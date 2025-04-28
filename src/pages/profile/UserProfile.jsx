@@ -222,7 +222,7 @@ export default function UserProfile() {
                   <Button
                     variant="primary"
                     onClick={handleProfileUpdate}
-                    size="sm"
+                    size="xs"
                   >
                     Save Changes
                   </Button>
@@ -242,7 +242,7 @@ export default function UserProfile() {
                 <CardTitle>Password</CardTitle>
               </CardHeader>
               <CardContent className="pt-0">
-                <div className="space-y-3 max-w-md">
+                <div className="space-y-2 max-w-md">
                   <Input
                     label="Current Password"
                     type="password"
@@ -270,7 +270,7 @@ export default function UserProfile() {
                   <Button
                     variant="primary"
                     onClick={handlePasswordChange}
-                    size="sm"
+                    size="xs"
                   >
                     Update Password
                   </Button>
@@ -291,10 +291,10 @@ export default function UserProfile() {
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
                     <div>
-                      <h4 className="text-sm font-medium text-gray-900 dark:text-white">
+                      <h4 className="text-xs font-medium text-gray-900 dark:text-white">
                         Email Notifications
                       </h4>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                      <p className="text-xxs text-gray-500 dark:text-gray-400">
                         Receive email notifications
                       </p>
                     </div>
@@ -320,10 +320,10 @@ export default function UserProfile() {
 
                   <div className="flex items-center justify-between">
                     <div>
-                      <h4 className="text-sm font-medium text-gray-900 dark:text-white">
+                      <h4 className="text-xs font-medium text-gray-900 dark:text-white">
                         Blog Updates
                       </h4>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                      <p className="text-xxs text-gray-500 dark:text-gray-400">
                         Get notified about blog generation status
                       </p>
                     </div>
@@ -347,10 +347,10 @@ export default function UserProfile() {
 
                   <div className="flex items-center justify-between">
                     <div>
-                      <h4 className="text-sm font-medium text-gray-900 dark:text-white">
+                      <h4 className="text-xs font-medium text-gray-900 dark:text-white">
                         New Features
                       </h4>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                      <p className="text-xxs text-gray-500 dark:text-gray-400">
                         Learn about new features and updates
                       </p>
                     </div>
@@ -374,10 +374,10 @@ export default function UserProfile() {
 
                   <div className="flex items-center justify-between">
                     <div>
-                      <h4 className="text-sm font-medium text-gray-900 dark:text-white">
+                      <h4 className="text-xs font-medium text-gray-900 dark:text-white">
                         Tips & Tutorials
                       </h4>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                      <p className="text-xxs text-gray-500 dark:text-gray-400">
                         Receive tips for better blog creation
                       </p>
                     </div>
@@ -403,7 +403,7 @@ export default function UserProfile() {
               <CardFooter>
                 <Button
                   variant="outline"
-                  size="sm"
+                  size="xs"
                   onClick={() => {
                     addToast({
                       title: "Notification preferences saved",
@@ -454,7 +454,7 @@ export default function UserProfile() {
                       variant={
                         connectedAccounts.wordpress ? "outline" : "primary"
                       }
-                      size="sm"
+                      size="xs"
                       onClick={() => handleConnect("wordpress")}
                     >
                       {connectedAccounts.wordpress ? "Disconnect" : "Connect"}
@@ -483,7 +483,7 @@ export default function UserProfile() {
                     </div>
                     <Button
                       variant={connectedAccounts.google ? "outline" : "primary"}
-                      size="sm"
+                      size="xs"
                       onClick={() => handleConnect("google")}
                     >
                       {connectedAccounts.google ? "Disconnect" : "Connect"}
@@ -514,7 +514,7 @@ export default function UserProfile() {
                       variant={
                         connectedAccounts.facebook ? "outline" : "primary"
                       }
-                      size="sm"
+                      size="xs"
                       onClick={() => handleConnect("facebook")}
                     >
                       {connectedAccounts.facebook ? "Disconnect" : "Connect"}
@@ -525,7 +525,7 @@ export default function UserProfile() {
               <CardFooter>
                 <Button
                   variant="outline"
-                  size="sm"
+                  size="xs"
                   onClick={() => {
                     addToast({
                       title: "Add your WordPress site",

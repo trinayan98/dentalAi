@@ -87,11 +87,11 @@ export default function AuthLayout() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5 }}
-              className="space-y-6"
+              className="space-y-3"
             >
-              <div className="space-y-2">
+              <div className="space-y-1">
                 <h1
-                  className={`text-4xl font-bold ${
+                  className={`text-xl font-bold ${
                     isSignUpPage ? "text-[#1850F0]" : "text-[#1850F0]"
                   } dark:text-blue-500`}
                 >
@@ -101,7 +101,7 @@ export default function AuthLayout() {
                     ? "Password Recovery"
                     : "Welcome back"}
                 </h1>
-                <p className="text-md text-gray-600 dark:text-gray-400">
+                <p className="text-sm text-gray-600 dark:text-gray-400">
                   {isSignUpPage
                     ? "Join BlogGenius and start creating AI-powered blog content"
                     : isForgotPassword
@@ -129,7 +129,7 @@ export default function AuthLayout() {
                 </div>
               </div>
 
-              <div className="space-y-4">
+              <div className="space-y-1">
                 {currentFeatures.map((feature, index) => (
                   <motion.div
                     key={feature.title}
@@ -141,11 +141,11 @@ export default function AuthLayout() {
                     <div className="flex-shrink-0 w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
                       <feature.icon className="h-5 w-5 text-[#1850F0] dark:text-blue-400" />
                     </div>
-                    <div>
-                      <h3 className="text-md font-medium text-gray-900 dark:text-white">
+                    <div className="mb-0">
+                      <h3 className="text-sm font-medium text-gray-900 dark:text-white ">
                         {feature.title}
                       </h3>
-                      <p className="text-sm text-gray-500 dark:text-gray-400">
+                      <p className="text-xs text-gray-500 dark:text-gray-400">
                         {feature.description}
                       </p>
                     </div>

@@ -30,7 +30,7 @@ export const CardTitle = ({ className, children }) => {
   return (
     <h3
       className={clsx(
-        "text-lg font-bold text-gray-900 dark:text-white",
+        "text-md font-bold text-gray-900 dark:text-white",
         className
       )}
     >

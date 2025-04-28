@@ -135,7 +135,7 @@ export default function Dashboard() {
           </div>
           <Link
             to="/dashboard/blogs/create"
-            className="inline-flex items-center px-4 py-2 bg-primary-600 text-white text-xs font-medium rounded-md hover:bg-primary-700 transition-colors gap-2"
+            className="inline-flex items-center px-4 py-2 bg-primary-600 text-white text-xxs font-medium rounded-md hover:bg-primary-700 transition-colors gap-2"
           >
             <PlusCircle className="h-3 w-3" />
             Create New Blog
@@ -210,8 +210,8 @@ export default function Dashboard() {
                   <div className="flex flex-col flex-grow p-5 space-y-2.5">
                     <div className="flex items-center justify-between text-gray-500">
                       <div className="flex items-center gap-2">
-                        <Clock className="h-3 w-3" />
-                        <span className="text-xs">
+                        <Clock className="h-2.5 w-2.5" />
+                        <span className="text-2xs">
                           {new Date(blog.createdAt).toLocaleDateString(
                             "en-US",
                             {
@@ -231,6 +231,21 @@ export default function Dashboard() {
                           )}
                         </span>
                       </div>
+                    </div>
+                    <h3 className="text-s font-semibold text-gray-900 dark:text-white">
+                      {blog.title}
+                    </h3>
+                    <p className="text-xxs text-gray-600 dark:text-gray-400 line-clamp-2 flex-grow">
+                      {blog.excerpt}
+                    </p>
+                    <div className="flex items-center justify-between">
+                      <Link
+                        to={`/dashboard/blogs/${blog.id}`}
+                        className="inline-flex px-4 py-2 bg-primary-50 pt-1 pb-1 text-primary-600 text-xxs rounded-md hover:text-white hover:bg-primary-700 transition-colors w-fit"
+                      >
+                        View Details
+                      </Link>
+
                       <span
                         className={`text-[10px] px-2 py-1 rounded-full ${
                           blog.status === "published"
@@ -242,18 +257,6 @@ export default function Dashboard() {
                           blog.status.slice(1)}
                       </span>
                     </div>
-                    <h3 className="text-md font-semibold text-gray-900 dark:text-white">
-                      {blog.title}
-                    </h3>
-                    <p className="text-xs text-gray-600 dark:text-gray-400 line-clamp-2 flex-grow">
-                      {blog.excerpt}
-                    </p>
-                    <Link
-                      to={`/dashboard/blogs/${blog.id}`}
-                      className="inline-flex px-4 py-2 bg-primary-50 pt-1 pb-1 text-primary-600 text-xxs rounded-md hover:text-white hover:bg-primary-700 transition-colors w-fit"
-                    >
-                      View Details
-                    </Link>
                   </div>
                 </Card>
               </motion.div>
@@ -276,7 +279,7 @@ export default function Dashboard() {
                     <activity.icon className="h-3 w-3 text-white" />
                   </div>
                   <div>
-                    <p className="text-xs text-gray-900 dark:text-white">
+                    <p className="text-xxs text-gray-900 dark:text-white">
                       {activity.title}
                     </p>
                     <span className="text-[10px] text-gray-500">

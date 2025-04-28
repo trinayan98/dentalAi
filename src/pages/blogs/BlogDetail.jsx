@@ -213,7 +213,7 @@ export default function BlogDetail() {
           <div className="flex items-center">
             <div>
               <div className="flex items-center">
-                <h1 className="text-lg font-bold text-gray-900 dark:text-white">
+                <h1 className="text-sm font-bold text-gray-900 dark:text-white">
                   {viewMode === "edit" ? "Edit Blog" : "Blog Preview"}
                 </h1>
                 <span
@@ -255,7 +255,7 @@ export default function BlogDetail() {
                 Edit
               </button>
               <button
-                className={`px-3 py-1.5 rounded text-sm font-medium text-xxs ${
+                className={`px-3 py-1.5 rounded  font-medium text-xxs ${
                   viewMode === "preview"
                     ? "bg-primary-100 text-primary-500 dark:bg-gray-700 dark:text-gray-900 dark:text-white cursor-none"
                     : " bg-gray-100 text-gray-600 dark:text-gray-300  hover:bg-primary-500 hover:text-white"
@@ -270,20 +270,18 @@ export default function BlogDetail() {
             {editedBlog.status === "draft" ? (
               <button
                 variant="primary"
-                size="xs"
-                leftIcon={<CheckCircle className="h-4 w-4" />}
+                leftIcon={<CheckCircle className="h-3 w-3" />}
                 onClick={handlePublish}
-                className="px-3 mr-2 py-1.5 rounded text-sm font-medium text-xxs bg-primary-100 text-primary-500 dark:bg-gray-700 dark:text-gray-900 dark:text-white"
+                className="px-3 mr-2 py-1.5 rounded  font-medium text-xxs bg-primary-100 text-primary-500 dark:bg-gray-700 dark:text-gray-900 dark:text-white"
               >
                 Publish
               </button>
             ) : (
               <button
                 variant="outline"
-                size="xs"
-                leftIcon={<Download className="h-4 w-4" />}
+                leftIcon={<Download className="h-3 w-3" />}
                 onClick={handleGeneratePdf}
-                className="px-3 mr-2 py-1.5 rounded text-sm font-medium text-xxs bg-primary-100 text-primary-500 dark:bg-gray-700 dark:text-gray-900 dark:text-white hover:bg-primary-500 hover:text-white"
+                className="px-3 mr-2 py-1.3 rounded  font-medium text-xxs bg-primary-100 text-primary-500 dark:bg-gray-700 dark:text-gray-900 dark:text-white hover:bg-primary-500 hover:text-white"
               >
                 Download PDF
               </button>
@@ -292,9 +290,9 @@ export default function BlogDetail() {
         </div>
 
         {viewMode === "edit" ? (
-          <div className="space-y-6 p-0">
-            <div className="p-0">
-              <CardContent className="p-0 ">
+          <div className="space-y-6 ">
+            <div className="">
+              <CardContent className=" ">
                 <div className="space-y-4 ">
                   <Input
                     label="Title"

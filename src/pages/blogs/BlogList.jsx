@@ -198,7 +198,7 @@ export default function BlogList() {
 
           <Link
             to="/dashboard/blogs/create"
-            className="inline-flex items-center px-4 py-2 bg-primary-600 text-white text-xs font-medium rounded-md hover:bg-primary-700 transition-colors gap-2 whitespace-nowrap"
+            className="inline-flex items-center px-4 py-2 bg-primary-600 text-white text-xxs font-medium rounded-md hover:bg-primary-700 transition-colors gap-2 whitespace-nowrap"
           >
             <PlusCircle className="h-3 w-3" />
             Create New Blog
@@ -268,7 +268,7 @@ export default function BlogList() {
                       <div className="flex items-center justify-between text-gray-500">
                         <div className="flex items-center gap-2">
                           <Clock className="h-3 w-3" />
-                          <span className="text-xs">
+                          <span className="text-2xs">
                             {new Date(blog.createdAt).toLocaleDateString(
                               "en-US",
                               {
@@ -299,7 +299,7 @@ export default function BlogList() {
                             blog.status.slice(1)}
                         </span>
                       </div>
-                      <h3 className="text-md font-semibold text-gray-900 dark:text-white">
+                      <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
                         {blog.title}
                       </h3>
                       <p className="text-xs text-gray-600 dark:text-gray-400 line-clamp-2 flex-grow">
@@ -308,7 +308,7 @@ export default function BlogList() {
                       <div className="flex items-center justify-between">
                         <Link
                           to={`/dashboard/blogs/${blog.id}`}
-                          className="inline-flex px-4 py-2 bg-primary-50 pt-1 pb-1 text-primary-600 text-xxs  rounded-md hover:text-white hover:bg-primary-700 transition-colors w-fit"
+                          className="inline-flex px-4 py-2 bg-primary-50 pt-1 pb-1 text-primary-600 text-2xs  rounded-md hover:text-white hover:bg-primary-700 transition-colors w-fit"
                         >
                           View Details
                         </Link>

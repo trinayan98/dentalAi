@@ -5,8 +5,10 @@ export default {
   theme: {
     extend: {
       fontSize: {
+        "2xs": "clamp(0.58rem, 0.7rem + 0.25vw, 0.6rem)", // 12px - 14px
         xxs: "clamp(0.6rem, 0.7rem + 0.25vw, 0.7rem)", // 12px - 14px
         xs: "clamp(0.65rem, 0.7rem + 0.25vw, 0.775rem)", // 12px - 14px
+        s: "clamp(0.68rem, 0.7rem + 0.25vw, 0.785rem)", // 12px - 14px
         sm: "clamp(0.7rem, 0.8rem + 0.375vw, .9rem)", // 14px - 16px
         base: "clamp(1rem, 0.9rem + 0.5vw, 1.125rem)", // 16px - 18px
         lg: "clamp(1.125rem, 1rem + 0.625vw, 1.25rem)", // 18px - 20px

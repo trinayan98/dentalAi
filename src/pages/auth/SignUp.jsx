@@ -97,7 +97,7 @@ export default function SignUp() {
       className="w-full max-w-xl mx-auto"
     >
       <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-8 mb-8">
-        <div className="grid grid-cols-1 gap-6 mb-8">
+        {/* <div className="grid grid-cols-1 gap-6 mb-8">
           <Button
             type="button"
             variant="outline"
@@ -124,9 +124,9 @@ export default function SignUp() {
             />
             Continue with Facebook
           </Button>
-        </div>
+        </div> */}
 
-        <div className="relative mb-8">
+        {/* <div className="relative mb-8">
           <div className="absolute inset-0 flex items-center">
             <div className="w-full border-t border-gray-300 dark:border-gray-700" />
           </div>
@@ -135,10 +135,10 @@ export default function SignUp() {
               Or continue with email
             </span>
           </div>
-        </div>
+        </div> */}
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-          <div className="space-y-4">
+          <div className="space-y-2">
             <Input
               label="Full Name"
               leftIcon={<User className="h-4 w-4 text-gray-400" />}

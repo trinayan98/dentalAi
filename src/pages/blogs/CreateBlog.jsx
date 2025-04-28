@@ -126,7 +126,7 @@ export default function CreateBlog() {
             className="w-full"
           >
             <div className="mb-6 text-center">
-              <h2 className="text-lg font-semibold text-gray-900 mb-1 dark:text-white">
+              <h2 className="text-md font-semibold text-gray-900 mb-1 dark:text-white">
                 What would you like to write about?
               </h2>
               <p className="text-xs text-gray-500">
@@ -171,7 +171,7 @@ export default function CreateBlog() {
             className="max-w-xxl mx-auto"
           >
             <div className="mb-4 text-center">
-              <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-1">
+              <h2 className="text-md font-bold text-gray-900 dark:text-white mb-1">
                 Customize your blog
               </h2>
               <p className="text-xs text-gray-600 dark:text-gray-400">
@@ -307,7 +307,7 @@ export default function CreateBlog() {
               {/* <div className="w-16 h-16 bg-primary-100 dark:bg-primary-900 rounded-full flex items-center justify-center mx-auto mb-4">
                 <Sparkles className="h-8 w-8 text-primary-600 dark:text-primary-400" />
               </div> */}
-              <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-1">
+              <h2 className="text-md font-bold text-gray-900 dark:text-white mb-1">
                 Generating your blog
               </h2>
               <p className="text-xs text-gray-600 dark:text-gray-400">
@@ -338,10 +338,10 @@ export default function CreateBlog() {
           >
             <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <div>
-                <h2 className="text-lg font-bold text-gray-900 dark:text-white">
+                <h2 className="text-md font-bold text-gray-900 dark:text-white">
                   Review your blog
                 </h2>
-                <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
                   Review and edit your AI-generated content before publishing.
                 </p>
               </div>
