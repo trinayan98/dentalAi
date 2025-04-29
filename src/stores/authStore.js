@@ -1,92 +1,118 @@
 import { create } from "zustand";
+import { persist } from "zustand/middleware";
+import { authApi } from "../utils/api";
 
-// Mock user data for demonstration
-const MOCK_USER = {
-  id: "1",
-  name: "John Doe",
-  email: "john@example.com",
-  avatar:
-    "https://images.pexels.com/photos/220453/pexels-photo-220453.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2",
-  createdAt: new Date().toISOString(),
-};
-
-export const useAuthStore = create((set) => ({
-  user: null,
-  isAuthenticated: false,
-  isLoading: false,
-
-  login: async (email, password) => {
-    set({ isLoading: true });
-
-    // Simulate API call delay
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-
-    // For demo purposes, any login works
-    if (email && password) {
-      set({
-        user: MOCK_USER,
-        isAuthenticated: true,
-        isLoading: false,
-      });
-    } else {
-      set({ isLoading: false });
-      throw new Error("Invalid credentials");
-    }
-  },
-
-  signup: async (name, email, password) => {
-    set({ isLoading: true });
-
-    // Simulate API call delay
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-
-    if (name && email && password) {
-      const newUser = { ...MOCK_USER, name, email };
-      set({
-        user: newUser,
-        isAuthenticated: true,
-        isLoading: false,
-      });
-    } else {
-      set({ isLoading: false });
-      throw new Error("All fields are required");
-    }
-  },
-
-  logout: () => {
-    set({
+const useAuthStore = create(
+  persist(
+    (set) => ({
       user: null,
+      token: null,
       isAuthenticated: false,
-    });
-  },
+      isLoading: false,
 
-  resetPassword: async (email) => {
-    set({ isLoading: true });
+      updateUser: (userData) => {
+        set((state) => ({
+          ...state,
+          user: { ...state.user, ...userData },
+        }));
+      },
 
-    // Simulate API call delay
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+      login: async (email, password) => {
+        set({ isLoading: true });
+        try {
+          const response = await authApi.login({ email, password });
+          localStorage.setItem("token", response.token);
+          set({
+            user: response.user,
+            token: response.token,
+            isAuthenticated: true,
+            isLoading: false,
+          });
+        } catch (error) {
+          set({ isLoading: false });
+          throw error;
+        }
+      },
 
-    set({ isLoading: false });
-    // In a real app, this would send a reset link via email
-  },
+      signup: async (username, email, password) => {
+        set({ isLoading: true });
+        try {
+          const userData = {
+            username,
+            email,
+            password,
+          };
 
-  setNewPassword: async (password, token) => {
-    set({ isLoading: true });
+          const response = await authApi.register(userData);
+          localStorage.setItem("token", response.token);
+          set({
+            user: response.user,
+            token: response.token,
+            isAuthenticated: true,
+            isLoading: false,
+          });
+        } catch (error) {
+          set({ isLoading: false });
+          throw error;
+        }
+      },
 
-    // Simulate API call delay
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+      logout: () => {
+        localStorage.removeItem("token");
+        set({
+          user: null,
+          token: null,
+          isAuthenticated: false,
+        });
+      },
 
-    set({ isLoading: false });
-    // In a real app, this would validate the token and update the password
-  },
+      resetPassword: async (email) => {
+        set({ isLoading: true });
+        try {
+          await authApi.resetPassword(email);
+          set({ isLoading: false });
+        } catch (error) {
+          set({ isLoading: false });
+          throw error;
+        }
+      },
 
-  verifyEmail: async (token) => {
-    set({ isLoading: true });
+      setNewPassword: async (password, token) => {
+        set({ isLoading: true });
+        try {
+          await authApi.setNewPassword(password, token);
+          set({ isLoading: false });
+        } catch (error) {
+          set({ isLoading: false });
+          throw error;
+        }
+      },
 
-    // Simulate API call delay
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+      verifyEmail: async (token) => {
+        set({ isLoading: true });
+        try {
+          await authApi.verifyEmail(token);
+          set({ isLoading: false });
+        } catch (error) {
+          set({ isLoading: false });
+          throw error;
+        }
+      },
 
-    set({ isLoading: false });
-    // In a real app, this would verify the email token
-  },
-}));
+      setAuth: (user, token) => {
+        localStorage.setItem("token", token);
+        set({ user, token, isAuthenticated: true });
+      },
+    }),
+    {
+      name: "auth-storage",
+      onRehydrateStorage: () => (state) => {
+        if (state && state.token) {
+          localStorage.setItem("token", state.token);
+        }
+      },
+    }
+  )
+);
+
+export default useAuthStore;

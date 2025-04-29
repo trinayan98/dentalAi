@@ -21,7 +21,7 @@ import {
   CardFooter,
 } from "../../components/ui/Card";
 import { Button } from "../../components/ui/Button";
-import { useAuthStore } from "../../stores/authStore";
+import useAuthStore from "../../stores/authStore";
 import { useBlogStore } from "../../stores/blogStore";
 import { motion } from "framer-motion";
 

@@ -3,9 +3,9 @@ import { Link, useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { Input } from "../../components/ui/Input";
 import { Button } from "../../components/ui/Button";
-import { useAuthStore } from "../../stores/authStore";
+import useAuthStore from "../../stores/authStore";
 import { useToastStore } from "../../stores/toastStore";
-import { User, Mail, Lock, Check, AlertCircle } from "lucide-react";
+import { User, Mail, Lock } from "lucide-react";
 import { motion } from "framer-motion";
 
 export default function SignUp() {
@@ -20,7 +20,7 @@ export default function SignUp() {
     formState: { errors },
   } = useForm({
     defaultValues: {
-      name: "",
+      username: "",
       email: "",
       password: "",
       confirmPassword: "",
@@ -40,19 +40,34 @@ export default function SignUp() {
       return;
     }
 
+    if (data.password !== data.confirmPassword) {
+      addToast({
+        title: "Password mismatch",
+        description: "Password and confirmation do not match",
+        type: "error",
+      });
+      return;
+    }
+
     try {
-      await signup(data.name, data.email, data.password);
-      navigate("/dashboard");
+      console.log("Form data being sent:", {
+        username: data.username,
+        email: data.email,
+        password: data.password,
+      });
+
+      await signup(data.username, data.email, data.password);
       addToast({
         title: "Account created",
         description: "Welcome to BlogGenius!",
         type: "success",
       });
+      navigate("/dashboard");
     } catch (error) {
+      console.error("Signup error:", error);
       addToast({
         title: "Sign up failed",
-        description:
-          error instanceof Error ? error.message : "Could not create account",
+        description: error.message || "Could not create account",
         type: "error",
       });
     }
@@ -97,12 +112,12 @@ export default function SignUp() {
       className="w-full max-w-xl mx-auto"
     >
       <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-8 mb-8">
-        {/* <div className="grid grid-cols-1 gap-6 mb-8">
+        <div className="grid grid-cols-1 gap-6 mb-8">
           <Button
             type="button"
             variant="outline"
             fullWidth
-            className=" border-gray-300 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700"
+            className="border-gray-300 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700"
           >
             <img
               className="h-4 w-4 mr-3"
@@ -119,33 +134,37 @@ export default function SignUp() {
           >
             <img
               className="h-4 w-4 mr-3"
-              src="https://www.svgrepo.com/show/452196/facebook-1.svg"
-              alt="Facebook"
+              src="https://upload.wikimedia.org/wikipedia/commons/thumb/4/44/Microsoft_logo.svg/512px-Microsoft_logo.svg.png"
+              alt="Microsoft"
             />
-            Continue with Facebook
+            Continue with Microsoft
           </Button>
-        </div> */}
+        </div>
 
-        {/* <div className="relative mb-8">
+        <div className="relative mb-8">
           <div className="absolute inset-0 flex items-center">
             <div className="w-full border-t border-gray-300 dark:border-gray-700" />
           </div>
           <div className="relative flex justify-center text-sm">
             <span className="px-4 bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400">
-              Or continue with email
+              or
             </span>
           </div>
-        </div> */}
+        </div>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-          <div className="space-y-2">
+          <div className="space-y-4">
             <Input
-              label="Full Name"
+              label="Username"
               leftIcon={<User className="h-4 w-4 text-gray-400" />}
-              error={errors.name?.message}
+              error={errors.username?.message}
               className="bg-gray-50 dark:bg-gray-900 border-gray-300 dark:border-gray-700"
-              {...register("name", {
-                required: "Name is required",
+              {...register("username", {
+                required: "Username is required",
+                minLength: {
+                  value: 3,
+                  message: "Username must be at least 3 characters",
+                },
               })}
             />
 
@@ -225,7 +244,7 @@ export default function SignUp() {
           </div>
 
           <div className="flex items-start">
-            <div className="flex items-center h4">
+            <div className="flex items-center h-4">
               <input
                 id="terms"
                 type="checkbox"
@@ -273,7 +292,7 @@ export default function SignUp() {
             size="sm"
             isLoading={isLoading}
             fullWidth
-            className="mt-6"
+            className="mt-6 bg-[#1850F0] hover:bg-blue-600"
           >
             Create Account
           </Button>
@@ -283,7 +302,7 @@ export default function SignUp() {
           Already have an account?{" "}
           <Link
             to="/login"
-            className="font-medium text-primary-600 hover:text-primary-500 dark:text-primary-400"
+            className="font-medium text-[#1850F0] hover:text-blue-600 dark:text-primary-400"
           >
             Sign in
           </Link>

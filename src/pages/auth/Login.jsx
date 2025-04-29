@@ -3,7 +3,7 @@ import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { Input } from "../../components/ui/Input";
 import { Button } from "../../components/ui/Button";
-import { useAuthStore } from "../../stores/authStore";
+import useAuthStore from "../../stores/authStore";
 import { useToastStore } from "../../stores/toastStore";
 import { Mail, Lock } from "lucide-react";
 import { motion } from "framer-motion";

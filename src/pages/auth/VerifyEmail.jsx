@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "../../components/ui/Button";
-import { useAuthStore } from "../../stores/authStore";
+import useAuthStore from "../../stores/authStore";
 import { useToastStore } from "../../stores/toastStore";
 import { CheckCircle, RefreshCw } from "lucide-react";
 import { motion } from "framer-motion";

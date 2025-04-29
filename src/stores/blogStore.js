@@ -1,4 +1,8 @@
 import { create } from "zustand";
+import axios from "axios";
+import useAuthStore from "./authStore";
+
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5001/api";
 
 // Mock blog data for demonstration
 const MOCK_BLOGS = [
@@ -49,40 +53,70 @@ const MOCK_BLOGS = [
   },
 ];
 
+// Helper function to get auth header
+const getAuthHeader = () => {
+  const token = useAuthStore.getState().token;
+  return token ? { Authorization: `Bearer ${token}` } : {};
+};
+
 export const useBlogStore = create((set, get) => ({
   blogs: [],
   currentBlog: null,
   isLoading: false,
   error: null,
 
-  fetchBlogs: async () => {
+  fetchBlogs: async (queryParams) => {
     set({ isLoading: true });
+    try {
+      const response = await axios.get(
+        `${API_URL}/blogs?${queryParams.toString()}`,
+        {
+          headers: {
+            ...getAuthHeader(),
+          },
+        }
+      );
 
-    // Simulate API call delay
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-
-    set({
-      blogs: MOCK_BLOGS,
-      isLoading: false,
-    });
+      if (response.data.success) {
+        set({
+          blogs: response.data.data,
+          isLoading: false,
+          error: null,
+        });
+        return response.data;
+      } else {
+        throw new Error(response.data.error || "Failed to fetch blogs");
+      }
+    } catch (error) {
+      set({
+        error: error.message,
+        isLoading: false,
+      });
+      return null;
+    }
   },
 
   fetchBlog: async (id) => {
     set({ isLoading: true });
-
-    // Simulate API call delay
-    await new Promise((resolve) => setTimeout(resolve, 800));
-
-    const blog = MOCK_BLOGS.find((blog) => blog.id === id);
-
-    if (blog) {
-      set({
-        currentBlog: blog,
-        isLoading: false,
+    try {
+      const response = await axios.get(`${API_URL}/blogs/${id}`, {
+        headers: {
+          ...getAuthHeader(),
+        },
       });
-    } else {
+
+      if (response.data.success) {
+        set({
+          currentBlog: response.data.data,
+          isLoading: false,
+          error: null,
+        });
+      } else {
+        throw new Error(response.data.error || "Blog not found");
+      }
+    } catch (error) {
       set({
-        error: "Blog not found",
+        error: error.message,
         isLoading: false,
       });
     }
@@ -90,62 +124,107 @@ export const useBlogStore = create((set, get) => ({
 
   createBlog: async (blogData) => {
     set({ isLoading: true });
+    try {
+      const formData = new FormData();
+      Object.keys(blogData).forEach((key) => {
+        if (key === "media" && blogData[key]) {
+          blogData[key].forEach((file) => {
+            formData.append("media", file);
+          });
+        } else {
+          formData.append(key, blogData[key]);
+        }
+      });
 
-    // Simulate API call delay
-    await new Promise((resolve) => setTimeout(resolve, 1200));
+      const response = await axios.post(`${API_URL}/blogs`, formData, {
+        headers: {
+          ...getAuthHeader(),
+          "Content-Type": "multipart/form-data",
+        },
+      });
 
-    const newBlog = {
-      id: `${Math.floor(Math.random() * 1000)}`,
-      title: blogData.title || "Untitled Blog",
-      content: blogData.content || "",
-      status: blogData.status || "draft",
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-      userId: "1",
-      imageUrl: blogData.imageUrl,
-      excerpt: blogData.excerpt,
-      tags: blogData.tags,
-      wordCount: blogData.content?.split(" ").length || 0,
-    };
-
-    set((state) => ({
-      blogs: [...state.blogs, newBlog],
-      currentBlog: newBlog,
-      isLoading: false,
-    }));
+      if (response.data.success) {
+        set((state) => ({
+          blogs: [...state.blogs, response.data.data],
+          currentBlog: response.data.data,
+          isLoading: false,
+          error: null,
+        }));
+      } else {
+        throw new Error(response.data.error || "Failed to create blog");
+      }
+    } catch (error) {
+      set({
+        error: error.message,
+        isLoading: false,
+      });
+    }
   },
 
   updateBlog: async (id, blogData) => {
     set({ isLoading: true });
+    try {
+      const response = await axios.put(`${API_URL}/blogs/${id}`, blogData, {
+        headers: {
+          ...getAuthHeader(),
+        },
+      });
 
-    // Simulate API call delay
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-
-    set((state) => {
-      const updatedBlogs = state.blogs.map((blog) =>
-        blog.id === id
-          ? { ...blog, ...blogData, updatedAt: new Date().toISOString() }
-          : blog
-      );
-
-      return {
-        blogs: updatedBlogs,
-        currentBlog: updatedBlogs.find((blog) => blog.id === id) || null,
+      if (response.data.success) {
+        set((state) => ({
+          blogs: state.blogs.map((blog) =>
+            blog._id === id ? response.data.data : blog
+          ),
+          currentBlog: response.data.data,
+          isLoading: false,
+          error: null,
+        }));
+      } else {
+        throw new Error(response.data.error || "Failed to update blog");
+      }
+    } catch (error) {
+      set({
+        error: error.message,
         isLoading: false,
-      };
-    });
+      });
+    }
   },
 
   deleteBlog: async (id) => {
+    console.log("deleteBlog called with ID:", id);
     set({ isLoading: true });
+    try {
+      console.log("Sending delete request to:", `${API_URL}/blogs/${id}`);
+      console.log("Auth headers:", getAuthHeader());
 
-    // Simulate API call delay
-    await new Promise((resolve) => setTimeout(resolve, 800));
+      const response = await axios.delete(`${API_URL}/blogs/${id}`, {
+        headers: {
+          ...getAuthHeader(),
+        },
+      });
 
-    set((state) => ({
-      blogs: state.blogs.filter((blog) => blog.id !== id),
-      isLoading: false,
-    }));
+      console.log("Delete response:", response);
+
+      if (response.data.success) {
+        set((state) => {
+          console.log("Updating state, removing blog with ID:", id);
+          return {
+            blogs: state.blogs.filter((blog) => blog._id !== id),
+            isLoading: false,
+            error: null,
+          };
+        });
+      } else {
+        throw new Error(response.data.error || "Failed to delete blog");
+      }
+    } catch (error) {
+      console.error("Delete error in store:", error);
+      set({
+        error: error.message,
+        isLoading: false,
+      });
+      throw error; // Re-throw to handle in component
+    }
   },
 
   generateBlog: async (topic, options) => {

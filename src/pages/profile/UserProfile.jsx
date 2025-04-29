@@ -1,5 +1,6 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { useForm } from "react-hook-form";
 import {
   User,
   Mail,
@@ -19,24 +20,49 @@ import {
 } from "../../components/ui/Card";
 import { Button } from "../../components/ui/Button";
 import { Input } from "../../components/ui/Input";
-import { useAuthStore } from "../../stores/authStore";
+import useAuthStore from "../../stores/authStore";
 import { useToastStore } from "../../stores/toastStore";
 import { motion } from "framer-motion";
+import { userApi } from "../../utils/api";
 
 export default function UserProfile() {
-  const { user, logout } = useAuthStore();
+  const { user, logout, token, updateUser } = useAuthStore();
   const { addToast } = useToastStore();
   const navigate = useNavigate();
-
+  const [isLoading, setIsLoading] = useState(false);
   const [profileImage, setProfileImage] = useState(
     user?.avatar ||
       "https://images.pexels.com/photos/415829/pexels-photo-415829.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2"
   );
-  const [name, setName] = useState(user?.name || "");
-  const [email, setEmail] = useState(user?.email || "");
-  const [currentPassword, setCurrentPassword] = useState("");
-  const [newPassword, setNewPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
+
+  // Profile form
+  const {
+    register: registerProfile,
+    handleSubmit: handleSubmitProfile,
+    formState: { errors: profileErrors },
+    setValue: setProfileValue,
+    watch: watchProfile,
+  } = useForm({
+    defaultValues: {
+      username: user?.name || "",
+      email: user?.email || "",
+    },
+  });
+
+  // Password form
+  const {
+    register: registerPassword,
+    handleSubmit: handleSubmitPassword,
+    formState: { errors: passwordErrors },
+    reset: resetPassword,
+    watch: watchPassword,
+  } = useForm({
+    defaultValues: {
+      currentPassword: "",
+      newPassword: "",
+      confirmPassword: "",
+    },
+  });
 
   // Notification preferences
   const [notificationPreferences, setNotificationPreferences] = useState({
@@ -53,52 +79,136 @@ export default function UserProfile() {
     facebook: false,
   });
 
-  const handleProfileUpdate = () => {
-    addToast({
-      title: "Profile updated",
-      description: "Your profile information has been saved successfully",
-      type: "success",
-    });
+  // Set initial form values when user data is available
+  useEffect(() => {
+    if (user) {
+      console.log("Setting user data:", user); // Debug log
+      setProfileValue("username", user.username || "");
+      setProfileValue("email", user.email || "");
+      if (user.avatar) {
+        setProfileImage(user.avatar);
+      }
+    }
+  }, [user, setProfileValue]);
+
+  // Fetch user profile
+  useEffect(() => {
+    const fetchUserProfile = async () => {
+      try {
+        console.log("Fetching user profile with token:", token); // Debug log
+        const userData = await userApi.getUserProfile(token);
+        console.log("Received user data:", userData); // Debug log
+        if (userData) {
+          updateUser(userData);
+          setProfileValue("username", userData.name || "");
+          setProfileValue("email", userData.email || "");
+          if (userData.avatar) {
+            setProfileImage(userData.avatar);
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching profile:", error); // Debug log
+        addToast({
+          title: "Error",
+          description: error.message,
+          type: "error",
+        });
+      }
+    };
+
+    if (token) {
+      fetchUserProfile();
+    }
+  }, [token, updateUser, addToast, setProfileValue]);
+
+  // Watch username value for debugging
+  const currentUsername = watchProfile("username");
+  useEffect(() => {
+    console.log("Current username value:", currentUsername); // Debug log
+  }, [currentUsername]);
+
+  const onSubmitProfile = async (data) => {
+    try {
+      setIsLoading(true);
+      console.log("Submitting profile update:", data); // Debug log
+      const response = await userApi.updateProfile(token, {
+        name: data.username.trim(),
+      });
+
+      if (response.user) {
+        updateUser(response.user);
+        setProfileValue("username", response.user.name || "");
+        addToast({
+          title: "Profile updated",
+          description: "Your username has been updated successfully",
+          type: "success",
+        });
+      }
+    } catch (error) {
+      console.error("Error updating profile:", error); // Debug log
+      addToast({
+        title: "Error",
+        description: error.message || "Failed to update username",
+        type: "error",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const handlePasswordChange = () => {
-    if (!currentPassword) {
+  const onSubmitPassword = async (data) => {
+    try {
+      setIsLoading(true);
+      await userApi.changePassword(token, {
+        currentPassword: data.currentPassword,
+        newPassword: data.newPassword,
+      });
+
       addToast({
-        title: "Current password required",
-        description: "Please enter your current password",
+        title: "Password updated",
+        description: "Your password has been changed successfully",
+        type: "success",
+      });
+
+      resetPassword();
+    } catch (error) {
+      addToast({
+        title: "Error",
+        description: error.message || "Failed to change password",
         type: "error",
       });
-      return;
+    } finally {
+      setIsLoading(false);
     }
+  };
 
-    if (newPassword !== confirmPassword) {
-      addToast({
-        title: "Passwords do not match",
-        description: "New password and confirmation must match",
-        type: "error",
-      });
-      return;
+  const handleImageChange = async (event) => {
+    const file = event.target.files[0];
+    if (file) {
+      try {
+        setIsLoading(true);
+        const response = await userApi.updateProfile(token, {
+          avatar: file,
+        });
+
+        setProfileImage(response.user.avatar);
+        updateUser(response.user);
+
+        addToast({
+          title: "Profile picture updated",
+          description: "Your profile picture has been updated successfully",
+          type: "success",
+        });
+      } catch (error) {
+        addToast({
+          title: "Error",
+          description: error.message,
+          type: "error",
+        });
+      } finally {
+        setIsLoading(false);
+      }
     }
-
-    if (newPassword.length < 8) {
-      addToast({
-        title: "Password too short",
-        description: "New password must be at least 8 characters long",
-        type: "error",
-      });
-      return;
-    }
-
-    addToast({
-      title: "Password updated",
-      description: "Your password has been changed successfully",
-      type: "success",
-    });
-
-    // Reset password fields
-    setCurrentPassword("");
-    setNewPassword("");
-    setConfirmPassword("");
   };
 
   const handleToggleNotification = (key) => {
@@ -183,51 +293,70 @@ export default function UserProfile() {
               <CardTitle className="font-bold">Personal Information</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="flex flex-col lg:flex-row gap-8">
-                <div className="flex flex-col items-center space-y-4">
-                  <div className="relative">
-                    <img
-                      src={profileImage}
-                      alt="Profile"
-                      className="w-32 h-32 rounded-full object-cover border-4 border-white dark:border-gray-800 shadow-sm"
-                    />
-                    <button
-                      className="absolute bottom-0 right-0 bg-primary-500 text-white p-2 rounded-full shadow-sm hover:bg-primary-600 transition-colors"
-                      aria-label="Change profile picture"
-                    >
-                      <Edit2 className="h-4 w-4" />
-                    </button>
+              <form onSubmit={handleSubmitProfile(onSubmitProfile)}>
+                <div className="flex flex-col lg:flex-row gap-8">
+                  <div className="flex flex-col items-center space-y-4">
+                    <div className="relative">
+                      <img
+                        src={profileImage}
+                        alt="Profile"
+                        className="w-32 h-32 rounded-full object-cover border-4 border-white dark:border-gray-800 shadow-sm"
+                      />
+                      <label
+                        className="absolute bottom-0 right-0 bg-primary-500 text-white p-2 rounded-full shadow-sm hover:bg-primary-600 transition-colors cursor-pointer"
+                        aria-label="Change profile picture"
+                      >
+                        <input
+                          type="file"
+                          className="hidden"
+                          accept="image/*"
+                          onChange={handleImageChange}
+                          disabled={isLoading}
+                        />
+                        <Edit2 className="h-4 w-4" />
+                      </label>
+                    </div>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                      Recommended: 400x400px JPG, PNG
+                    </p>
                   </div>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">
-                    Recommended: 400x400px JPG, PNG
-                  </p>
+
+                  <div className="flex-1 space-y-4">
+                    <Input
+                      label="Username"
+                      {...registerProfile("username", {
+                        required: "Username is required",
+                        minLength: {
+                          value: 3,
+                          message: "Username must be at least 3 characters",
+                        },
+                      })}
+                      error={profileErrors.username?.message}
+                      leftIcon={<User className="h-4 w-4 text-gray-400" />}
+                      disabled={isLoading}
+                      placeholder="Enter your username"
+                    />
+
+                    <Input
+                      label="Email Address"
+                      type="email"
+                      value={watchProfile("email")}
+                      disabled={true}
+                      leftIcon={<Mail className="h-4 w-4 text-gray-400" />}
+                      placeholder="Your email address"
+                    />
+
+                    <Button
+                      type="submit"
+                      variant="primary"
+                      size="xs"
+                      disabled={isLoading}
+                    >
+                      {isLoading ? "Saving..." : "Save Changes"}
+                    </Button>
+                  </div>
                 </div>
-
-                <div className="flex-1 space-y-4">
-                  <Input
-                    label="Full Name"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    leftIcon={<User className="h-4 w-4 text-gray-400" />}
-                  />
-
-                  <Input
-                    label="Email Address"
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    leftIcon={<Mail className="h-4 w-4 text-gray-400" />}
-                  />
-
-                  <Button
-                    variant="primary"
-                    onClick={handleProfileUpdate}
-                    size="xs"
-                  >
-                    Save Changes
-                  </Button>
-                </div>
-              </div>
+              </form>
             </CardContent>
           </Card>
         </motion.div>
@@ -242,39 +371,59 @@ export default function UserProfile() {
                 <CardTitle>Password</CardTitle>
               </CardHeader>
               <CardContent className="pt-0">
-                <div className="space-y-2 max-w-md">
+                <form
+                  onSubmit={handleSubmitPassword(onSubmitPassword)}
+                  className="space-y-2 max-w-md"
+                >
                   <Input
                     label="Current Password"
                     type="password"
-                    value={currentPassword}
-                    onChange={(e) => setCurrentPassword(e.target.value)}
+                    {...registerPassword("currentPassword", {
+                      required: "Current password is required",
+                    })}
+                    error={passwordErrors.currentPassword?.message}
                     leftIcon={<Lock className="h-4 w-4 text-gray-400" />}
+                    placeholder="Enter current password"
                   />
 
                   <Input
                     label="New Password"
                     type="password"
-                    value={newPassword}
-                    onChange={(e) => setNewPassword(e.target.value)}
+                    {...registerPassword("newPassword", {
+                      required: "New password is required",
+                      minLength: {
+                        value: 8,
+                        message: "Password must be at least 8 characters",
+                      },
+                    })}
+                    error={passwordErrors.newPassword?.message}
                     leftIcon={<Lock className="h-4 w-4 text-gray-400" />}
+                    placeholder="Enter new password"
                   />
 
                   <Input
                     label="Confirm New Password"
                     type="password"
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    {...registerPassword("confirmPassword", {
+                      required: "Please confirm your password",
+                      validate: (value) =>
+                        value === watchPassword("newPassword") ||
+                        "Passwords do not match",
+                    })}
+                    error={passwordErrors.confirmPassword?.message}
                     leftIcon={<Lock className="h-4 w-4 text-gray-400" />}
+                    placeholder="Confirm new password"
                   />
 
                   <Button
+                    type="submit"
                     variant="primary"
-                    onClick={handlePasswordChange}
                     size="xs"
+                    disabled={isLoading}
                   >
-                    Update Password
+                    {isLoading ? "Updating..." : "Update Password"}
                   </Button>
-                </div>
+                </form>
               </CardContent>
             </Card>
           </motion.div>

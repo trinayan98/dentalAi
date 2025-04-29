@@ -16,6 +16,7 @@ import {
   Clock,
   ChevronRight,
   Edit,
+  Delete,
 } from "lucide-react";
 import { Card, CardContent } from "../../components/ui/Card";
 import { Button } from "../../components/ui/Button";
@@ -34,10 +35,61 @@ export default function BlogList() {
   const [sortBy, setSortBy] = useState("newest");
   const [viewMode, setViewMode] = useState("grid");
   const [activeDropdown, setActiveDropdown] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [itemsPerPage] = useState(10);
+  const [initialLoad, setInitialLoad] = useState(true);
 
   useEffect(() => {
-    fetchBlogs();
-  }, [fetchBlogs]);
+    const fetchBlogsData = async () => {
+      try {
+        const queryParams = new URLSearchParams({
+          page: currentPage,
+          limit: itemsPerPage,
+          sortBy: sortBy,
+          ...(searchTerm && { search: searchTerm }),
+          ...(statusFilter !== "all" && { status: statusFilter }),
+        });
+
+        const response = await fetchBlogs(queryParams);
+        if (response?.pagination) {
+          setTotalPages(response.pagination.pages);
+        }
+        if (initialLoad) {
+          setInitialLoad(false);
+        }
+      } catch (error) {
+        addToast({
+          title: "Error",
+          description: "Failed to fetch blogs",
+          type: "error",
+        });
+        if (initialLoad) {
+          setInitialLoad(false);
+        }
+      }
+    };
+
+    const timeoutId = setTimeout(
+      () => {
+        fetchBlogsData();
+      },
+      initialLoad ? 0 : 500
+    ); // No delay on initial load
+
+    return () => clearTimeout(timeoutId);
+  }, [
+    currentPage,
+    itemsPerPage,
+    sortBy,
+    searchTerm,
+    statusFilter,
+    initialLoad,
+  ]);
+
+  const handlePageChange = (newPage) => {
+    setCurrentPage(newPage);
+  };
 
   // Handle outside click to close dropdowns
   useEffect(() => {
@@ -54,8 +106,10 @@ export default function BlogList() {
   }, [activeDropdown]);
 
   const handleDeleteBlog = async (id) => {
+    console.log("Attempting to delete blog with ID:", id);
     if (window.confirm("Are you sure you want to delete this blog post?")) {
       try {
+        console.log("Delete confirmed, sending request for ID:", id);
         await deleteBlog(id);
         addToast({
           title: "Blog deleted",
@@ -63,6 +117,7 @@ export default function BlogList() {
           type: "success",
         });
       } catch (error) {
+        console.error("Delete error:", error);
         addToast({
           title: "Delete failed",
           description:
@@ -135,7 +190,10 @@ export default function BlogList() {
             placeholder="Search blogs..."
             leftIcon={<Search className="h-4 w-4 text-gray-400" />}
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            onChange={(e) => {
+              setSearchTerm(e.target.value);
+              setCurrentPage(1);
+            }}
             className="bg-gray-50 border-0 w-full"
           />
         </div>
@@ -148,7 +206,10 @@ export default function BlogList() {
             <select
               className="bg-transparent border-0 text-xxs text-gray-900 focus:outline-none focus:ring-0 cursor-pointer px-2"
               value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
+              onChange={(e) => {
+                setStatusFilter(e.target.value);
+                setCurrentPage(1);
+              }}
             >
               <option value="all">All</option>
               <option value="published">Published</option>
@@ -163,7 +224,10 @@ export default function BlogList() {
             <select
               className="bg-transparent border-0 text-xxs text-gray-900 focus:outline-none focus:ring-0 cursor-pointer px-2"
               value={sortBy}
-              onChange={(e) => setSortBy(e.target.value)}
+              onChange={(e) => {
+                setSortBy(e.target.value);
+                setCurrentPage(1);
+              }}
             >
               <option value="newest">Recent</option>
               <option value="oldest">Oldest</option>
@@ -207,7 +271,7 @@ export default function BlogList() {
       </div>
 
       {/* Blog list */}
-      {isLoading ? (
+      {isLoading && initialLoad ? (
         <div className="py-12 flex justify-center">
           <div className="animate-pulse space-y-8 w-full">
             <div className="h-48 bg-gray-300 dark:bg-gray-700 rounded"></div>
@@ -245,144 +309,152 @@ export default function BlogList() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
             >
-              {filteredBlogs.map((blog) => (
-                <motion.div
-                  key={blog.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.3 }}
-                  className="h-full"
-                >
-                  <Card className="flex flex-col h-full">
-                    <div className="relative w-full">
-                      <img
-                        src={
-                          blog.imageUrl || "https://via.placeholder.com/400x200"
-                        }
-                        alt={blog.title}
-                        className="w-full h-32 object-cover rounded-t-md rounded-bl-[8px] rounded-br-[8px]"
-                      />
-                    </div>
-                    <div className="flex flex-col flex-grow p-5 space-y-2.5">
-                      <div className="flex items-center justify-between text-gray-500">
-                        <div className="flex items-center gap-2">
-                          <Clock className="h-3 w-3" />
-                          <span className="text-2xs">
-                            {new Date(blog.createdAt).toLocaleDateString(
-                              "en-US",
-                              {
-                                month: "long",
-                                day: "numeric",
-                                year: "numeric",
-                              }
-                            )}{" "}
-                            ·{" "}
-                            {new Date(blog.createdAt).toLocaleTimeString(
-                              "en-US",
-                              {
-                                hour: "numeric",
-                                minute: "numeric",
-                                hour12: true,
-                              }
-                            )}
+              {filteredBlogs.map((blog) => {
+                console.log("Blog item:", blog);
+                return (
+                  <motion.div
+                    key={blog._id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.3 }}
+                    className="h-full"
+                  >
+                    <Card className="flex flex-col h-full">
+                      <div className="relative w-full">
+                        <img
+                          src={
+                            blog.imageUrl ||
+                            "https://placehold.co/400x200/e2e8f0/1e293b?text=Blog+Image"
+                          }
+                          alt={blog.title}
+                          className="w-full h-32 object-cover rounded-t-md rounded-bl-[8px] rounded-br-[8px]"
+                        />
+                      </div>
+                      <div className="flex flex-col flex-grow p-5 space-y-2.5">
+                        <div className="flex items-center justify-between text-gray-500">
+                          <div className="flex items-center gap-2">
+                            <Clock className="h-3 w-3" />
+                            <span className="text-2xs">
+                              {new Date(blog.createdAt).toLocaleDateString(
+                                "en-US",
+                                {
+                                  month: "long",
+                                  day: "numeric",
+                                  year: "numeric",
+                                }
+                              )}{" "}
+                              ·{" "}
+                              {new Date(blog.createdAt).toLocaleTimeString(
+                                "en-US",
+                                {
+                                  hour: "numeric",
+                                  minute: "numeric",
+                                  hour12: true,
+                                }
+                              )}
+                            </span>
+                          </div>
+                          <span
+                            className={`text-[10px] px-2 py-1 rounded-full ${
+                              blog.status === "published"
+                                ? "bg-green-50 text-green-700"
+                                : "bg-yellow-50 text-yellow-700"
+                            }`}
+                          >
+                            {blog.status.charAt(0).toUpperCase() +
+                              blog.status.slice(1)}
                           </span>
                         </div>
-                        <span
-                          className={`text-[10px] px-2 py-1 rounded-full ${
-                            blog.status === "published"
-                              ? "bg-green-50 text-green-700"
-                              : "bg-yellow-50 text-yellow-700"
-                          }`}
-                        >
-                          {blog.status.charAt(0).toUpperCase() +
-                            blog.status.slice(1)}
-                        </span>
-                      </div>
-                      <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
-                        {blog.title}
-                      </h3>
-                      <p className="text-xs text-gray-600 dark:text-gray-400 line-clamp-2 flex-grow">
-                        {blog.content}
-                      </p>
-                      <div className="flex items-center justify-between">
-                        <Link
-                          to={`/dashboard/blogs/${blog.id}`}
-                          className="inline-flex px-4 py-2 bg-primary-50 pt-1 pb-1 text-primary-600 text-2xs  rounded-md hover:text-white hover:bg-primary-700 transition-colors w-fit"
-                        >
-                          View Details
-                        </Link>
-                        <div className="relative">
-                          <button
-                            onClick={() =>
-                              navigate(`/dashboard/blogs/${blog.id}`)
-                            }
-                            className="p-2 text-primary-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
+                        <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
+                          {blog.title}
+                        </h3>
+                        <p className="text-xs text-gray-600 dark:text-gray-400 line-clamp-2 flex-grow">
+                          {blog.content}
+                        </p>
+                        <div className="flex items-center justify-between">
+                          <Link
+                            to={`/dashboard/blogs/${blog._id}`}
+                            className="inline-flex px-4 py-2 bg-primary-50 pt-1 pb-1 text-primary-600 text-2xs  rounded-md hover:text-white hover:bg-primary-700 transition-colors w-fit"
                           >
-                            <Edit className="h-4 w-4" />
-                          </button>
-                          <button
-                            onClick={(e) => toggleDropdown(e, blog.id)}
-                            className="p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
-                          >
-                            <MoreVertical className="h-4 w-4" />
-                          </button>
+                            View Details
+                          </Link>
+                          <div className="relative">
+                            <button
+                              onClick={() => {
+                                console.log(
+                                  "Delete button clicked for blog:",
+                                  blog
+                                );
+                                handleDeleteBlog(blog._id);
+                                setActiveDropdown(null);
+                              }}
+                              className="p-2 text-error-600 dark:text-error-400 hover:text-gray-700 dark:hover:text-gray-300"
+                            >
+                              <Trash className="h-4 w-4" />
+                            </button>
+                            <button
+                              onClick={() =>
+                                navigate(`/dashboard/blogs/${blog._id}`)
+                              }
+                              className="p-2 text-primary-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
+                            >
+                              <Edit className="h-4 w-4" />
+                            </button>
+                            <button
+                              onClick={(e) => toggleDropdown(e, blog._id)}
+                              className="p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
+                            >
+                              <MoreVertical className="h-4 w-4" />
+                            </button>
 
-                          {activeDropdown === blog.id && (
-                            <div className="absolute right-0 bottom-full mb-1 z-50 w-36 rounded-md bg-white  dark:bg-gray-800 py-1  ring-1 ring-black ring-opacity-5 focus:outline-none">
-                              <button
-                                className="flex items-center w-full px-4 py-1 text-xxs text-primary-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
-                                onClick={() => {
-                                  navigator.clipboard.writeText(
-                                    window.location.origin +
-                                      `/dashboard/blogs/${blog.id}`
-                                  );
-                                  addToast({
-                                    title: "Link copied",
-                                    description:
-                                      "Blog link copied to clipboard",
-                                    type: "success",
-                                  });
-                                  setActiveDropdown(null);
-                                }}
-                              >
-                                <Copy className="h-3 w-3 mr-2" />
-                                Copy Link
-                              </button>
-                              <button
-                                className="flex items-center w-full px-4 py-1 text-xxs text-primary-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
-                                onClick={() => {
-                                  // In a real app, this would download the blog as PDF
-                                  addToast({
-                                    title: "Download started",
-                                    description:
-                                      "Your blog post is being downloaded",
-                                    type: "success",
-                                  });
-                                  setActiveDropdown(null);
-                                }}
-                              >
-                                <Download className="h-3 w-3 mr-2" />
-                                Download PDF
-                              </button>
-                              <button
-                                className="flex items-center w-full px-4 py-1 text-xxs text-error-600 dark:text-error-400 hover:bg-gray-100 dark:hover:bg-gray-700"
-                                onClick={() => {
-                                  handleDeleteBlog(blog.id);
-                                  setActiveDropdown(null);
-                                }}
-                              >
-                                <Trash className="h-3 w-3 mr-2" />
-                                Delete
-                              </button>
-                            </div>
-                          )}
+                            {activeDropdown === blog._id && (
+                              <div className="absolute right-0 bottom-full mb-1 z-50 w-36 rounded-md bg-white  dark:bg-gray-800 py-1  ring-1 ring-black ring-opacity-5 focus:outline-none">
+                                <button
+                                  className="flex items-center w-full px-4 py-1 text-xxs text-primary-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                                  onClick={() => {
+                                    navigator.clipboard.writeText(
+                                      window.location.origin +
+                                        `/dashboard/blogs/${blog._id}`
+                                    );
+                                    addToast({
+                                      title: "Link copied",
+                                      description:
+                                        "Blog link copied to clipboard",
+                                      type: "success",
+                                    });
+                                    setActiveDropdown(null);
+                                  }}
+                                >
+                                  <Copy className="h-3 w-3 mr-2" />
+                                  Copy Link
+                                </button>
+                                <button
+                                  className="flex items-center w-full px-4 py-1 text-xxs text-primary-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                                  onClick={() => {
+                                    // In a real app, this would download the blog as PDF
+                                    addToast({
+                                      title: "Download started",
+                                      description:
+                                        "Your blog post is being downloaded",
+                                      type: "success",
+                                    });
+                                    setActiveDropdown(null);
+                                  }}
+                                >
+                                  <Download className="h-3 w-3 mr-2" />
+                                  Download PDF
+                                </button>
+                              </div>
+                            )}
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  </Card>
-                </motion.div>
-              ))}
+                    </Card>
+                  </motion.div>
+                );
+              })}
             </motion.div>
           ) : (
             <motion.div
@@ -390,10 +462,11 @@ export default function BlogList() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
             >
               {filteredBlogs.map((blog) => (
                 <Card
-                  key={blog.id}
+                  key={blog._id}
                   className="hover:shadow-md transition-shadow"
                   hoverable
                 >
@@ -403,7 +476,7 @@ export default function BlogList() {
                         <img
                           src={
                             blog.imageUrl ||
-                            "https://images.pexels.com/photos/2927323/pexels-photo-2927323.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2"
+                            "https://placehold.co/400x400/e2e8f0/1e293b?text=Blog+Image"
                           }
                           alt={blog.title}
                           className="w-full h-full object-cover"
@@ -425,16 +498,16 @@ export default function BlogList() {
                           </span>
                           <div className="relative">
                             <button
-                              onClick={(e) => toggleDropdown(e, blog.id)}
+                              onClick={(e) => toggleDropdown(e, blog._id)}
                               className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
                             >
                               <MoreVertical className="h-5 w-5" />
                             </button>
 
-                            {activeDropdown === blog.id && (
+                            {activeDropdown === blog._id && (
                               <div className="absolute right-0 bottom-full mb-1 z-50 w-48 rounded-md bg-white dark:bg-gray-800 py-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
                                 <Link
-                                  to={`/dashboard/blogs/${blog.id}`}
+                                  to={`/dashboard/blogs/${blog._id}`}
                                   className="flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
                                   onClick={() => setActiveDropdown(null)}
                                 >
@@ -442,7 +515,7 @@ export default function BlogList() {
                                   View
                                 </Link>
                                 <Link
-                                  to={`/dashboard/blogs/${blog.id}/edit`}
+                                  to={`/dashboard/blogs/${blog._id}/edit`}
                                   className="flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
                                   onClick={() => setActiveDropdown(null)}
                                 >
@@ -454,7 +527,7 @@ export default function BlogList() {
                                   onClick={() => {
                                     navigator.clipboard.writeText(
                                       window.location.origin +
-                                        `/dashboard/blogs/${blog.id}`
+                                        `/dashboard/blogs/${blog._id}`
                                     );
                                     addToast({
                                       title: "Link copied",
@@ -487,7 +560,7 @@ export default function BlogList() {
                                 <button
                                   className="flex items-center w-full px-4 py-2 text-sm text-error-600 dark:text-error-400 hover:bg-gray-100 dark:hover:bg-gray-700"
                                   onClick={() => {
-                                    handleDeleteBlog(blog.id);
+                                    handleDeleteBlog(blog._id);
                                     setActiveDropdown(null);
                                   }}
                                 >
@@ -524,6 +597,27 @@ export default function BlogList() {
             </motion.div>
           )}
         </AnimatePresence>
+      )}
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="flex justify-center mt-6">
+          <div className="flex gap-2">
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+              <button
+                key={page}
+                onClick={() => handlePageChange(page)}
+                className={`px-3 py-1 rounded ${
+                  currentPage === page
+                    ? "bg-primary-600 text-white"
+                    : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                }`}
+              >
+                {page}
+              </button>
+            ))}
+          </div>
+        </div>
       )}
     </div>
   );

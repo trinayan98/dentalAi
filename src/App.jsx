@@ -6,8 +6,6 @@ import {
 import { Suspense } from "react";
 import AuthLayout from "./layouts/AuthLayout";
 import DashboardLayout from "./layouts/DashboardLayout";
-import Login from "./pages/auth/Login";
-import SignUp from "./pages/auth/SignUp";
 import ForgotPassword from "./pages/auth/ForgotPassword";
 import ResetPassword from "./pages/auth/ResetPassword";
 import VerifyEmail from "./pages/auth/VerifyEmail";
@@ -18,6 +16,9 @@ import BlogDetail from "./pages/blogs/BlogDetail";
 import UserProfile from "./pages/profile/UserProfile";
 import { Toaster } from "./components/ui/Toaster";
 import RequiredAuth from "./components/RequiredAuth";
+import Login from "./pages/auth/Login";
+import SignUp from "./pages/auth/SignUp";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 // Loading component
 const LoadingPage = () => (
@@ -25,6 +26,16 @@ const LoadingPage = () => (
     <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary-500"></div>
   </div>
 );
+
+// Create a client
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: 1,
+      refetchOnWindowFocus: false,
+    },
+  },
+});
 
 const router = createBrowserRouter([
   {
@@ -136,10 +147,10 @@ const router = createBrowserRouter([
 
 function App() {
   return (
-    <>
+    <QueryClientProvider client={queryClient}>
       <RouterProvider router={router} basename="/admin" />
       <Toaster />
-    </>
+    </QueryClientProvider>
   );
 }
 

@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Outlet, Link, useLocation, useNavigate } from "react-router-dom";
-import { useAuthStore } from "../stores/authStore";
+import useAuthStore from "../stores/authStore";
 import {
   Pen,
   LayoutDashboard,

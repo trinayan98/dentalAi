@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useCallback } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import {
   ChevronRight,
@@ -12,6 +12,8 @@ import {
   Check,
   Save,
   Clock,
+  Upload,
+  X,
 } from "lucide-react";
 import { Button } from "../../components/ui/Button";
 import { Input } from "../../components/ui/Input";
@@ -19,6 +21,8 @@ import { Card, CardContent } from "../../components/ui/Card";
 import { useBlogStore } from "../../stores/blogStore";
 import { useToastStore } from "../../stores/toastStore";
 import { motion, AnimatePresence } from "framer-motion";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { blogApi } from "../../api/blogs";
 
 const Step = {
   Topic: 0,
@@ -31,9 +35,11 @@ export default function CreateBlog() {
   const navigate = useNavigate();
   const { generateBlog, isLoading } = useBlogStore();
   const { addToast } = useToastStore();
+  const queryClient = useQueryClient();
 
   const [step, setStep] = useState(Step.Topic);
   const [topic, setTopic] = useState("");
+  const [content, setContent] = useState("");
   const [options, setOptions] = useState({
     tone: "professional",
     length: "medium",
@@ -44,6 +50,46 @@ export default function CreateBlog() {
 
   // For step 3 (review)
   const [previewMode, setPreviewMode] = useState("edit");
+
+  const [selectedFiles, setSelectedFiles] = useState([]);
+  const [previewUrls, setPreviewUrls] = useState([]);
+  const [uploadProgress, setUploadProgress] = useState(0);
+
+  // Create blog mutation
+  const createBlogMutation = useMutation({
+    mutationFn: blogApi.createBlog,
+    onSuccess: (data) => {
+      // Invalidate and refetch blogs list
+      queryClient.invalidateQueries(["blogs"]);
+
+      addToast({
+        title: "Blog saved",
+        description: "Your blog has been saved successfully",
+        type: "success",
+      });
+      navigate("/dashboard/blogs");
+    },
+    onError: (error) => {
+      const errorMessage =
+        error.response?.data?.error || error.message || "Failed to save blog";
+
+      if (error.response?.status === 401) {
+        addToast({
+          title: "Authentication Error",
+          description: "Please login to create a blog",
+          type: "error",
+        });
+        navigate("/login");
+        return;
+      }
+
+      addToast({
+        title: "Error saving blog",
+        description: errorMessage,
+        type: "error",
+      });
+    },
+  });
 
   const handleNextStep = () => {
     if (step === Step.Topic && !topic.trim()) {
@@ -106,13 +152,76 @@ export default function CreateBlog() {
     }
   };
 
-  const handleSaveBlog = () => {
-    addToast({
-      title: "Blog saved",
-      description: "Your blog has been saved successfully",
-      type: "success",
-    });
-    navigate("/dashboard/blogs");
+  // Handle file selection
+  const handleFileSelect = (event) => {
+    const files = Array.from(event.target.files);
+    setSelectedFiles(files);
+
+    // Create preview URLs
+    const urls = files.map((file) => URL.createObjectURL(file));
+    setPreviewUrls(urls);
+  };
+
+  // Handle drag and drop
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    const files = Array.from(e.dataTransfer.files);
+    if (files.some((file) => !file.type.startsWith("image/"))) {
+      addToast({
+        title: "Invalid file type",
+        description: "Please upload only image files",
+        type: "error",
+      });
+      return;
+    }
+
+    setSelectedFiles(files);
+    const urls = files.map((file) => URL.createObjectURL(file));
+    setPreviewUrls(urls);
+  };
+
+  // Clean up preview URLs when component unmounts
+  React.useEffect(() => {
+    return () => {
+      previewUrls.forEach((url) => URL.revokeObjectURL(url));
+    };
+  }, [previewUrls]);
+
+  const handleSaveBlog = async () => {
+    try {
+      const formData = new FormData();
+      formData.append("title", topic);
+      formData.append("content", content);
+      formData.append(
+        "options",
+        JSON.stringify({
+          tone: options.tone,
+          length: options.length,
+          targetAudience: options.targetAudience,
+          includeImages: options.includeImages,
+        })
+      );
+
+      // Append each file to formData
+      selectedFiles.forEach((file, index) => {
+        formData.append("media", file);
+      });
+
+      createBlogMutation.mutate(formData);
+    } catch (error) {
+      addToast({
+        title: "Error saving blog",
+        description: error.message || "Failed to save blog",
+        type: "error",
+      });
+    }
   };
 
   const renderStepContent = () => {
@@ -389,15 +498,26 @@ export default function CreateBlog() {
                     </label>
                     <textarea
                       className="w-full h-40 p-3 rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-primary-500 focus:border-primary-500"
-                      value={topic}
-                      onChange={(e) => setTopic(e.target.value)}
+                      value={content}
+                      onChange={(e) => setContent(e.target.value)}
                       placeholder="Your blog content will appear here..."
                     />
                   </div>
+
+                  {renderFileUploadSection()}
                 </div>
               ) : (
                 <div className="prose dark:prose-invert max-w-none">
                   <h1 className="mb-2 font-medium text-md">{topic}</h1>
+                  {previewUrls.length > 0 && (
+                    <div className="mb-4">
+                      <img
+                        src={previewUrls[0]}
+                        alt="Featured"
+                        className="w-full h-64 object-cover rounded-lg"
+                      />
+                    </div>
+                  )}
                   <div className="whitespace-pre-wrap bg-primary-100 p-4 rounded-md text-xs">
                     {/* Generated content will appear here */}
                     This is a preview of your blog post. The actual content will
@@ -506,6 +626,82 @@ export default function CreateBlog() {
       </div>
     );
   };
+
+  const renderFileUploadSection = () => (
+    <div>
+      <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+        Featured Image
+      </label>
+      <div
+        className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 dark:border-gray-700 border-dashed rounded-md"
+        onDragOver={handleDragOver}
+        onDrop={handleDrop}
+      >
+        {previewUrls.length > 0 ? (
+          <div className="space-y-4 w-full">
+            <div className="grid grid-cols-2 gap-4">
+              {previewUrls.map((url, index) => (
+                <div key={index} className="relative group">
+                  <img
+                    src={url}
+                    alt={`Preview ${index + 1}`}
+                    className="w-full h-40 object-cover rounded-md"
+                  />
+                  <button
+                    onClick={() => {
+                      setPreviewUrls((prev) =>
+                        prev.filter((_, i) => i !== index)
+                      );
+                      setSelectedFiles((prev) =>
+                        prev.filter((_, i) => i !== index)
+                      );
+                    }}
+                    className="absolute top-2 right-2 bg-red-500 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+              ))}
+            </div>
+            <button
+              onClick={() => {
+                setSelectedFiles([]);
+                setPreviewUrls([]);
+              }}
+              className="text-xs text-red-500 hover:text-red-600"
+            >
+              Clear all
+            </button>
+          </div>
+        ) : (
+          <div className="space-y-1 text-center">
+            <Upload className="mx-auto h-12 w-12 text-gray-400" />
+            <div className="flex text-sm text-gray-600 dark:text-gray-400">
+              <label
+                htmlFor="file-upload"
+                className="relative cursor-pointer bg-white dark:bg-gray-900 rounded-md font-medium text-primary-600 hover:text-primary-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-primary-500"
+              >
+                <span>Upload a file</span>
+                <input
+                  id="file-upload"
+                  name="file-upload"
+                  type="file"
+                  multiple
+                  accept="image/*"
+                  className="sr-only"
+                  onChange={handleFileSelect}
+                />
+              </label>
+              <p className="pl-1">or drag and drop</p>
+            </div>
+            <p className="text-xs text-gray-500 dark:text-gray-400">
+              PNG, JPG, GIF up to 10MB
+            </p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
 
   return (
     <div className="h-full bg-transparent">
