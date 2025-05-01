@@ -23,6 +23,7 @@ import { useToastStore } from "../../stores/toastStore";
 import { motion, AnimatePresence } from "framer-motion";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { blogApi } from "../../api/blogs";
+import RichTextEditor from "../../components/ui/RichTextEditor";
 
 const Step = {
   Topic: 0,
@@ -53,7 +54,8 @@ export default function CreateBlog() {
 
   const [selectedFiles, setSelectedFiles] = useState([]);
   const [previewUrls, setPreviewUrls] = useState([]);
-  const [uploadProgress, setUploadProgress] = useState(0);
+  const [imageUploadType, setImageUploadType] = useState("file");
+  const [imageUrl, setImageUrl] = useState(""); // Changed from imageUrls array to single imageUrl
 
   // Create blog mutation
   const createBlogMutation = useMutation({
@@ -155,11 +157,11 @@ export default function CreateBlog() {
   // Handle file selection
   const handleFileSelect = (event) => {
     const files = Array.from(event.target.files);
-    setSelectedFiles(files);
-
-    // Create preview URLs
-    const urls = files.map((file) => URL.createObjectURL(file));
-    setPreviewUrls(urls);
+    // Only take the first file
+    if (files.length > 0) {
+      setSelectedFiles([files[0]]);
+      setPreviewUrls([URL.createObjectURL(files[0])]);
+    }
   };
 
   // Handle drag and drop
@@ -173,18 +175,19 @@ export default function CreateBlog() {
     e.stopPropagation();
 
     const files = Array.from(e.dataTransfer.files);
-    if (files.some((file) => !file.type.startsWith("image/"))) {
-      addToast({
-        title: "Invalid file type",
-        description: "Please upload only image files",
-        type: "error",
-      });
-      return;
+    if (files.length > 0) {
+      const file = files[0]; // Only take the first file
+      if (!file.type.startsWith("image/")) {
+        addToast({
+          title: "Invalid file type",
+          description: "Please upload only image files",
+          type: "error",
+        });
+        return;
+      }
+      setSelectedFiles([file]);
+      setPreviewUrls([URL.createObjectURL(file)]);
     }
-
-    setSelectedFiles(files);
-    const urls = files.map((file) => URL.createObjectURL(file));
-    setPreviewUrls(urls);
   };
 
   // Clean up preview URLs when component unmounts
@@ -196,28 +199,82 @@ export default function CreateBlog() {
 
   const handleSaveBlog = async () => {
     try {
-      const formData = new FormData();
-      formData.append("title", topic);
-      formData.append("content", content);
-      formData.append(
-        "options",
-        JSON.stringify({
+      // Validate title
+      if (!topic) {
+        throw new Error("Please enter a blog title");
+      }
+      if (topic.trim().length < 3) {
+        throw new Error("Blog title must be at least 3 characters long");
+      }
+      if (topic.length > 100) {
+        throw new Error("Blog title cannot exceed 100 characters");
+      }
+
+      // Validate content
+      if (!content) {
+        throw new Error("Please add content to your blog");
+      }
+      if (content.trim().length < 100) {
+        throw new Error(
+          "Blog content must be at least 100 characters long for a meaningful post"
+        );
+      }
+
+      // Validate options
+      if (
+        !options.tone ||
+        !["professional", "casual", "formal", "friendly"].includes(options.tone)
+      ) {
+        throw new Error("Please select a valid tone for your blog");
+      }
+      if (
+        !options.length ||
+        !["short", "medium", "long"].includes(options.length)
+      ) {
+        throw new Error("Please select a valid length for your blog");
+      }
+
+      // Create the blog data object
+      const blogData = {
+        title: topic.trim(),
+        content: content.trim(),
+        options: {
           tone: options.tone,
           length: options.length,
-          targetAudience: options.targetAudience,
+          targetAudience: options.targetAudience?.trim() || "",
           includeImages: options.includeImages,
-        })
-      );
+        },
+        status: "draft",
+      };
 
-      // Append each file to formData
-      selectedFiles.forEach((file, index) => {
+      if (imageUploadType === "file" && selectedFiles.length > 0) {
+        const formData = new FormData();
+        formData.append("blogData", JSON.stringify(blogData));
+
+        // Validate and append media file
+        const file = selectedFiles[0];
+        const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+
+        if (!file.type.startsWith("image/")) {
+          throw new Error("Please upload only image files");
+        }
+        if (file.size > MAX_FILE_SIZE) {
+          throw new Error("File exceeds 5MB. Please upload a smaller file.");
+        }
         formData.append("media", file);
-      });
 
-      createBlogMutation.mutate(formData);
+        createBlogMutation.mutate(formData);
+      } else if (imageUploadType === "url" && imageUrl) {
+        // Add single image URL to the blog data
+        blogData.imageUrl = imageUrl;
+        createBlogMutation.mutate(blogData);
+      } else {
+        // No image
+        createBlogMutation.mutate(blogData);
+      }
     } catch (error) {
       addToast({
-        title: "Error saving blog",
+        title: "Validation Error",
         description: error.message || "Failed to save blog",
         type: "error",
       });
@@ -496,10 +553,9 @@ export default function CreateBlog() {
                     <label className="block text-xxs font-medium text-gray-700 dark:text-gray-300 mb-1">
                       Content
                     </label>
-                    <textarea
-                      className="w-full h-40 p-3 rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-primary-500 focus:border-primary-500"
+                    <RichTextEditor
                       value={content}
-                      onChange={(e) => setContent(e.target.value)}
+                      onChange={(value) => setContent(value)}
                       placeholder="Your blog content will appear here..."
                     />
                   </div>
@@ -632,74 +688,119 @@ export default function CreateBlog() {
       <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
         Featured Image
       </label>
-      <div
-        className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 dark:border-gray-700 border-dashed rounded-md"
-        onDragOver={handleDragOver}
-        onDrop={handleDrop}
-      >
-        {previewUrls.length > 0 ? (
-          <div className="space-y-4 w-full">
-            <div className="grid grid-cols-2 gap-4">
-              {previewUrls.map((url, index) => (
-                <div key={index} className="relative group">
-                  <img
-                    src={url}
-                    alt={`Preview ${index + 1}`}
-                    className="w-full h-40 object-cover rounded-md"
-                  />
-                  <button
-                    onClick={() => {
-                      setPreviewUrls((prev) =>
-                        prev.filter((_, i) => i !== index)
-                      );
-                      setSelectedFiles((prev) =>
-                        prev.filter((_, i) => i !== index)
-                      );
-                    }}
-                    className="absolute top-2 right-2 bg-red-500 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
-                  >
-                    <X className="h-4 w-4" />
-                  </button>
-                </div>
-              ))}
-            </div>
-            <button
-              onClick={() => {
-                setSelectedFiles([]);
-                setPreviewUrls([]);
-              }}
-              className="text-xs text-red-500 hover:text-red-600"
-            >
-              Clear all
-            </button>
-          </div>
-        ) : (
-          <div className="space-y-1 text-center">
-            <Upload className="mx-auto h-12 w-12 text-gray-400" />
-            <div className="flex text-sm text-gray-600 dark:text-gray-400">
-              <label
-                htmlFor="file-upload"
-                className="relative cursor-pointer bg-white dark:bg-gray-900 rounded-md font-medium text-primary-600 hover:text-primary-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-primary-500"
-              >
-                <span>Upload a file</span>
-                <input
-                  id="file-upload"
-                  name="file-upload"
-                  type="file"
-                  multiple
-                  accept="image/*"
-                  className="sr-only"
-                  onChange={handleFileSelect}
-                />
-              </label>
-              <p className="pl-1">or drag and drop</p>
-            </div>
-            <p className="text-xs text-gray-500 dark:text-gray-400">
-              PNG, JPG, GIF up to 10MB
-            </p>
-          </div>
-        )}
+      <div className="mb-4">
+        <div className="flex space-x-4 mb-2">
+          <button
+            onClick={() => {
+              setImageUploadType("file");
+              setImageUrl("");
+            }}
+            className={`px-3 py-1.5 rounded text-xxs font-medium ${
+              imageUploadType === "file"
+                ? "bg-primary-100 text-primary-500 dark:bg-gray-700"
+                : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+            }`}
+          >
+            Upload File
+          </button>
+          <button
+            onClick={() => {
+              setImageUploadType("url");
+              setSelectedFiles([]);
+              setPreviewUrls([]);
+            }}
+            className={`px-3 py-1.5 rounded text-xxs font-medium ${
+              imageUploadType === "url"
+                ? "bg-primary-100 text-primary-500 dark:bg-gray-700"
+                : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+            }`}
+          >
+            Image URL
+          </button>
+        </div>
       </div>
+
+      {imageUploadType === "file" ? (
+        <div
+          className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 dark:border-gray-700 border-dashed rounded-md"
+          onDragOver={handleDragOver}
+          onDrop={handleDrop}
+        >
+          {previewUrls.length > 0 ? (
+            <div className="space-y-4 w-full">
+              <div className="relative">
+                <img
+                  src={previewUrls[0]}
+                  alt="Preview"
+                  className="w-full h-40 object-cover rounded-md"
+                />
+                <button
+                  onClick={() => {
+                    setPreviewUrls([]);
+                    setSelectedFiles([]);
+                  }}
+                  className="absolute top-2 right-2 bg-red-500 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-1 text-center">
+              <Upload className="mx-auto h-12 w-12 text-gray-400" />
+              <div className="flex text-sm text-gray-600 dark:text-gray-400">
+                <label
+                  htmlFor="file-upload"
+                  className="relative cursor-pointer bg-white dark:bg-gray-900 rounded-md font-medium text-primary-600 hover:text-primary-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-primary-500"
+                >
+                  <span>Upload a file</span>
+                  <input
+                    id="file-upload"
+                    name="file-upload"
+                    type="file"
+                    accept="image/*"
+                    className="sr-only"
+                    onChange={handleFileSelect}
+                  />
+                </label>
+                <p className="pl-1">or drag and drop</p>
+              </div>
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                PNG, JPG, GIF up to 5MB
+              </p>
+            </div>
+          )}
+        </div>
+      ) : (
+        <div className="space-y-4">
+          <div className="flex items-center space-x-2">
+            <Input
+              placeholder="Enter image URL"
+              value={imageUrl}
+              onChange={(e) => setImageUrl(e.target.value)}
+            />
+          </div>
+          {imageUrl && (
+            <div className="relative">
+              <img
+                src={imageUrl}
+                alt="URL Image"
+                className="w-full h-40 object-cover rounded-md"
+                onError={(e) => {
+                  e.target.src =
+                    "https://via.placeholder.com/400x300?text=Invalid+Image+URL";
+                }}
+              />
+              <button
+                onClick={() => setImageUrl("")}
+                className="absolute top-2 right-2 bg-red-500 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 

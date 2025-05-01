@@ -127,7 +127,8 @@ export default function Dashboard() {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-xl font-semibold text-gray-900 dark:text-white">
-              Good afternoon, {user?.name || "John"}!
+              Good {getTimeOfDay()},{" "}
+              {(user?.name && user.name.trim()) || user?.username || "Guest"}!
             </h1>
             <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
               Here's what's happening with your blog posts today.
@@ -240,7 +241,7 @@ export default function Dashboard() {
                     </p>
                     <div className="flex items-center justify-between">
                       <Link
-                        to={`/dashboard/blogs/${blog.id}`}
+                        to={`/dashboard/blogs/${blog._id}`}
                         className="inline-flex px-4 py-2 bg-primary-50 pt-1 pb-1 text-primary-600 text-xxs rounded-md hover:text-white hover:bg-primary-700 transition-colors w-fit"
                       >
                         View Details

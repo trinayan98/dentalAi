@@ -38,10 +38,10 @@ export default function Login() {
       const from = location.state?.from?.pathname || "/dashboard";
       navigate(from, { replace: true });
     } catch (error) {
+      console.error("Login error:", error);
       addToast({
         title: "Login failed",
-        description:
-          error instanceof Error ? error.message : "Invalid credentials",
+        description: error.message || "An unexpected error occurred",
         type: "error",
       });
     }

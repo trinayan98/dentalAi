@@ -20,6 +20,7 @@ export default function SignUp() {
     formState: { errors },
   } = useForm({
     defaultValues: {
+      name: "",
       username: "",
       email: "",
       password: "",
@@ -50,24 +51,17 @@ export default function SignUp() {
     }
 
     try {
-      console.log("Form data being sent:", {
-        username: data.username,
-        email: data.email,
-        password: data.password,
-      });
-
-      await signup(data.username, data.email, data.password);
+      await signup(data.username, data.email, data.password, data.name);
+      navigate("/login");
       addToast({
-        title: "Account created",
+        title: "Registration successful",
         description: "Welcome to BlogGenius!",
         type: "success",
       });
-      navigate("/dashboard");
     } catch (error) {
-      console.error("Signup error:", error);
       addToast({
-        title: "Sign up failed",
-        description: error.message || "Could not create account",
+        title: "Registration failed",
+        description: error.message || "Registration failed",
         type: "error",
       });
     }
@@ -154,6 +148,20 @@ export default function SignUp() {
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
           <div className="space-y-4">
+            <Input
+              label="Full Name"
+              leftIcon={<User className="h-4 w-4 text-gray-400" />}
+              error={errors.name?.message}
+              className="bg-gray-50 dark:bg-gray-900 border-gray-300 dark:border-gray-700"
+              {...register("name", {
+                required: "Full name is required",
+                minLength: {
+                  value: 2,
+                  message: "Name must be at least 2 characters",
+                },
+              })}
+            />
+
             <Input
               label="Username"
               leftIcon={<User className="h-4 w-4 text-gray-400" />}

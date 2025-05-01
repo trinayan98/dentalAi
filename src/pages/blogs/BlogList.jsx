@@ -106,10 +106,8 @@ export default function BlogList() {
   }, [activeDropdown]);
 
   const handleDeleteBlog = async (id) => {
-    console.log("Attempting to delete blog with ID:", id);
-    if (window.confirm("Are you sure you want to delete this blog post?")) {
+    if (window.confirm("Are you sure you want to delete this blog?")) {
       try {
-        console.log("Delete confirmed, sending request for ID:", id);
         await deleteBlog(id);
         addToast({
           title: "Blog deleted",
@@ -117,7 +115,6 @@ export default function BlogList() {
           type: "success",
         });
       } catch (error) {
-        console.error("Delete error:", error);
         addToast({
           title: "Delete failed",
           description:
@@ -312,7 +309,6 @@ export default function BlogList() {
               transition={{ duration: 0.2 }}
             >
               {filteredBlogs.map((blog) => {
-                console.log("Blog item:", blog);
                 return (
                   <motion.div
                     key={blog._id}
@@ -383,10 +379,6 @@ export default function BlogList() {
                           <div className="relative">
                             <button
                               onClick={() => {
-                                console.log(
-                                  "Delete button clicked for blog:",
-                                  blog
-                                );
                                 handleDeleteBlog(blog._id);
                                 setActiveDropdown(null);
                               }}

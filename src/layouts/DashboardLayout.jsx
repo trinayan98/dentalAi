@@ -20,6 +20,7 @@ export default function DashboardLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const { user, logout } = useAuthStore();
+  console.log("Current user:", user);
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -133,7 +134,9 @@ export default function DashboardLayout() {
                     alt="User avatar"
                   />
                   <span className="hidden md:flex ml-2 text-xs font-medium text-gray-700 dark:text-gray-300">
-                    {user?.name || "User Name"}
+                    {(user?.name && user.name.trim()) ||
+                      user?.username ||
+                      "Guest"}
                   </span>
                   <ChevronDown className="hidden md:block ml-1 h-4 w-4 text-gray-500 dark:text-gray-400" />
                 </div>

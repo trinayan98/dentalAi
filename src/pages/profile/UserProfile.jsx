@@ -10,6 +10,7 @@ import {
   Trash,
   ChevronRight,
   Link as LinkIcon,
+  AtSign,
 } from "lucide-react";
 import {
   Card,
@@ -44,7 +45,8 @@ export default function UserProfile() {
     watch: watchProfile,
   } = useForm({
     defaultValues: {
-      username: user?.name || "",
+      name: user?.name || "",
+      username: user?.username || "",
       email: user?.email || "",
     },
   });
@@ -82,8 +84,8 @@ export default function UserProfile() {
   // Set initial form values when user data is available
   useEffect(() => {
     if (user) {
-      console.log("Setting user data:", user); // Debug log
       setProfileValue("username", user.username || "");
+      setProfileValue("name", user.name || "");
       setProfileValue("email", user.email || "");
       if (user.avatar) {
         setProfileImage(user.avatar);
@@ -95,9 +97,7 @@ export default function UserProfile() {
   useEffect(() => {
     const fetchUserProfile = async () => {
       try {
-        console.log("Fetching user profile with token:", token); // Debug log
         const userData = await userApi.getUserProfile(token);
-        console.log("Received user data:", userData); // Debug log
         if (userData) {
           updateUser(userData);
           setProfileValue("username", userData.name || "");
@@ -107,7 +107,6 @@ export default function UserProfile() {
           }
         }
       } catch (error) {
-        console.error("Error fetching profile:", error); // Debug log
         addToast({
           title: "Error",
           description: error.message,
@@ -121,34 +120,37 @@ export default function UserProfile() {
     }
   }, [token, updateUser, addToast, setProfileValue]);
 
-  // Watch username value for debugging
-  const currentUsername = watchProfile("username");
-  useEffect(() => {
-    console.log("Current username value:", currentUsername); // Debug log
-  }, [currentUsername]);
-
   const onSubmitProfile = async (data) => {
     try {
       setIsLoading(true);
-      console.log("Submitting profile update:", data); // Debug log
-      const response = await userApi.updateProfile(token, {
-        name: data.username.trim(),
-      });
+
+      // Create update data object
+      const updateData = {};
+      if (data.name !== undefined) updateData.name = data.name.trim();
+      if (data.username !== undefined)
+        updateData.username = data.username.trim();
+
+      console.log("Form data:", data);
+      console.log("Sending update data:", updateData);
+
+      const response = await userApi.updateProfile(token, updateData);
 
       if (response.user) {
         updateUser(response.user);
-        setProfileValue("username", response.user.name || "");
+        // Update form values with the response
+        setProfileValue("name", response.user.name || "");
+        setProfileValue("username", response.user.username || "");
         addToast({
           title: "Profile updated",
-          description: "Your username has been updated successfully",
+          description: "Your profile has been updated successfully",
           type: "success",
         });
       }
     } catch (error) {
-      console.error("Error updating profile:", error); // Debug log
+      console.error("Profile update error:", error);
       addToast({
         title: "Error",
-        description: error.message || "Failed to update username",
+        description: error.message || "Failed to update profile",
         type: "error",
       });
     } finally {
@@ -323,6 +325,21 @@ export default function UserProfile() {
 
                   <div className="flex-1 space-y-4">
                     <Input
+                      label="Full Name"
+                      {...registerProfile("name", {
+                        required: "Full name is required",
+                        minLength: {
+                          value: 2,
+                          message: "Name must be at least 2 characters",
+                        },
+                      })}
+                      error={profileErrors.name?.message}
+                      leftIcon={<User className="h-4 w-4 text-gray-400" />}
+                      disabled={isLoading}
+                      placeholder="Enter your full name"
+                    />
+
+                    <Input
                       label="Username"
                       {...registerProfile("username", {
                         required: "Username is required",
@@ -330,11 +347,16 @@ export default function UserProfile() {
                           value: 3,
                           message: "Username must be at least 3 characters",
                         },
+                        pattern: {
+                          value: /^[a-zA-Z0-9_]+$/,
+                          message:
+                            "Username can only contain letters, numbers and underscores",
+                        },
                       })}
                       error={profileErrors.username?.message}
-                      leftIcon={<User className="h-4 w-4 text-gray-400" />}
+                      leftIcon={<AtSign className="h-4 w-4 text-gray-400" />}
                       disabled={isLoading}
-                      placeholder="Enter your username"
+                      placeholder="Choose a unique username"
                     />
 
                     <Input

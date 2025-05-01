@@ -21,10 +21,16 @@ const useAuthStore = create(
         set({ isLoading: true });
         try {
           const response = await authApi.login({ email, password });
-          localStorage.setItem("token", response.token);
+          console.log("Login response:", {
+            token: response.data.token
+              ? `${response.data.token.substring(0, 15)}...`
+              : "No token",
+            user: response.data.user,
+          });
+          localStorage.setItem("token", response.data.token);
           set({
-            user: response.user,
-            token: response.token,
+            user: response.data.user,
+            token: response.data.token,
             isAuthenticated: true,
             isLoading: false,
           });
@@ -34,20 +40,21 @@ const useAuthStore = create(
         }
       },
 
-      signup: async (username, email, password) => {
+      signup: async (username, email, password, name) => {
         set({ isLoading: true });
         try {
           const userData = {
             username,
             email,
             password,
+            name,
           };
 
           const response = await authApi.register(userData);
-          localStorage.setItem("token", response.token);
+          localStorage.setItem("token", response.data.token);
           set({
-            user: response.user,
-            token: response.token,
+            user: response.data.user,
+            token: response.data.token,
             isAuthenticated: true,
             isLoading: false,
           });

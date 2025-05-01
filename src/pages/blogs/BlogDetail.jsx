@@ -13,6 +13,7 @@ import {
   ArrowLeft,
   Upload,
   ChevronRight,
+  X,
 } from "lucide-react";
 import { Button } from "../../components/ui/Button";
 import { Input } from "../../components/ui/Input";
@@ -20,6 +21,7 @@ import { Card, CardContent } from "../../components/ui/Card";
 import { useBlogStore } from "../../stores/blogStore";
 import { useToastStore } from "../../stores/toastStore";
 import { motion } from "framer-motion";
+import RichTextEditor from "../../components/ui/RichTextEditor";
 
 export default function BlogDetail() {
   const { id } = useParams();
@@ -28,9 +30,13 @@ export default function BlogDetail() {
     useBlogStore();
   const { addToast } = useToastStore();
 
-  const [viewMode, setViewMode] = useState("edit");
+  const [viewMode, setViewMode] = useState("preview");
   const [editedBlog, setEditedBlog] = useState(null);
   const [wordCount, setWordCount] = useState(0);
+  const [selectedFiles, setSelectedFiles] = useState([]);
+  const [previewUrls, setPreviewUrls] = useState([]);
+  const [imageUploadType, setImageUploadType] = useState("file");
+  const [imageUrl, setImageUrl] = useState("");
 
   useEffect(() => {
     if (id) {
@@ -43,6 +49,12 @@ export default function BlogDetail() {
       setEditedBlog({ ...currentBlog });
       const words = currentBlog.content.trim().split(/\s+/).length;
       setWordCount(words);
+
+      // Set image URL if it exists
+      if (currentBlog.imageUrl) {
+        setImageUrl(currentBlog.imageUrl);
+        setImageUploadType("url");
+      }
     }
   }, [currentBlog]);
 
@@ -71,14 +83,74 @@ export default function BlogDetail() {
     }
   };
 
+  const handleFileSelect = (event) => {
+    const files = Array.from(event.target.files);
+    // Only take the first file
+    if (files.length > 0) {
+      setSelectedFiles([files[0]]);
+      setPreviewUrls([URL.createObjectURL(files[0])]);
+    }
+  };
+
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    const files = Array.from(e.dataTransfer.files);
+    if (files.length > 0) {
+      const file = files[0]; // Only take the first file
+      if (!file.type.startsWith("image/")) {
+        addToast({
+          title: "Invalid file type",
+          description: "Please upload only image files",
+          type: "error",
+        });
+        return;
+      }
+      setSelectedFiles([file]);
+      setPreviewUrls([URL.createObjectURL(file)]);
+    }
+  };
+
   const handleSave = async () => {
     if (editedBlog && id) {
       try {
-        await updateBlog(id, {
+        const updatedBlog = {
           ...editedBlog,
           wordCount,
           updatedAt: new Date().toISOString(),
-        });
+        };
+
+        if (imageUploadType === "file" && selectedFiles.length > 0) {
+          const formData = new FormData();
+          formData.append("blogData", JSON.stringify(updatedBlog));
+
+          const file = selectedFiles[0];
+          const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+
+          if (!file.type.startsWith("image/")) {
+            throw new Error("Please upload only image files");
+          }
+          if (file.size > MAX_FILE_SIZE) {
+            throw new Error("File exceeds 5MB. Please upload a smaller file.");
+          }
+          formData.append("media", file);
+
+          await updateBlog(id, formData);
+        } else if (imageUploadType === "url" && imageUrl) {
+          updatedBlog.imageUrl = imageUrl;
+          await updateBlog(id, updatedBlog);
+        } else {
+          // No image
+          updatedBlog.imageUrl = null; // Clear the image if none is selected
+          await updateBlog(id, updatedBlog);
+        }
+
         addToast({
           title: "Blog updated",
           description: "Your blog post has been saved successfully",
@@ -156,6 +228,127 @@ export default function BlogDetail() {
       type: "success",
     });
   };
+
+  const renderFileUploadSection = () => (
+    <div>
+      <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+        Featured Image
+      </label>
+      <div className="mb-4">
+        <div className="flex space-x-4 mb-2">
+          <button
+            onClick={() => {
+              setImageUploadType("file");
+              setImageUrl("");
+            }}
+            className={`px-3 py-1.5 rounded text-xxs font-medium ${
+              imageUploadType === "file"
+                ? "bg-primary-100 text-primary-500 dark:bg-gray-700"
+                : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+            }`}
+          >
+            Upload File
+          </button>
+          <button
+            onClick={() => {
+              setImageUploadType("url");
+              setSelectedFiles([]);
+              setPreviewUrls([]);
+            }}
+            className={`px-3 py-1.5 rounded text-xxs font-medium ${
+              imageUploadType === "url"
+                ? "bg-primary-100 text-primary-500 dark:bg-gray-700"
+                : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+            }`}
+          >
+            Image URL
+          </button>
+        </div>
+      </div>
+
+      {imageUploadType === "file" ? (
+        <div
+          className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 dark:border-gray-700 border-dashed rounded-md"
+          onDragOver={handleDragOver}
+          onDrop={handleDrop}
+        >
+          {previewUrls.length > 0 ? (
+            <div className="space-y-4 w-full">
+              <div className="relative">
+                <img
+                  src={previewUrls[0]}
+                  alt="Preview"
+                  className="w-full h-40 object-cover rounded-md"
+                />
+                <button
+                  onClick={() => {
+                    setPreviewUrls([]);
+                    setSelectedFiles([]);
+                  }}
+                  className="absolute top-2 right-2 bg-red-500 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-1 text-center">
+              <Upload className="mx-auto h-12 w-12 text-gray-400" />
+              <div className="flex text-sm text-gray-600 dark:text-gray-400">
+                <label
+                  htmlFor="file-upload"
+                  className="relative cursor-pointer bg-white dark:bg-gray-900 rounded-md font-medium text-primary-600 hover:text-primary-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-primary-500"
+                >
+                  <span>Upload a file</span>
+                  <input
+                    id="file-upload"
+                    name="file-upload"
+                    type="file"
+                    accept="image/*"
+                    className="sr-only"
+                    onChange={handleFileSelect}
+                  />
+                </label>
+                <p className="pl-1">or drag and drop</p>
+              </div>
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                PNG, JPG, GIF up to 5MB
+              </p>
+            </div>
+          )}
+        </div>
+      ) : (
+        <div className="space-y-4">
+          <div className="flex items-center space-x-2">
+            <Input
+              placeholder="Enter image URL"
+              value={imageUrl}
+              onChange={(e) => setImageUrl(e.target.value)}
+            />
+          </div>
+          {imageUrl && (
+            <div className="relative">
+              <img
+                src={imageUrl}
+                alt="URL Image"
+                className="w-full h-40 object-cover rounded-md"
+                onError={(e) => {
+                  e.target.src =
+                    "https://via.placeholder.com/400x300?text=Invalid+Image+URL";
+                }}
+              />
+              <button
+                onClick={() => setImageUrl("")}
+                className="absolute top-2 right-2 bg-red-500 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
 
   if (isLoading) {
     return (
@@ -306,10 +499,11 @@ export default function BlogDetail() {
                     <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
                       Content
                     </label>
-                    <textarea
-                      className="text-xs w-full h-80 p-3 rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-primary-500 focus:border-primary-500"
+                    <RichTextEditor
                       value={editedBlog.content}
-                      onChange={handleContentChange}
+                      onChange={(value) =>
+                        handleContentChange({ target: { value } })
+                      }
                       placeholder="Write your blog content here..."
                     />
                     <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
@@ -325,34 +519,7 @@ export default function BlogDetail() {
                     placeholder="e.g. technology, web development, react"
                   />
 
-                  <div>
-                    <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
-                      Featured Image
-                    </label>
-                    <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 dark:border-gray-700 border-dashed rounded-md">
-                      <div className="space-y-1 text-center">
-                        <Upload className="mx-auto h-12 w-12 text-gray-400" />
-                        <div className="flex text-sm text-gray-600 dark:text-gray-400">
-                          <label
-                            htmlFor="file-upload"
-                            className="relative cursor-pointer bg-white dark:bg-gray-900 rounded-md font-medium text-primary-600 hover:text-primary-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-primary-500"
-                          >
-                            <span>Upload a file</span>
-                            <input
-                              id="file-upload"
-                              name="file-upload"
-                              type="file"
-                              className="sr-only"
-                            />
-                          </label>
-                          <p className="pl-1">or drag and drop</p>
-                        </div>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">
-                          PNG, JPG, GIF up to 10MB
-                        </p>
-                      </div>
-                    </div>
-                  </div>
+                  {renderFileUploadSection()}
                 </div>
               </CardContent>
             </div>

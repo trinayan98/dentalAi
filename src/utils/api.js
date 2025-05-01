@@ -24,11 +24,12 @@ export const authApi = {
       },
       body: JSON.stringify(credentials),
     });
+    const data = await response.json();
+    console.log("Full login response:", data);
     if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.message || "Login failed");
+      throw new Error(data.error || "Login failed");
     }
-    return response.json();
+    return data;
   },
 
   getCurrentUser: async (token) => {
@@ -46,11 +47,23 @@ export const authApi = {
 
 export const userApi = {
   updateProfile: async (token, data) => {
+    console.log("Updating profile with data:", data); // Debug log
+
     const formData = new FormData();
 
-    // Handle name/username update
-    if (data.name) {
+    // Handle name update
+    if (data.name !== undefined) {
       formData.append("name", data.name);
+    }
+
+    // Handle username update
+    if (data.username !== undefined) {
+      formData.append("username", data.username);
+      console.log("FormData username value:", data.username);
+      // Log the actual FormData entries
+      for (let [key, value] of formData.entries()) {
+        console.log(`FormData ${key}:`, value);
+      }
     }
 
     // Handle avatar update
@@ -90,13 +103,20 @@ export const userApi = {
   },
 
   getUserProfile: async (token) => {
+    console.log(
+      "Calling getUserProfile with token:",
+      token ? `${token.substring(0, 15)}...` : "No token"
+    );
     const response = await fetch(`${API_URL}/users/profile`, {
       headers: {
         Authorization: `Bearer ${token}`,
       },
     });
+    console.log("Profile response status:", response.status);
     if (!response.ok) {
-      throw new Error("Failed to get user profile");
+      const errorData = await response.json();
+      console.error("Profile error:", errorData);
+      throw new Error(errorData.message || "Failed to get user profile");
     }
     return response.json();
   },
