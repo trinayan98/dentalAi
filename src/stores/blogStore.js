@@ -2,8 +2,9 @@ import { create } from "zustand";
 import axios from "axios";
 import useAuthStore from "./authStore";
 import { blogApi } from "../api/blogs";
+import { API_BASE_URL } from "../config/constants";
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5001/api";
+const API_URL = API_BASE_URL;
 
 // Helper function to get auth header
 const getAuthHeader = () => {

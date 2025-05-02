@@ -367,7 +367,14 @@ export default function BlogList() {
                           {blog.title}
                         </h3>
                         <p className="text-xs text-gray-600 dark:text-gray-400 line-clamp-2 flex-grow">
-                          {blog.content}
+                          <span
+                            dangerouslySetInnerHTML={{
+                              __html:
+                                blog.content
+                                  ?.replace(/<[^>]*>/g, "")
+                                  .substring(0, 150) + "...",
+                            }}
+                          />
                         </p>
                         <div className="flex items-center justify-between">
                           <Link
@@ -568,7 +575,14 @@ export default function BlogList() {
                           {blog.title}
                         </h3>
                         <p className="text-gray-600 dark:text-gray-400 text-sm line-clamp-2 mb-4">
-                          {blog.content}
+                          <span
+                            dangerouslySetInnerHTML={{
+                              __html:
+                                blog.content
+                                  ?.replace(/<[^>]*>/g, "")
+                                  .substring(0, 200) + "...",
+                            }}
+                          />
                         </p>
 
                         <div className="flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400">

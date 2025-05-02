@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import { usersApi } from "../utils/usersApi";
+import { usersApi } from "../utils/usersApi.js";
 import useAuthStore from "./authStore";
 
 const useUsersStore = create((set) => ({

@@ -14,10 +14,15 @@ import CreateBlog from "./pages/blogs/CreateBlog";
 import BlogList from "./pages/blogs/BlogList";
 import BlogDetail from "./pages/blogs/BlogDetail";
 import UserProfile from "./pages/profile/UserProfile";
+import UserDetails from "./pages/admin/UserDetails";
 import { Toaster } from "./components/ui/Toaster";
 import RequiredAuth from "./components/RequiredAuth";
+import RequireRole from "./components/RequireRole";
 import Login from "./pages/auth/Login";
 import SignUp from "./pages/auth/SignUp";
+import UserList from "./pages/admin/UserList";
+import AdminSettings from "./pages/admin/AdminSettings";
+import AdminLogs from "./pages/admin/AdminLogs";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 // Loading component
@@ -97,43 +102,67 @@ const router = createBrowserRouter([
         children: [
           {
             path: "",
-            element: (
-              <Suspense fallback={<LoadingPage />}>
-                <Dashboard />
-              </Suspense>
-            ),
+            element: <Dashboard />,
           },
+          // User-only routes
           {
-            path: "blogs",
-            element: (
-              <Suspense fallback={<LoadingPage />}>
-                <BlogList />
-              </Suspense>
-            ),
-          },
-          {
-            path: "blogs/create",
-            element: (
-              <Suspense fallback={<LoadingPage />}>
-                <CreateBlog />
-              </Suspense>
-            ),
-          },
-          {
-            path: "blogs/:id",
-            element: (
-              <Suspense fallback={<LoadingPage />}>
-                <BlogDetail />
-              </Suspense>
-            ),
+            element: <RequireRole allowedRoles={["user"]} />,
+            children: [
+              {
+                path: "blogs",
+                element: <BlogList />,
+              },
+              {
+                path: "blogs/:id",
+                element: <BlogDetail />,
+              },
+              {
+                path: "blogs/create",
+                element: <CreateBlog />,
+              },
+            ],
           },
           {
             path: "profile",
-            element: (
-              <Suspense fallback={<LoadingPage />}>
-                <UserProfile />
-              </Suspense>
-            ),
+            element: <UserProfile />,
+          },
+          // Admin-only routes
+          {
+            element: <RequireRole allowedRoles={["admin"]} />,
+            children: [
+              {
+                path: "users",
+                element: (
+                  <Suspense fallback={<LoadingPage />}>
+                    <UserList />
+                  </Suspense>
+                ),
+              },
+              {
+                path: "users/:id",
+                element: (
+                  <Suspense fallback={<LoadingPage />}>
+                    <UserDetails />
+                  </Suspense>
+                ),
+              },
+              {
+                path: "settings",
+                element: (
+                  <Suspense fallback={<LoadingPage />}>
+                    <AdminSettings />
+                  </Suspense>
+                ),
+              },
+              {
+                path: "logs",
+                element: (
+                  <Suspense fallback={<LoadingPage />}>
+                    <AdminLogs />
+                  </Suspense>
+                ),
+              },
+            ],
           },
         ],
       },

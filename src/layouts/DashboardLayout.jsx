@@ -11,18 +11,44 @@ import {
   Menu,
   X,
   ChevronDown,
+  Users,
+  ScrollText,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { clsx } from "clsx";
 import { ThemeToggle } from "../components/ThemeToggle";
 
+const navigation = {
+  // common: [
+  //   { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
+  //   { name: "Profile", href: "/dashboard/profile", icon: Users },
+  // ],
+  user: [
+    { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
+    { name: "Blogs", href: "/dashboard/blogs", icon: FileText },
+    { name: "Create Blog", href: "/dashboard/blogs/create", icon: PlusCircle },
+    { name: "Profile", href: "/dashboard/profile", icon: Users },
+  ],
+  admin: [
+    { name: "Users", href: "/dashboard/users", icon: Users },
+    { name: "System Logs", href: "/dashboard/logs", icon: ScrollText },
+    { name: "Settings", href: "/dashboard/settings", icon: Settings },
+    { name: "Profile", href: "/dashboard/profile", icon: Users },
+  ],
+};
+
 export default function DashboardLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const { user, logout } = useAuthStore();
-  console.log("Current user:", user);
   const location = useLocation();
   const navigate = useNavigate();
+
+  const isAdmin = user?.role === "admin";
+  const navItems = [
+    // ...navigation.common,
+    ...(isAdmin ? navigation.admin : navigation.user),
+  ];
 
   const handleLogout = () => {
     logout();
@@ -30,7 +56,7 @@ export default function DashboardLayout() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex">
       {/* Mobile sidebar backdrop */}
       <AnimatePresence>
         {sidebarOpen && (
@@ -47,13 +73,13 @@ export default function DashboardLayout() {
       {/* Sidebar */}
       <aside
         className={clsx(
-          "fixed top-0 left-0 z-30 h-full w-56 bg-white dark:bg-gray-800  transform transition-transform duration-200 ease-in-out md:translate-x-0",
+          "fixed top-0 left-0 z-30 h-full w-56 bg-white dark:bg-gray-800 transform transition-transform duration-200 ease-in-out md:translate-x-0",
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
         )}
       >
         <div className="h-full flex flex-col">
           {/* Logo */}
-          <div className="flex items-center justify-between h-16 px-4  dark:border-gray-700">
+          <div className="flex items-center justify-between h-16 px-4 dark:border-gray-700">
             <Link to="/dashboard" className="flex items-center">
               <Pen className="h-5 w-5 text-primary-500" />
               <span className="ml-2 text-sm font-semibold text-gray-900 dark:text-white">
@@ -72,24 +98,24 @@ export default function DashboardLayout() {
           <nav className="flex-1 px-5 py-0 space-y-1 overflow-y-auto">
             {navItems.map((item) => (
               <Link
-                key={item.path}
-                to={item.path}
+                key={item.name}
+                to={item.href}
                 className={clsx(
                   "text-xs group flex items-center px-4 py-2 pt-3 pb-3 text-sm font-medium rounded-md transition-colors",
-                  location.pathname === item.path
-                    ? " bg-primary-500 text-white dark:bg-primary-900/30 dark:text-primary-400"
+                  location.pathname === item.href
+                    ? "bg-primary-500 text-white dark:bg-primary-900/30 dark:text-primary-400"
                     : "text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700/30"
                 )}
               >
                 <item.icon
                   className={clsx(
                     "mr-2 flex-shrink-0 h-4 w-4",
-                    location.pathname === item.path
+                    location.pathname === item.href
                       ? "text-white dark:text-primary-400"
                       : "text-gray-500 dark:text-gray-400"
                   )}
                 />
-                {item.label}
+                {item.name}
               </Link>
             ))}
           </nav>
@@ -97,11 +123,9 @@ export default function DashboardLayout() {
       </aside>
 
       {/* Main content */}
-      <div
-        className={clsx("md:pl-56 flex flex-col min-h-screen transition-all")}
-      >
+      <div className="md:pl-56 flex-1 flex flex-col min-h-screen">
         {/* Header */}
-        <header className="sticky top-0 z-10 bg-white/100 dark:bg-gray-800/80 backdrop-blur-sm   dark:border-gray-700">
+        <header className="sticky top-0 z-10 bg-white/100 dark:bg-gray-800 backdrop-blur-sm dark:border-gray-700">
           <div className="px-4 sm:px-6 h-16 flex items-center justify-between">
             {/* Left side */}
             <div className="flex items-center">
@@ -111,9 +135,6 @@ export default function DashboardLayout() {
               >
                 <Menu className="h-6 w-6" />
               </button>
-              {/* <h1 className="ml-4 md:ml-0 text-xl font-semibold text-gray-900 dark:text-white">
-                {getPageTitle(location.pathname)}
-              </h1> */}
             </div>
 
             {/* Right side - User menu */}
@@ -137,6 +158,11 @@ export default function DashboardLayout() {
                     {(user?.name && user.name.trim()) ||
                       user?.username ||
                       "Guest"}
+                    {isAdmin && (
+                      <span className="ml-1 text-xs text-primary-500">
+                        (Admin)
+                      </span>
+                    )}
                   </span>
                   <ChevronDown className="hidden md:block ml-1 h-4 w-4 text-gray-500 dark:text-gray-400" />
                 </div>
@@ -181,50 +207,10 @@ export default function DashboardLayout() {
         </header>
 
         {/* Page content */}
-        <main className="flex-1 py-6 px-4 sm:px-6 overflow-x-hidden">
+        <main className="flex-1 py-6 px-4 sm:px-6 bg-transparent dark:bg-gray-900">
           <Outlet />
         </main>
       </div>
     </div>
   );
-}
-
-const navItems = [
-  {
-    label: "Dashboard",
-    path: "/dashboard",
-    icon: LayoutDashboard,
-  },
-  {
-    label: "My Blogs",
-    path: "/dashboard/blogs",
-    icon: FileText,
-  },
-  {
-    label: "Create Blog",
-    path: "/dashboard/blogs/create",
-    icon: PlusCircle,
-  },
-  {
-    label: "Profile",
-    path: "/dashboard/profile",
-    icon: Settings,
-  },
-];
-
-function getPageTitle(pathname) {
-  switch (true) {
-    case pathname === "/dashboard":
-      return "Dashboard";
-    case pathname === "/dashboard/blogs":
-      return "My Blogs";
-    case pathname === "/dashboard/blogs/create":
-      return "Create Blog";
-    case pathname.startsWith("/dashboard/blogs/"):
-      return "Blog Details";
-    case pathname === "/dashboard/profile":
-      return "Profile Settings";
-    default:
-      return "Dashboard";
-  }
 }

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import {
   User,
@@ -27,14 +27,18 @@ import { motion } from "framer-motion";
 import { userApi } from "../../utils/api";
 
 export default function UserProfile() {
-  const { user, logout, token, updateUser } = useAuthStore();
+  const { id: userId } = useParams();
+  const { user: currentUser, logout, token, updateUser } = useAuthStore();
   const { addToast } = useToastStore();
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
+  const [profileUser, setProfileUser] = useState(null);
   const [profileImage, setProfileImage] = useState(
-    user?.avatar ||
-      "https://images.pexels.com/photos/415829/pexels-photo-415829.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2"
+    "https://images.pexels.com/photos/415829/pexels-photo-415829.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2"
   );
+
+  const isOwnProfile = !userId || userId === currentUser?.id;
+  const user = isOwnProfile ? currentUser : profileUser;
 
   // Profile form
   const {
@@ -81,30 +85,32 @@ export default function UserProfile() {
     facebook: false,
   });
 
-  // Set initial form values when user data is available
-  useEffect(() => {
-    if (user) {
-      setProfileValue("username", user.username || "");
-      setProfileValue("name", user.name || "");
-      setProfileValue("email", user.email || "");
-      if (user.avatar) {
-        setProfileImage(user.avatar);
-      }
-    }
-  }, [user, setProfileValue]);
-
   // Fetch user profile
   useEffect(() => {
     const fetchUserProfile = async () => {
       try {
-        const userData = await userApi.getUserProfile(token);
-        if (userData) {
-          updateUser(userData);
-          setProfileValue("username", userData.name || "");
-          setProfileValue("email", userData.email || "");
-          if (userData.avatar) {
-            setProfileImage(userData.avatar);
+        setIsLoading(true);
+        let userData;
+
+        if (isOwnProfile) {
+          userData = await userApi.getUserProfile(token);
+          if (userData) {
+            updateUser(userData);
           }
+        } else {
+          // Fetch other user's profile
+          userData = await userApi.getUserById(token, userId);
+          setProfileUser(userData);
+        }
+
+        if (userData?.avatar) {
+          setProfileImage(userData.avatar);
+        }
+
+        if (isOwnProfile) {
+          setProfileValue("username", userData?.username || "");
+          setProfileValue("name", userData?.name || "");
+          setProfileValue("email", userData?.email || "");
         }
       } catch (error) {
         addToast({
@@ -112,13 +118,18 @@ export default function UserProfile() {
           description: error.message,
           type: "error",
         });
+        if (!isOwnProfile) {
+          navigate("/dashboard/users");
+        }
+      } finally {
+        setIsLoading(false);
       }
     };
 
     if (token) {
       fetchUserProfile();
     }
-  }, [token, updateUser, addToast, setProfileValue]);
+  }, [token, userId, isOwnProfile]);
 
   const onSubmitProfile = async (data) => {
     try {
@@ -277,14 +288,14 @@ export default function UserProfile() {
   return (
     <div className="max-w-full mx-auto space-y-6">
       <div className="flex items-center gap-2 text-xs">
-        <Link to="/dashboard/profile" className="text-gray-500 ">
-          Profile
+        <Link to="/dashboard/users" className="text-gray-500">
+          Users
         </Link>
         <ChevronRight className="h-3 w-3 text-gray-400" />
+        <span className="text-gray-500">Profile</span>
       </div>
 
       <div className="max-w-6xl mx-auto space-y-6">
-        {" "}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -292,18 +303,20 @@ export default function UserProfile() {
         >
           <Card className="px-3 py-3">
             <CardHeader className="border-0">
-              <CardTitle className="font-bold">Personal Information</CardTitle>
+              <CardTitle className="font-bold">
+                {isOwnProfile ? "Personal Information" : "User Information"}
+              </CardTitle>
             </CardHeader>
             <CardContent>
-              <form onSubmit={handleSubmitProfile(onSubmitProfile)}>
-                <div className="flex flex-col lg:flex-row gap-8">
-                  <div className="flex flex-col items-center space-y-4">
-                    <div className="relative">
-                      <img
-                        src={profileImage}
-                        alt="Profile"
-                        className="w-32 h-32 rounded-full object-cover border-4 border-white dark:border-gray-800 shadow-sm"
-                      />
+              <div className="flex flex-col lg:flex-row gap-8">
+                <div className="flex flex-col items-center space-y-4">
+                  <div className="relative">
+                    <img
+                      src={profileImage}
+                      alt="Profile"
+                      className="w-32 h-32 rounded-full object-cover border-4 border-white dark:border-gray-800 shadow-sm"
+                    />
+                    {isOwnProfile && (
                       <label
                         className="absolute bottom-0 right-0 bg-primary-500 text-white p-2 rounded-full shadow-sm hover:bg-primary-600 transition-colors cursor-pointer"
                         aria-label="Change profile picture"
@@ -317,57 +330,46 @@ export default function UserProfile() {
                         />
                         <Edit2 className="h-4 w-4" />
                       </label>
-                    </div>
+                    )}
+                  </div>
+                  {isOwnProfile && (
                     <p className="text-xs text-gray-500 dark:text-gray-400">
                       Recommended: 400x400px JPG, PNG
                     </p>
-                  </div>
+                  )}
+                </div>
 
-                  <div className="flex-1 space-y-4">
-                    <Input
-                      label="Full Name"
-                      {...registerProfile("name", {
-                        required: "Full name is required",
-                        minLength: {
-                          value: 2,
-                          message: "Name must be at least 2 characters",
-                        },
-                      })}
-                      error={profileErrors.name?.message}
-                      leftIcon={<User className="h-4 w-4 text-gray-400" />}
-                      disabled={isLoading}
-                      placeholder="Enter your full name"
-                    />
+                <div className="flex-1 space-y-4">
+                  <Input
+                    label="Full Name"
+                    value={user?.name || ""}
+                    disabled={!isOwnProfile || isLoading}
+                    {...(isOwnProfile && registerProfile("name"))}
+                    error={isOwnProfile && profileErrors.name?.message}
+                    leftIcon={<User className="h-4 w-4 text-gray-400" />}
+                    placeholder="Enter your full name"
+                  />
 
-                    <Input
-                      label="Username"
-                      {...registerProfile("username", {
-                        required: "Username is required",
-                        minLength: {
-                          value: 3,
-                          message: "Username must be at least 3 characters",
-                        },
-                        pattern: {
-                          value: /^[a-zA-Z0-9_]+$/,
-                          message:
-                            "Username can only contain letters, numbers and underscores",
-                        },
-                      })}
-                      error={profileErrors.username?.message}
-                      leftIcon={<AtSign className="h-4 w-4 text-gray-400" />}
-                      disabled={isLoading}
-                      placeholder="Choose a unique username"
-                    />
+                  <Input
+                    label="Username"
+                    value={user?.username || ""}
+                    disabled={!isOwnProfile || isLoading}
+                    {...(isOwnProfile && registerProfile("username"))}
+                    error={isOwnProfile && profileErrors.username?.message}
+                    leftIcon={<AtSign className="h-4 w-4 text-gray-400" />}
+                    placeholder="Choose a unique username"
+                  />
 
-                    <Input
-                      label="Email Address"
-                      type="email"
-                      value={watchProfile("email")}
-                      disabled={true}
-                      leftIcon={<Mail className="h-4 w-4 text-gray-400" />}
-                      placeholder="Your email address"
-                    />
+                  <Input
+                    label="Email Address"
+                    type="email"
+                    value={user?.email || ""}
+                    disabled={true}
+                    leftIcon={<Mail className="h-4 w-4 text-gray-400" />}
+                    placeholder="Email address"
+                  />
 
+                  {isOwnProfile && (
                     <Button
                       type="submit"
                       variant="primary"
@@ -376,396 +378,405 @@ export default function UserProfile() {
                     >
                       {isLoading ? "Saving..." : "Save Changes"}
                     </Button>
-                  </div>
+                  )}
                 </div>
-              </form>
+              </div>
             </CardContent>
           </Card>
         </motion.div>
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3, delay: 0.1 }}
-          >
-            <Card className="px-3 py-3">
-              <CardHeader>
-                <CardTitle>Password</CardTitle>
-              </CardHeader>
-              <CardContent className="pt-0">
-                <form
-                  onSubmit={handleSubmitPassword(onSubmitPassword)}
-                  className="space-y-2 max-w-md"
-                >
-                  <Input
-                    label="Current Password"
-                    type="password"
-                    {...registerPassword("currentPassword", {
-                      required: "Current password is required",
-                    })}
-                    error={passwordErrors.currentPassword?.message}
-                    leftIcon={<Lock className="h-4 w-4 text-gray-400" />}
-                    placeholder="Enter current password"
-                  />
 
-                  <Input
-                    label="New Password"
-                    type="password"
-                    {...registerPassword("newPassword", {
-                      required: "New password is required",
-                      minLength: {
-                        value: 8,
-                        message: "Password must be at least 8 characters",
-                      },
-                    })}
-                    error={passwordErrors.newPassword?.message}
-                    leftIcon={<Lock className="h-4 w-4 text-gray-400" />}
-                    placeholder="Enter new password"
-                  />
-
-                  <Input
-                    label="Confirm New Password"
-                    type="password"
-                    {...registerPassword("confirmPassword", {
-                      required: "Please confirm your password",
-                      validate: (value) =>
-                        value === watchPassword("newPassword") ||
-                        "Passwords do not match",
-                    })}
-                    error={passwordErrors.confirmPassword?.message}
-                    leftIcon={<Lock className="h-4 w-4 text-gray-400" />}
-                    placeholder="Confirm new password"
-                  />
-
-                  <Button
-                    type="submit"
-                    variant="primary"
-                    size="xs"
-                    disabled={isLoading}
+        {isOwnProfile && (
+          <>
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3, delay: 0.1 }}
+            >
+              <Card className="px-3 py-3">
+                <CardHeader>
+                  <CardTitle>Password</CardTitle>
+                </CardHeader>
+                <CardContent className="pt-0">
+                  <form
+                    onSubmit={handleSubmitPassword(onSubmitPassword)}
+                    className="space-y-2 max-w-md"
                   >
-                    {isLoading ? "Updating..." : "Update Password"}
-                  </Button>
-                </form>
-              </CardContent>
-            </Card>
-          </motion.div>
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3, delay: 0.2 }}
-          >
-            <Card className="h-full px-3 py-3">
-              <CardHeader>
-                <CardTitle>Notification Preferences</CardTitle>
-              </CardHeader>
-              <CardContent className="pt-0">
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h4 className="text-xs font-medium text-gray-900 dark:text-white">
-                        Email Notifications
-                      </h4>
-                      <p className="text-xxs text-gray-500 dark:text-gray-400">
-                        Receive email notifications
-                      </p>
-                    </div>
-                    <button
-                      onClick={() =>
-                        handleToggleNotification("emailNotifications")
-                      }
-                      className={`relative inline-flex h-6 w-11 items-center rounded-full ${
-                        notificationPreferences.emailNotifications
-                          ? "bg-primary-500"
-                          : "bg-gray-200 dark:bg-gray-700"
-                      }`}
+                    <Input
+                      label="Current Password"
+                      type="password"
+                      {...registerPassword("currentPassword", {
+                        required: "Current password is required",
+                      })}
+                      error={passwordErrors.currentPassword?.message}
+                      leftIcon={<Lock className="h-4 w-4 text-gray-400" />}
+                      placeholder="Enter current password"
+                    />
+
+                    <Input
+                      label="New Password"
+                      type="password"
+                      {...registerPassword("newPassword", {
+                        required: "New password is required",
+                        minLength: {
+                          value: 8,
+                          message: "Password must be at least 8 characters",
+                        },
+                      })}
+                      error={passwordErrors.newPassword?.message}
+                      leftIcon={<Lock className="h-4 w-4 text-gray-400" />}
+                      placeholder="Enter new password"
+                    />
+
+                    <Input
+                      label="Confirm New Password"
+                      type="password"
+                      {...registerPassword("confirmPassword", {
+                        required: "Please confirm your password",
+                        validate: (value) =>
+                          value === watchPassword("newPassword") ||
+                          "Passwords do not match",
+                      })}
+                      error={passwordErrors.confirmPassword?.message}
+                      leftIcon={<Lock className="h-4 w-4 text-gray-400" />}
+                      placeholder="Confirm new password"
+                    />
+
+                    <Button
+                      type="submit"
+                      variant="primary"
+                      size="xs"
+                      disabled={isLoading}
                     >
-                      <span
-                        className={`${
+                      {isLoading ? "Updating..." : "Update Password"}
+                    </Button>
+                  </form>
+                </CardContent>
+              </Card>
+            </motion.div>
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3, delay: 0.2 }}
+            >
+              <Card className="h-full px-3 py-3">
+                <CardHeader>
+                  <CardTitle>Notification Preferences</CardTitle>
+                </CardHeader>
+                <CardContent className="pt-0">
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h4 className="text-xs font-medium text-gray-900 dark:text-white">
+                          Email Notifications
+                        </h4>
+                        <p className="text-xxs text-gray-500 dark:text-gray-400">
+                          Receive email notifications
+                        </p>
+                      </div>
+                      <button
+                        onClick={() =>
+                          handleToggleNotification("emailNotifications")
+                        }
+                        className={`relative inline-flex h-6 w-11 items-center rounded-full ${
                           notificationPreferences.emailNotifications
-                            ? "translate-x-6"
-                            : "translate-x-1"
-                        } inline-block h-4 w-4 transform rounded-full bg-white transition-transform`}
-                      />
-                    </button>
-                  </div>
-
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h4 className="text-xs font-medium text-gray-900 dark:text-white">
-                        Blog Updates
-                      </h4>
-                      <p className="text-xxs text-gray-500 dark:text-gray-400">
-                        Get notified about blog generation status
-                      </p>
+                            ? "bg-primary-500"
+                            : "bg-gray-200 dark:bg-gray-700"
+                        }`}
+                      >
+                        <span
+                          className={`${
+                            notificationPreferences.emailNotifications
+                              ? "translate-x-6"
+                              : "translate-x-1"
+                          } inline-block h-4 w-4 transform rounded-full bg-white transition-transform`}
+                        />
+                      </button>
                     </div>
-                    <button
-                      onClick={() => handleToggleNotification("blogUpdates")}
-                      className={`relative inline-flex h-6 w-11 items-center rounded-full ${
-                        notificationPreferences.blogUpdates
-                          ? "bg-primary-500"
-                          : "bg-gray-200 dark:bg-gray-700"
-                      }`}
-                    >
-                      <span
-                        className={`${
+
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h4 className="text-xs font-medium text-gray-900 dark:text-white">
+                          Blog Updates
+                        </h4>
+                        <p className="text-xxs text-gray-500 dark:text-gray-400">
+                          Get notified about blog generation status
+                        </p>
+                      </div>
+                      <button
+                        onClick={() => handleToggleNotification("blogUpdates")}
+                        className={`relative inline-flex h-6 w-11 items-center rounded-full ${
                           notificationPreferences.blogUpdates
-                            ? "translate-x-6"
-                            : "translate-x-1"
-                        } inline-block h-4 w-4 transform rounded-full bg-white transition-transform`}
-                      />
-                    </button>
-                  </div>
-
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h4 className="text-xs font-medium text-gray-900 dark:text-white">
-                        New Features
-                      </h4>
-                      <p className="text-xxs text-gray-500 dark:text-gray-400">
-                        Learn about new features and updates
-                      </p>
+                            ? "bg-primary-500"
+                            : "bg-gray-200 dark:bg-gray-700"
+                        }`}
+                      >
+                        <span
+                          className={`${
+                            notificationPreferences.blogUpdates
+                              ? "translate-x-6"
+                              : "translate-x-1"
+                          } inline-block h-4 w-4 transform rounded-full bg-white transition-transform`}
+                        />
+                      </button>
                     </div>
-                    <button
-                      onClick={() => handleToggleNotification("newFeatures")}
-                      className={`relative inline-flex h-6 w-11 items-center rounded-full ${
-                        notificationPreferences.newFeatures
-                          ? "bg-primary-500"
-                          : "bg-gray-200 dark:bg-gray-700"
-                      }`}
-                    >
-                      <span
-                        className={`${
+
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h4 className="text-xs font-medium text-gray-900 dark:text-white">
+                          New Features
+                        </h4>
+                        <p className="text-xxs text-gray-500 dark:text-gray-400">
+                          Learn about new features and updates
+                        </p>
+                      </div>
+                      <button
+                        onClick={() => handleToggleNotification("newFeatures")}
+                        className={`relative inline-flex h-6 w-11 items-center rounded-full ${
                           notificationPreferences.newFeatures
-                            ? "translate-x-6"
-                            : "translate-x-1"
-                        } inline-block h-4 w-4 transform rounded-full bg-white transition-transform`}
-                      />
-                    </button>
-                  </div>
-
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h4 className="text-xs font-medium text-gray-900 dark:text-white">
-                        Tips & Tutorials
-                      </h4>
-                      <p className="text-xxs text-gray-500 dark:text-gray-400">
-                        Receive tips for better blog creation
-                      </p>
+                            ? "bg-primary-500"
+                            : "bg-gray-200 dark:bg-gray-700"
+                        }`}
+                      >
+                        <span
+                          className={`${
+                            notificationPreferences.newFeatures
+                              ? "translate-x-6"
+                              : "translate-x-1"
+                          } inline-block h-4 w-4 transform rounded-full bg-white transition-transform`}
+                        />
+                      </button>
                     </div>
-                    <button
-                      onClick={() => handleToggleNotification("tips")}
-                      className={`relative inline-flex h-6 w-11 items-center rounded-full ${
-                        notificationPreferences.tips
-                          ? "bg-primary-500"
-                          : "bg-gray-200 dark:bg-gray-700"
-                      }`}
-                    >
-                      <span
-                        className={`${
+
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h4 className="text-xs font-medium text-gray-900 dark:text-white">
+                          Tips & Tutorials
+                        </h4>
+                        <p className="text-xxs text-gray-500 dark:text-gray-400">
+                          Receive tips for better blog creation
+                        </p>
+                      </div>
+                      <button
+                        onClick={() => handleToggleNotification("tips")}
+                        className={`relative inline-flex h-6 w-11 items-center rounded-full ${
                           notificationPreferences.tips
-                            ? "translate-x-6"
-                            : "translate-x-1"
-                        } inline-block h-4 w-4 transform rounded-full bg-white transition-transform`}
-                      />
-                    </button>
-                  </div>
-                </div>
-              </CardContent>
-              <CardFooter>
-                <Button
-                  variant="outline"
-                  size="xs"
-                  onClick={() => {
-                    addToast({
-                      title: "Notification preferences saved",
-                      type: "success",
-                    });
-                  }}
-                  leftIcon={<Bell className="h-4 w-4" />}
-                >
-                  Save Preferences
-                </Button>
-              </CardFooter>
-            </Card>
-          </motion.div>
-        </div>
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3, delay: 0.3 }}
-          >
-            <Card className="h-full px-3 py-3">
-              <CardHeader>
-                <CardTitle>Connected Accounts</CardTitle>
-              </CardHeader>
-              <CardContent className="pt-0">
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center">
-                      <div className="h-10 w-10 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center mr-3">
-                        <img
-                          src="https://www.svgrepo.com/show/475696/wordpress-color.svg"
-                          alt="WordPress"
-                          className="h-6 w-6"
+                            ? "bg-primary-500"
+                            : "bg-gray-200 dark:bg-gray-700"
+                        }`}
+                      >
+                        <span
+                          className={`${
+                            notificationPreferences.tips
+                              ? "translate-x-6"
+                              : "translate-x-1"
+                          } inline-block h-4 w-4 transform rounded-full bg-white transition-transform`}
                         />
-                      </div>
-                      <div>
-                        <h4 className="text-sm font-medium text-gray-900 dark:text-white">
-                          WordPress
-                        </h4>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">
+                      </button>
+                    </div>
+                  </div>
+                </CardContent>
+                <CardFooter>
+                  <Button
+                    variant="outline"
+                    size="xs"
+                    onClick={() => {
+                      addToast({
+                        title: "Notification preferences saved",
+                        type: "success",
+                      });
+                    }}
+                    leftIcon={<Bell className="h-4 w-4" />}
+                  >
+                    Save Preferences
+                  </Button>
+                </CardFooter>
+              </Card>
+            </motion.div>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3, delay: 0.3 }}
+              >
+                <Card className="h-full px-3 py-3">
+                  <CardHeader>
+                    <CardTitle>Connected Accounts</CardTitle>
+                  </CardHeader>
+                  <CardContent className="pt-0">
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center">
+                          <div className="h-10 w-10 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center mr-3">
+                            <img
+                              src="https://www.svgrepo.com/show/475696/wordpress-color.svg"
+                              alt="WordPress"
+                              className="h-6 w-6"
+                            />
+                          </div>
+                          <div>
+                            <h4 className="text-sm font-medium text-gray-900 dark:text-white">
+                              WordPress
+                            </h4>
+                            <p className="text-xs text-gray-500 dark:text-gray-400">
+                              {connectedAccounts.wordpress
+                                ? "Connected"
+                                : "Not connected"}
+                            </p>
+                          </div>
+                        </div>
+                        <Button
+                          variant={
+                            connectedAccounts.wordpress ? "outline" : "primary"
+                          }
+                          size="xs"
+                          onClick={() => handleConnect("wordpress")}
+                        >
                           {connectedAccounts.wordpress
-                            ? "Connected"
-                            : "Not connected"}
-                        </p>
+                            ? "Disconnect"
+                            : "Connect"}
+                        </Button>
                       </div>
-                    </div>
-                    <Button
-                      variant={
-                        connectedAccounts.wordpress ? "outline" : "primary"
-                      }
-                      size="xs"
-                      onClick={() => handleConnect("wordpress")}
-                    >
-                      {connectedAccounts.wordpress ? "Disconnect" : "Connect"}
-                    </Button>
-                  </div>
 
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center">
-                      <div className="h-10 w-10 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center mr-3">
-                        <img
-                          src="https://www.svgrepo.com/show/475656/google-color.svg"
-                          alt="Google"
-                          className="h-6 w-6"
-                        />
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center">
+                          <div className="h-10 w-10 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center mr-3">
+                            <img
+                              src="https://www.svgrepo.com/show/475656/google-color.svg"
+                              alt="Google"
+                              className="h-6 w-6"
+                            />
+                          </div>
+                          <div>
+                            <h4 className="text-sm font-medium text-gray-900 dark:text-white">
+                              Google
+                            </h4>
+                            <p className="text-xs text-gray-500 dark:text-gray-400">
+                              {connectedAccounts.google
+                                ? "Connected"
+                                : "Not connected"}
+                            </p>
+                          </div>
+                        </div>
+                        <Button
+                          variant={
+                            connectedAccounts.google ? "outline" : "primary"
+                          }
+                          size="xs"
+                          onClick={() => handleConnect("google")}
+                        >
+                          {connectedAccounts.google ? "Disconnect" : "Connect"}
+                        </Button>
                       </div>
-                      <div>
-                        <h4 className="text-sm font-medium text-gray-900 dark:text-white">
-                          Google
-                        </h4>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">
-                          {connectedAccounts.google
-                            ? "Connected"
-                            : "Not connected"}
-                        </p>
-                      </div>
-                    </div>
-                    <Button
-                      variant={connectedAccounts.google ? "outline" : "primary"}
-                      size="xs"
-                      onClick={() => handleConnect("google")}
-                    >
-                      {connectedAccounts.google ? "Disconnect" : "Connect"}
-                    </Button>
-                  </div>
 
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center">
-                      <div className="h-10 w-10 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center mr-3">
-                        <img
-                          src="https://www.svgrepo.com/show/452196/facebook-1.svg"
-                          alt="Facebook"
-                          className="h-6 w-6"
-                        />
-                      </div>
-                      <div>
-                        <h4 className="text-sm font-medium text-gray-900 dark:text-white">
-                          Facebook
-                        </h4>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center">
+                          <div className="h-10 w-10 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center mr-3">
+                            <img
+                              src="https://www.svgrepo.com/show/452196/facebook-1.svg"
+                              alt="Facebook"
+                              className="h-6 w-6"
+                            />
+                          </div>
+                          <div>
+                            <h4 className="text-sm font-medium text-gray-900 dark:text-white">
+                              Facebook
+                            </h4>
+                            <p className="text-xs text-gray-500 dark:text-gray-400">
+                              {connectedAccounts.facebook
+                                ? "Connected"
+                                : "Not connected"}
+                            </p>
+                          </div>
+                        </div>
+                        <Button
+                          variant={
+                            connectedAccounts.facebook ? "outline" : "primary"
+                          }
+                          size="xs"
+                          onClick={() => handleConnect("facebook")}
+                        >
                           {connectedAccounts.facebook
-                            ? "Connected"
-                            : "Not connected"}
-                        </p>
+                            ? "Disconnect"
+                            : "Connect"}
+                        </Button>
                       </div>
                     </div>
+                  </CardContent>
+                  <CardFooter>
                     <Button
-                      variant={
-                        connectedAccounts.facebook ? "outline" : "primary"
-                      }
+                      variant="outline"
                       size="xs"
-                      onClick={() => handleConnect("facebook")}
+                      onClick={() => {
+                        addToast({
+                          title: "Add your WordPress site",
+                          description:
+                            "Connect your WordPress site to publish blog posts directly",
+                          type: "info",
+                        });
+                      }}
+                      leftIcon={<LinkIcon className="h-4 w-4" />}
                     >
-                      {connectedAccounts.facebook ? "Disconnect" : "Connect"}
+                      Connect More Services
                     </Button>
-                  </div>
-                </div>
-              </CardContent>
-              <CardFooter>
-                <Button
-                  variant="outline"
-                  size="xs"
-                  onClick={() => {
-                    addToast({
-                      title: "Add your WordPress site",
-                      description:
-                        "Connect your WordPress site to publish blog posts directly",
-                      type: "info",
-                    });
-                  }}
-                  leftIcon={<LinkIcon className="h-4 w-4" />}
-                >
-                  Connect More Services
-                </Button>
-              </CardFooter>
-            </Card>
-          </motion.div>
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3, delay: 0.4 }}
-          >
-            <Card className="px-3 py-3">
-              <CardHeader>
-                <CardTitle>Account Actions</CardTitle>
-              </CardHeader>
-              <CardContent className="pt-0">
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                    <div>
-                      <h4 className="text-sm font-medium text-gray-900 dark:text-white">
-                        Log out of your account
-                      </h4>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">
-                        You'll need to enter your credentials to log back in
-                      </p>
-                    </div>
-                    <Button
-                      variant="outline"
-                      onClick={handleLogout}
-                      size="sm"
-                      leftIcon={<LogOut className="h-4 w-4" />}
-                    >
-                      Log Out
-                    </Button>
-                  </div>
+                  </CardFooter>
+                </Card>
+              </motion.div>
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3, delay: 0.4 }}
+              >
+                <Card className="px-3 py-3">
+                  <CardHeader>
+                    <CardTitle>Account Actions</CardTitle>
+                  </CardHeader>
+                  <CardContent className="pt-0">
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                        <div>
+                          <h4 className="text-sm font-medium text-gray-900 dark:text-white">
+                            Log out of your account
+                          </h4>
+                          <p className="text-xs text-gray-500 dark:text-gray-400">
+                            You'll need to enter your credentials to log back in
+                          </p>
+                        </div>
+                        <Button
+                          variant="outline"
+                          onClick={handleLogout}
+                          size="sm"
+                          leftIcon={<LogOut className="h-4 w-4" />}
+                        >
+                          Log Out
+                        </Button>
+                      </div>
 
-                  <div className="flex items-center justify-between p-4 bg-error-50 dark:bg-error-900/20 rounded-lg border border-error-200 dark:border-error-800">
-                    <div>
-                      <h4 className="text-sm font-medium text-error-900 dark:text-error-200">
-                        Delete account
-                      </h4>
-                      <p className="text-xs text-error-700 dark:text-error-300">
-                        Permanently delete your account and all your data
-                      </p>
+                      <div className="flex items-center justify-between p-4 bg-error-50 dark:bg-error-900/20 rounded-lg border border-error-200 dark:border-error-800">
+                        <div>
+                          <h4 className="text-sm font-medium text-error-900 dark:text-error-200">
+                            Delete account
+                          </h4>
+                          <p className="text-xs text-error-700 dark:text-error-300">
+                            Permanently delete your account and all your data
+                          </p>
+                        </div>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="border-error-300 dark:border-error-700 text-error-700 dark:text-error-300 hover:bg-error-50 dark:hover:bg-error-900/30"
+                          onClick={handleDeleteAccount}
+                          leftIcon={<Trash className="h-4 w-4" />}
+                        >
+                          Delete Account
+                        </Button>
+                      </div>
                     </div>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="border-error-300 dark:border-error-700 text-error-700 dark:text-error-300 hover:bg-error-50 dark:hover:bg-error-900/30"
-                      onClick={handleDeleteAccount}
-                      leftIcon={<Trash className="h-4 w-4" />}
-                    >
-                      Delete Account
-                    </Button>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </motion.div>
-        </div>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            </div>
+          </>
+        )}
       </div>
     </div>
   );

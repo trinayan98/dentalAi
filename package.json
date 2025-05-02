@@ -11,17 +11,22 @@
   },
   "dependencies": {
     "@tanstack/react-query": "^5.74.11",
+    "@types/react-datepicker": "^6.2.0",
     "axios": "^1.9.0",
     "clsx": "^2.1.0",
+    "date-fns": "^4.1.0",
     "framer-motion": "^11.0.8",
     "js-cookie": "^3.0.5",
     "lucide-react": "^0.344.0",
     "multer": "^1.4.5-lts.2",
     "react": "^18.3.1",
+    "react-datepicker": "^8.3.0",
     "react-dom": "^18.3.1",
     "react-hook-form": "^7.56.1",
     "react-quill": "^2.0.0",
     "react-router-dom": "^6.22.3",
+    "react-super-responsive-table": "^6.0.2",
+    "tailwind-merge": "^3.2.0",
     "zustand": "^4.5.0"
   },
   "devDependencies": {

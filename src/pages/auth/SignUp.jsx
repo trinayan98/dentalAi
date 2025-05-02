@@ -1,17 +1,19 @@
-import React from "react";
+import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { Input } from "../../components/ui/Input";
 import { Button } from "../../components/ui/Button";
 import useAuthStore from "../../stores/authStore";
 import { useToastStore } from "../../stores/toastStore";
-import { User, Mail, Lock } from "lucide-react";
+import { User, Mail, Lock, Eye, EyeOff } from "lucide-react";
 import { motion } from "framer-motion";
 
 export default function SignUp() {
   const { signup, isLoading } = useAuthStore();
   const { addToast } = useToastStore();
   const navigate = useNavigate();
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const {
     register,
@@ -192,20 +194,33 @@ export default function SignUp() {
             />
 
             <div className="space-y-2">
-              <Input
-                label="Password"
-                type="password"
-                leftIcon={<Lock className="h-4 w-4 text-gray-400" />}
-                error={errors.password?.message}
-                className="bg-gray-50 dark:bg-gray-900 border-gray-300 dark:border-gray-700"
-                {...register("password", {
-                  required: "Password is required",
-                  minLength: {
-                    value: 8,
-                    message: "Password must be at least 8 characters",
-                  },
-                })}
-              />
+              <div className="relative">
+                <Input
+                  label="Password"
+                  type={showPassword ? "text" : "password"}
+                  leftIcon={<Lock className="h-4 w-4 text-gray-400" />}
+                  error={errors.password?.message}
+                  className="bg-gray-50 dark:bg-gray-900 border-gray-300 dark:border-gray-700 pr-10"
+                  {...register("password", {
+                    required: "Password is required",
+                    minLength: {
+                      value: 8,
+                      message: "Password must be at least 8 characters",
+                    },
+                  })}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-[33px] text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 focus:outline-none"
+                >
+                  {showPassword ? (
+                    <EyeOff className="h-5 w-5" />
+                  ) : (
+                    <Eye className="h-5 w-5" />
+                  )}
+                </button>
+              </div>
 
               {password && (
                 <div className="mt-2 p-3 bg-gray-50 dark:bg-gray-900 rounded-lg">
@@ -237,18 +252,31 @@ export default function SignUp() {
               )}
             </div>
 
-            <Input
-              label="Confirm Password"
-              type="password"
-              leftIcon={<Lock className="h-4 w-4 text-gray-400" />}
-              error={errors.confirmPassword?.message}
-              className="bg-gray-50 dark:bg-gray-900 border-gray-300 dark:border-gray-700"
-              {...register("confirmPassword", {
-                required: "Please confirm your password",
-                validate: (value) =>
-                  value === password || "Passwords do not match",
-              })}
-            />
+            <div className="relative">
+              <Input
+                label="Confirm Password"
+                type={showConfirmPassword ? "text" : "password"}
+                leftIcon={<Lock className="h-4 w-4 text-gray-400" />}
+                error={errors.confirmPassword?.message}
+                className="bg-gray-50 dark:bg-gray-900 border-gray-300 dark:border-gray-700 pr-10"
+                {...register("confirmPassword", {
+                  required: "Please confirm your password",
+                  validate: (value) =>
+                    value === password || "Passwords do not match",
+                })}
+              />
+              <button
+                type="button"
+                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                className="absolute right-3 top-[34px] text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 focus:outline-none"
+              >
+                {showConfirmPassword ? (
+                  <EyeOff className="h-5 w-5" />
+                ) : (
+                  <Eye className="h-5 w-5" />
+                )}
+              </button>
+            </div>
           </div>
 
           <div className="flex items-start">

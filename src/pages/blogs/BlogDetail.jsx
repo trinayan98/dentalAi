@@ -559,7 +559,14 @@ export default function BlogDetail() {
                   </div>
                 </div>
                 <div className="whitespace-pre-wrap text-xs">
-                  {editedBlog.content}
+                  <span
+                    dangerouslySetInnerHTML={{
+                      __html:
+                        editedBlog.content
+                          ?.replace(/<[^>]*>/g, "")
+                          .substring(0, 200) + "...",
+                    }}
+                  />
                 </div>
               </div>
             </CardContent>

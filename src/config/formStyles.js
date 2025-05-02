@@ -1,6 +1,6 @@
 export const formStyles = {
   label: {
-    base: "block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300",
+    base: "block text-sm font-medium mb-1 text-gray-700 dark:text-gray-200",
     sizes: {
       xs: "text-xs py-1 px-2",
       sm: "text-sm",

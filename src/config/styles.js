@@ -3,7 +3,7 @@ export const styles = {
     label: {
       base: "block font-medium mb-1",
       colors: {
-        default: "text-[#374151] dark:text-gray-300",
+        default: "text-[#374151] dark:text-gray-200",
         error: "text-red-500 dark:text-red-400",
       },
       sizes: {

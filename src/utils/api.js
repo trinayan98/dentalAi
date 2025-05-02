@@ -1,4 +1,6 @@
-const API_URL = "http://localhost:5001/api";
+import { API_BASE_URL } from "../config/constants";
+
+const API_URL = API_BASE_URL;
 
 export const authApi = {
   register: async (userData) => {
@@ -119,5 +121,32 @@ export const userApi = {
       throw new Error(errorData.message || "Failed to get user profile");
     }
     return response.json();
+  },
+
+  getUserById: async (token, userId) => {
+    const response = await fetch(`${API_URL}/users/${userId}`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || "Failed to get user profile");
+    }
+    return response.json();
+  },
+
+  getUserDetails: async (token, userId) => {
+    const response = await fetch(`${API_URL}/admin/users/${userId}`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || "Failed to fetch user details");
+    }
+    const { data } = await response.json();
+    return data;
   },
 };
