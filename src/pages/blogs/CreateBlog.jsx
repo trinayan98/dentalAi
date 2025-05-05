@@ -332,7 +332,7 @@ export default function CreateBlog() {
 
             <div className="space-y-5 flex flex-col items-center">
               <div className="max-w-xl w-full">
-                <label className="block text-xxs font-medium text-gray-700 mb-1">
+                <label className="block text-xxs font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Blog topic or title
                 </label>
                 <Input
@@ -472,7 +472,7 @@ export default function CreateBlog() {
               <Button
                 variant="outline"
                 size="xs"
-                className="px-3 py-1.5 text-xs font-medium"
+                className="px-3 py-1.5 text-xs font-medium dark:text-gray-300"
                 leftIcon={<ChevronLeft className="h-3.5 w-3.5 mr-0" />}
                 onClick={handlePrevStep}
               >
@@ -547,10 +547,11 @@ export default function CreateBlog() {
                   <button
                     className={`px-3 mr-2 py-1.5 rounded text-sm font-medium text-xxs ${
                       previewMode === "edit"
-                        ? "bg-primary-100 text-primary-500 dark:bg-gray-700 dark:text-gray-900 dark:text-white"
-                        : "bg-gray-100 text-gray-600 dark:text-gray-300  hover:bg-primary-500 hover:text-white"
+                        ? "bg-primary-100 text-primary-500 dark:bg-gray-700 dark:text-gray-900 dark:text-white cursor-not-allowed"
+                        : "bg-gray-100 text-gray-600   hover:bg-primary-500 hover:text-white "
                     }`}
                     onClick={() => setPreviewMode("edit")}
+                    // disabled={previewMode === "preview"}
                   >
                     <Edit2 className="h-3 w-3 inline mr-1" />
                     Edit
@@ -558,10 +559,11 @@ export default function CreateBlog() {
                   <button
                     className={`px-3 py-1.5 rounded text-sm font-medium text-xxs ${
                       previewMode === "preview"
-                        ? "bg-primary-100 text-primary-500 dark:bg-gray-700 dark:text-gray-900 dark:text-white"
-                        : "bg-gray-100 text-gray-600 dark:text-gray-300  hover:bg-primary-500 hover:text-white"
+                        ? "bg-primary-100 text-primary-500 dark:bg-gray-700 dark:text-gray-900 dark:text-white cursor-not-allowed"
+                        : "bg-gray-100 text-gray-600   hover:bg-primary-500 hover:text-white "
                     }`}
                     onClick={() => setPreviewMode("preview")}
+                    disabled={previewMode === "preview"}
                   >
                     <Eye className="h-3 w-3 inline mr-1" />
                     Preview
@@ -594,7 +596,9 @@ export default function CreateBlog() {
                 </div>
               ) : (
                 <div className="prose dark:prose-invert max-w-none">
-                  <h1 className="mb-2 font-medium text-md">{topic}</h1>
+                  <h1 className="mb-2 font-medium text-md text-gray-600 dark:text-gray-300">
+                    {topic}
+                  </h1>
                   {previewUrls.length > 0 && (
                     <div className="mb-4">
                       <img
@@ -605,7 +609,7 @@ export default function CreateBlog() {
                     </div>
                   )}
                   <div
-                    className="whitespace-pre-wrap bg-primary-100 p-4 rounded-md text-xs"
+                    className="whitespace-pre-wrap bg-primary-100 p-6 rounded-md text-xs"
                     dangerouslySetInnerHTML={{ __html: content }}
                   />
                 </div>
@@ -616,20 +620,28 @@ export default function CreateBlog() {
               <Button
                 variant="outline"
                 size="xs"
-                className="px-3 py-1.5 text-xs font-medium"
+                className="px-3 py-1.5 text-xs font-medium  text-gray-600 dark:text-gray-300"
                 leftIcon={<ChevronLeft className="h-3.5 w-3.5 mr-0" />}
                 onClick={() => setStep((prevStep) => prevStep - 2)}
+                disabled={createBlogMutation.isLoading}
               >
                 Back
               </Button>
               <Button
                 variant="primary"
                 size="xs"
-                className="px-3 py-1.5 text-xs font-medium"
-                leftIcon={<Save className="h-3.5 w-3.5 mr-1" />}
+                className="px-3 py-1.5 text-xs font-medium min-w-[120px]"
+                leftIcon={
+                  createBlogMutation.isLoading ? (
+                    <div className="animate-spin rounded-full h-3.5 w-3.5 border-2 border-white border-t-transparent" />
+                  ) : (
+                    <Save className="h-3.5 w-3.5 mr-1" />
+                  )
+                }
                 onClick={handleSaveBlog}
+                disabled={createBlogMutation.isLoading}
               >
-                Save & Publish
+                {createBlogMutation.isLoading ? "Saving..." : "Save & Publish"}
               </Button>
             </div>
           </motion.div>
@@ -670,7 +682,7 @@ export default function CreateBlog() {
             return (
               <div
                 key={s.label}
-                className="flex flex-col items-center relative z-10"
+                className="flex flex-col items-center relative z-3"
               >
                 <div
                   className={`
@@ -836,7 +848,7 @@ export default function CreateBlog() {
   return (
     <div className="h-full bg-transparent dark:bg-gray-900">
       <div className="flex items-center gap-2 text-xs mb-6">
-        <span className="font-medium text-gray-700 dark:text-gray-300">
+        <span className="font-medium text-gray-500 dark:text-gray-300">
           Create Blog
         </span>
         <ChevronRight className="h-3 w-3 text-gray-400" />

@@ -162,7 +162,7 @@ export default function BlogList() {
     <div className="space-y-6">
       {/* Breadcrumbs */}
       <div className="flex items-center gap-2 text-xs">
-        <span className="text-gray-500 ">My Blogs</span>{" "}
+        <span className="text-gray-500  dark:text-gray-300">My Blogs</span>{" "}
         <ChevronRight className="h-3 w-3 text-gray-400" />
       </div>
 

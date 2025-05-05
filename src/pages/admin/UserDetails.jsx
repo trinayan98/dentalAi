@@ -77,7 +77,7 @@ export default function UserDetails() {
         >
           <Card>
             <CardHeader>
-              <CardTitle>User Information</CardTitle>
+              <CardTitle className="text-md pb-0">User Information</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex items-center gap-4">
@@ -85,38 +85,48 @@ export default function UserDetails() {
                   <User className="h-8 w-8 text-gray-500" />
                 </div>
                 <div>
-                  <h3 className="text-lg font-medium">{userDetails.name}</h3>
-                  <p className="text-sm text-gray-500">
+                  <h3 className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                    {userDetails.name}
+                  </h3>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
                     {userDetails.username}
                   </p>
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-4 pt-4">
+              <div className="grid grid-cols-2 gap-4 pt-0 p-3">
                 <div>
-                  <p className="text-sm text-gray-500">Email</p>
-                  <p className="text-sm font-medium flex items-center gap-2">
-                    <Mail className="h-4 w-4" />
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">
+                    Email
+                  </p>
+                  <p className="text-xxs font-medium text-gray-900 dark:text-gray-100 flex items-center gap-1">
+                    <Mail className="h-3 w-3" />
                     {userDetails.email}
                   </p>
                 </div>
                 <div>
-                  <p className="text-sm text-gray-500">Role</p>
-                  <p className="text-sm font-medium">
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">
+                    Role
+                  </p>
+                  <p className="text-xxs font-medium">
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-medium text-xs font-medium bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300">
                       {userDetails.role}
                     </span>
                   </p>
                 </div>
                 <div>
-                  <p className="text-sm text-gray-500">Member Since</p>
-                  <p className="text-sm font-medium flex items-center gap-2">
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">
+                    Member Since
+                  </p>
+                  <p className="text-xxs font-medium text-gray-900 dark:text-gray-100 flex items-center gap-2">
                     <Calendar className="h-4 w-4" />
                     {format(new Date(userDetails.createdAt), "MMM d, yyyy")}
                   </p>
                 </div>
                 <div>
-                  <p className="text-sm text-gray-500">Last Updated</p>
-                  <p className="text-sm font-medium">
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">
+                    Last Updated
+                  </p>
+                  <p className="text-xxs font-medium text-gray-900 dark:text-gray-100">
                     {format(new Date(userDetails.updatedAt), "MMM d, yyyy")}
                   </p>
                 </div>
@@ -132,32 +142,40 @@ export default function UserDetails() {
           transition={{ duration: 0.3, delay: 0.1 }}
         >
           <Card>
-            <CardHeader>
+            <CardHeader className="text-md p-0">
               <CardTitle>Blog Statistics</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
-                  <p className="text-sm text-gray-500">Total Blogs</p>
-                  <p className="text-2xl font-semibold">
+              <div className="grid grid-cols-2 gap-3">
+                <div className="bg-primary-100 dark:bg-primary-900/40 p-4 rounded-lg">
+                  <p className="text-sm text-gray-700 dark:text-gray-300">
+                    Total Blogs
+                  </p>
+                  <p className="text-xl font-semibold text-primary-800 dark:text-primary-300">
                     {userDetails.blogStats.total}
                   </p>
                 </div>
-                <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
-                  <p className="text-sm text-gray-500">Published</p>
-                  <p className="text-2xl font-semibold">
+                <div className="bg-success-100 dark:bg-success-900/40 p-4 rounded-lg">
+                  <p className="text-sm text-gray-700 dark:text-gray-300">
+                    Published
+                  </p>
+                  <p className="text-xl font-semibold text-success-800 dark:text-success-300">
                     {userDetails.blogStats.published}
                   </p>
                 </div>
-                <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
-                  <p className="text-sm text-gray-500">Draft</p>
-                  <p className="text-2xl font-semibold">
+                <div className="bg-warning-100 dark:bg-warning-900/40 p-4 rounded-lg">
+                  <p className="text-sm text-gray-700 dark:text-gray-300">
+                    Draft
+                  </p>
+                  <p className="text-xl font-semibold text-warning-800 dark:text-warning-300">
                     {userDetails.blogStats.draft}
                   </p>
                 </div>
-                <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
-                  <p className="text-sm text-gray-500">Total Views</p>
-                  <p className="text-2xl font-semibold">
+                <div className="bg-secondary-100 dark:bg-secondary-900/40 p-4 rounded-lg">
+                  <p className="text-sm text-gray-700 dark:text-gray-300">
+                    Total Views
+                  </p>
+                  <p className="text-xl font-semibold text-secondary-800 dark:text-secondary-300">
                     {userDetails.blogStats.totalViews}
                   </p>
                 </div>
@@ -178,19 +196,21 @@ export default function UserDetails() {
             <CardTitle>Monthly Blog Activity</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 ">
               {userDetails.monthlyBlogCount.map((month) => (
                 <div
                   key={`${month._id.year}-${month._id.month}`}
-                  className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg"
+                  className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg dark:bg-white"
                 >
-                  <p className="text-sm text-gray-500">
+                  <p className="text-sm text-gray-500 dark:text-gray-600">
                     {format(
                       new Date(month._id.year, month._id.month - 1),
                       "MMM yyyy"
                     )}
                   </p>
-                  <p className="text-xl font-semibold">{month.count} posts</p>
+                  <p className="text-xl font-semibold text-gray-900 dark:text-gray-900">
+                    {month.count} posts
+                  </p>
                 </div>
               ))}
             </div>
@@ -209,22 +229,22 @@ export default function UserDetails() {
             <CardTitle>Recent Blogs</CardTitle>
           </CardHeader>
           <CardContent>
-            <Table className="w-full">
-              <Thead>
+            <Table>
+              <Thead className="divide-gray-200 dark:divide-gray-700 border-b border-primary-200 ">
                 <Tr>
-                  <Th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <Th className=" pt-0 py-6 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-100">
                     Title
                   </Th>
-                  <Th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <Th className="pt-0 py-6 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-100">
                     Status
                   </Th>
-                  <Th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <Th className="pt-0 py-6 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-100">
                     Views
                   </Th>
-                  <Th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <Th className="pt-0 py-6 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-100">
                     Engagement
                   </Th>
-                  <Th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <Th className="pt-0 py-6 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-100">
                     Created
                   </Th>
                 </Tr>
@@ -233,19 +253,19 @@ export default function UserDetails() {
                 {userDetails.blogs.map((blog) => (
                   <Tr
                     key={blog._id}
-                    className="hover:bg-gray-50 dark:hover:bg-gray-800"
+                    className="hover:bg-gray-50 dark:hover:bg-gray-800 dark:text-gray-400"
                   >
-                    <Td className="py-4">
+                    <Td className="py-4 ">
                       <div className="flex items-center">
                         <BookOpen className="h-4 w-4 text-gray-400 mr-2" />
-                        <span className="text-sm font-medium">
+                        <span className="text-xs font-medium">
                           {blog.title}
                         </span>
                       </div>
                     </Td>
                     <Td>
                       <span
-                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xxs font-medium ${
                           blog.status === "published"
                             ? "bg-green-100 text-green-800"
                             : "bg-yellow-100 text-yellow-800"
@@ -254,14 +274,14 @@ export default function UserDetails() {
                         {blog.status}
                       </span>
                     </Td>
-                    <Td className="text-sm">{blog.views}</Td>
-                    <Td className="text-sm">
+                    <Td className="text-xs">{blog.views}</Td>
+                    <Td className="text-xs">
                       <div className="flex items-center gap-4">
                         <span>{blog.likes} likes</span>
                         <span>{blog.comments} comments</span>
                       </div>
                     </Td>
-                    <Td className="text-sm">
+                    <Td className="text-xs">
                       {format(new Date(blog.createdAt), "MMM d, yyyy")}
                     </Td>
                   </Tr>

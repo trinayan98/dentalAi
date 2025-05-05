@@ -17,8 +17,10 @@ import { motion } from "framer-motion";
 import { ThemeToggle } from "../components/ThemeToggle";
 
 // Import workspace image
-const workspaceImg = new URL("../assets/images/workspace.jpg", import.meta.url)
-  .href;
+const workspaceImg = new URL(
+  "https://img.freepik.com/free-photo/man-is-using-laptop-books-notebook-top-view_169016-49211.jpg?ga=GA1.1.1194710755.1726822523&semt=ais_hybrid&w=740",
+  import.meta.url
+).href;
 
 const signUpFeatures = [
   {
@@ -80,7 +82,7 @@ export default function AuthLayout() {
       {/* Main Content */}
       <div className="flex-1 flex flex-col md:flex-row">
         {/* Left side - Branding and info */}
-        <div className="w-full md:w-1/2 flex flex-col justify-center items-center lg:items-end">
+        <div className="w-full md:w-1/2 flex flex-col justify-normal items-center lg:items-end">
           <div className="w-full max-w-xl lg:max-w-none lg:w-[520px] lg:mr-0 px-4 sm:px-6 md:px-8 lg:px-16 py-8">
             <motion.div
               key={location.pathname}
@@ -111,16 +113,30 @@ export default function AuthLayout() {
               </div>
 
               <div className="relative rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-800">
-                <div className="absolute top-0 left-0 bg-[#1850F0] text-white text-xs px-2 py-1 z-10">
+                {/* <div className="absolute top-0 left-0 bg-[#1850F0] text-white text-xs px-2 py-1 z-10">
                   {isForgotPassword ? "RECOVERY" : "WORKSPACE"}
-                </div>
+                </div> */}
                 <div className="aspect-[16/10] w-full">
                   {workspaceImg ? (
-                    <img
-                      src={workspaceImg}
-                      alt="Modern workspace setup with laptop and monitor"
-                      className="w-full h-full object-cover"
-                    />
+                    isLoginPage ? (
+                      <img
+                        src="https://img.freepik.com/free-photo/blogging-gone-viral-camera-concept_53876-127618.jpg?ga=GA1.1.1194710755.1726822523&semt=ais_hybrid&w=740"
+                        alt="Businessman using laptop in modern office"
+                        className="w-full h-full object-cover"
+                      />
+                    ) : isSignUpPage ? (
+                      <img
+                        src="https://img.freepik.com/free-photo/man-is-using-laptop-books-notebook-top-view_169016-49211.jpg"
+                        alt="Modern workspace setup with laptop and monitor"
+                        className="w-full h-full object-cover"
+                      />
+                    ) : isForgotPassword ? (
+                      <img
+                        src="https://img.freepik.com/free-vector/forgot-password-concept-illustration_114360-1010.jpg?ga=GA1.1.1194710755.1726822523&semt=ais_hybrid&w=740"
+                        alt="Security concept with lock"
+                        className="w-full h-full object-cover"
+                      />
+                    ) : null
                   ) : (
                     <div className="w-full h-full flex items-center justify-center text-gray-400">
                       <p>Loading image...</p>
@@ -158,7 +174,7 @@ export default function AuthLayout() {
 
         {/* Right side - Auth forms */}
         <div
-          className={`w-full md:w-1/2 flex flex-col justify-center items-center lg:items-start p-6 md:p-8 lg:p-16 ${
+          className={`w-full md:w-1/2 flex flex-col justify-normal items-center lg:items-start p-4 md:p-6 lg:p-8 ${
             isSignUpPage
               ? "bg-white dark:bg-gray-900"
               : "bg-white dark:bg-gray-900"

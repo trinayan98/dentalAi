@@ -19,21 +19,17 @@ import { clsx } from "clsx";
 import { ThemeToggle } from "../components/ThemeToggle";
 
 const navigation = {
-  // common: [
-  //   { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-  //   { name: "Profile", href: "/dashboard/profile", icon: Users },
-  // ],
+  common: [{ name: "Dashboard", href: "/dashboard", icon: LayoutDashboard }],
   user: [
-    { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
     { name: "Blogs", href: "/dashboard/blogs", icon: FileText },
     { name: "Create Blog", href: "/dashboard/blogs/create", icon: PlusCircle },
     { name: "Profile", href: "/dashboard/profile", icon: Users },
   ],
   admin: [
     { name: "Users", href: "/dashboard/users", icon: Users },
-    { name: "System Logs", href: "/dashboard/logs", icon: ScrollText },
     { name: "Settings", href: "/dashboard/settings", icon: Settings },
-    { name: "Profile", href: "/dashboard/profile", icon: Users },
+    // { name: "Profile", href: "/dashboard/profile", icon: Users },
+    { name: "System Logs", href: "/dashboard/logs", icon: ScrollText },
   ],
 };
 
@@ -46,7 +42,7 @@ export default function DashboardLayout() {
 
   const isAdmin = user?.role === "admin";
   const navItems = [
-    // ...navigation.common,
+    ...navigation.common,
     ...(isAdmin ? navigation.admin : navigation.user),
   ];
 
@@ -73,7 +69,7 @@ export default function DashboardLayout() {
       {/* Sidebar */}
       <aside
         className={clsx(
-          "fixed top-0 left-0 z-30 h-full w-56 bg-white dark:bg-gray-800 transform transition-transform duration-200 ease-in-out md:translate-x-0",
+          "fixed top-0 left-0 z-30 h-full  lg:w-[210px] xl:w-[224px] bg-white dark:bg-gray-800 transform transition-transform duration-200 ease-in-out md:translate-x-0",
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
         )}
       >
@@ -101,7 +97,7 @@ export default function DashboardLayout() {
                 key={item.name}
                 to={item.href}
                 className={clsx(
-                  "text-xs group flex items-center px-4 py-2 pt-3 pb-3 text-sm font-medium rounded-md transition-colors",
+                  "text-xxs group flex items-center px-4 py-2 pt-3 pb-3 text-sm font-medium rounded-md transition-colors",
                   location.pathname === item.href
                     ? "bg-primary-500 text-white dark:bg-primary-900/30 dark:text-primary-400"
                     : "text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700/30"
@@ -123,7 +119,7 @@ export default function DashboardLayout() {
       </aside>
 
       {/* Main content */}
-      <div className="md:pl-56 flex-1 flex flex-col min-h-screen">
+      <div className="md:pl-[158px] lg:pl-[210px] xl:pl-[224px] flex-1 flex flex-col min-h-screen">
         {/* Header */}
         <header className="sticky top-0 z-10 bg-white/100 dark:bg-gray-800 backdrop-blur-sm dark:border-gray-700">
           <div className="px-4 sm:px-6 h-16 flex items-center justify-between">

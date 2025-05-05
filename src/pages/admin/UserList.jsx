@@ -15,10 +15,18 @@ import {
   ChevronLeft,
   ChevronsLeft,
   ChevronsRight,
+  Eye,
+  Edit2,
+  Trash2,
+  Edit,
 } from "lucide-react";
 import { Table, Thead, Tbody, Tr, Th, Td } from "react-super-responsive-table";
 import "react-super-responsive-table/dist/SuperResponsiveTableStyle.css";
 import { Input } from "../../components/ui/Input";
+import { usersApi } from "../../utils/usersApi";
+import useAuthStore from "../../stores/authStore";
+import { Switch, FormControlLabel } from "@mui/material";
+import IconButton from "../../components/ui/IconButton";
 
 export default function UserList() {
   const { users, isLoading, error, fetchUsers, pagination } = useUsersStore();
@@ -26,6 +34,7 @@ export default function UserList() {
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
+  const [isToggling, setIsToggling] = useState(false);
 
   // Debounce search term
   useEffect(() => {
@@ -59,6 +68,37 @@ export default function UserList() {
   const handlePageChange = (page) => {
     if (page < 1 || page > (pagination?.pages || 1)) return;
     setCurrentPage(page);
+  };
+
+  const handleToggleStatus = async (userId, currentStatus) => {
+    try {
+      setIsToggling(true);
+      const token = useAuthStore.getState().token;
+      await usersApi.toggleUserStatus(token, userId, currentStatus === 1);
+
+      // Refetch users to update the list
+      await fetchUsers({
+        page: currentPage,
+        limit: 10,
+        search: debouncedSearchTerm,
+      });
+
+      addToast({
+        title: "Success",
+        description: `User ${
+          currentStatus === 1 ? "deactivated" : "activated"
+        } successfully`,
+        type: "success",
+      });
+    } catch (error) {
+      addToast({
+        title: "Error",
+        description: error.message || "Failed to update user status",
+        type: "error",
+      });
+    } finally {
+      setIsToggling(false);
+    }
   };
 
   if (error) {
@@ -115,19 +155,19 @@ export default function UserList() {
           <Table className="w-full">
             <Thead className="divide-gray-200 dark:divide-gray-700 border-b border-primary-200 ">
               <Tr>
-                <Th className="px-6 py-6 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider  ">
+                <Th className="px-6 py-6 text-left text-xxs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider  ">
                   Name
                 </Th>
                 <Th className="px-6 py-6 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                   Email
                 </Th>
-                <Th className="px-6 py-6 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                <Th className="px-6 py-6 text-left text-xxs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                   Role
                 </Th>
-                <Th className="px-6 py-6 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                <Th className="px-6 py-6 text-left text-xxs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                   Status
                 </Th>
-                <Th className="px-6 py-6 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                <Th className="px-6 py-6 text-left text-xxs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                   Actions
                 </Th>
               </Tr>
@@ -153,45 +193,71 @@ export default function UserList() {
                     key={user.id}
                     className="hover:bg-gray-50 dark:hover:bg-gray-700/50"
                   >
-                    <Td className="px-4 py-4 text-xs text-gray-900 dark:text-gray-300">
+                    <Td className="px-4 py-4 text-xxs text-gray-900 dark:text-gray-300">
                       {user.name}
                     </Td>
-                    <Td className="px-4 py-4 text-xs text-gray-900 dark:text-gray-300">
+                    <Td className="px-4 py-4 text-xxs text-gray-900 dark:text-gray-300">
                       {user.email}
                     </Td>
-                    <Td className="px-6 py-4 whitespace-nowrap text-xs">
+                    <Td className="px-6 py-4 whitespace-nowrap text-xxs">
                       <span
-                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                        className={`inline-flex items-center px-2.5 py-1 rounded-sm text-2xs font-medium ${
                           user.role === "admin"
                             ? "bg-purple-100 text-purple-800"
                             : "bg-green-100 text-green-800"
                         }`}
                       >
-                        {user.role}
+                        {user.role === "admin" ? "Admin" : "User"}
                       </span>
                     </Td>
-                    <Td className="px-6 py-4 whitespace-nowrap text-xs">
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                        Active
+                    <Td className="px-6 py-4 whitespace-nowrap text-xxs">
+                      <span
+                        className={`inline-flex items-center px-2.5 py-1 rounded-sm text-2xs font-medium ${
+                          user.active === 1
+                            ? "bg-green-100 text-green-800"
+                            : "bg-red-100 text-red-800"
+                        }`}
+                      >
+                        {user.active === 1 ? "Active" : "Inactive"}
                       </span>
                     </Td>
-                    <Td className="px-6 py-4 whitespace-nowrap text-xs">
-                      <div className="flex space-x-2">
+                    <Td className="px-6 py-4 whitespace-nowrap text-xxs">
+                      <div className="flex items-center space-x-4">
                         <Link to={`/dashboard/users/${user._id}`}>
-                          {/* <Button variant="outline" size="sm">
-                            View Details
-                          </Button> */}
+                          <IconButton
+                            variant="primary"
+                            size="sm"
+                            icon={<Eye className="h-3 w-3" />}
+                            tooltip="View Details"
+                          />
                         </Link>
-                        <Button variant="outline" size="sm">
-                          Edit
-                        </Button>
-                        <Button
-                          variant="outline"
+                        <IconButton
+                          variant="purple"
                           size="sm"
-                          className="text-red-600 hover:text-red-700"
-                        >
-                          Delete
-                        </Button>
+                          icon={<Edit className="h-4 w-4" />}
+                          tooltip="Edit User"
+                        />
+
+                        <IconButton
+                          variant="danger"
+                          size="sm"
+                          icon={<Trash2 className="h-4 w-4" />}
+                          tooltip="Delete User"
+                        />
+                        <FormControlLabel
+                          control={
+                            <Switch
+                              checked={user.active === 1}
+                              onChange={() =>
+                                handleToggleStatus(user._id, user.active)
+                              }
+                              disabled={isToggling}
+                              size="small"
+                              color={user.active === 1 ? "success" : "error"}
+                            />
+                          }
+                          label=""
+                        />
                       </div>
                     </Td>
                   </Tr>

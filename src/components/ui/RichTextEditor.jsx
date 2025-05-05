@@ -39,7 +39,7 @@ const RichTextEditor = ({ value, onChange, placeholder }) => {
         modules={modules}
         formats={formats}
         placeholder={placeholder}
-        className="h-80 mb-12" // Added margin bottom to account for Quill toolbar
+        className="h-80 mb-12 text-gray-700  bg-white dark:bg-white border-gray-300 "
       />
     </div>
   );

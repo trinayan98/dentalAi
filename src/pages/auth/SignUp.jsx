@@ -108,7 +108,7 @@ export default function SignUp() {
       className="w-full max-w-xl mx-auto"
     >
       <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-8 mb-8">
-        <div className="grid grid-cols-1 gap-6 mb-8">
+        {/* <div className="grid grid-cols-1 gap-6 mb-8">
           <Button
             type="button"
             variant="outline"
@@ -146,9 +146,9 @@ export default function SignUp() {
               or
             </span>
           </div>
-        </div>
+        </div>*/}
 
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div className="space-y-4">
             <Input
               label="Full Name"
@@ -212,7 +212,7 @@ export default function SignUp() {
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-[33px] text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 focus:outline-none"
+                  className="absolute right-3 top-[31px] text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 focus:outline-none"
                 >
                   {showPassword ? (
                     <EyeOff className="h-5 w-5" />
@@ -225,11 +225,11 @@ export default function SignUp() {
               {password && (
                 <div className="mt-2 p-3 bg-gray-50 dark:bg-gray-900 rounded-lg">
                   <div className="flex items-center justify-between mb-2">
-                    <span className="text-xs font-medium text-gray-700 dark:text-gray-300">
+                    <span className="text-2xs font-medium text-gray-700 dark:text-gray-300">
                       Password strength
                     </span>
                     <span
-                      className={`text-xxs font-medium ${
+                      className={`text-2xs font-medium ${
                         passwordStrength.label === "Strong"
                           ? "text-success-600 dark:text-success-400"
                           : passwordStrength.label === "Medium"
@@ -268,7 +268,7 @@ export default function SignUp() {
               <button
                 type="button"
                 onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                className="absolute right-3 top-[34px] text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 focus:outline-none"
+                className="absolute right-3 top-[31px] text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 focus:outline-none"
               >
                 {showConfirmPassword ? (
                   <EyeOff className="h-5 w-5" />
@@ -290,10 +290,10 @@ export default function SignUp() {
                 })}
               />
             </div>
-            <div className="ml-3 text-xs">
+            <div className="ml-3 text-xxs">
               <label
                 htmlFor="terms"
-                className={`text-xs font-medium ${
+                className={`text-xss font-medium ${
                   errors.agreeTerms
                     ? "text-error-600 dark:text-error-400"
                     : "text-gray-700 dark:text-gray-300"
@@ -328,13 +328,13 @@ export default function SignUp() {
             size="sm"
             isLoading={isLoading}
             fullWidth
-            className="mt-6 bg-[#1850F0] hover:bg-blue-600"
+            className="mt-4 bg-[#1850F0] hover:bg-blue-600"
           >
             Create Account
           </Button>
         </form>
 
-        <p className="mt-6 text-center text-xs text-gray-600 dark:text-gray-400">
+        <p className="mt-4 text-center text-xxs text-gray-600 dark:text-gray-400">
           Already have an account?{" "}
           <Link
             to="/login"

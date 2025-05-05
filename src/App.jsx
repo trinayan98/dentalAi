@@ -3,27 +3,29 @@ import {
   RouterProvider,
   Navigate,
 } from "react-router-dom";
-import { Suspense } from "react";
+import { Suspense, lazy } from "react";
 import AuthLayout from "./layouts/AuthLayout";
 import DashboardLayout from "./layouts/DashboardLayout";
-import ForgotPassword from "./pages/auth/ForgotPassword";
-import ResetPassword from "./pages/auth/ResetPassword";
-import VerifyEmail from "./pages/auth/VerifyEmail";
-import Dashboard from "./pages/dashboard/Dashboard";
-import CreateBlog from "./pages/blogs/CreateBlog";
-import BlogList from "./pages/blogs/BlogList";
-import BlogDetail from "./pages/blogs/BlogDetail";
-import UserProfile from "./pages/profile/UserProfile";
-import UserDetails from "./pages/admin/UserDetails";
 import { Toaster } from "./components/ui/Toaster";
 import RequiredAuth from "./components/RequiredAuth";
 import RequireRole from "./components/RequireRole";
-import Login from "./pages/auth/Login";
-import SignUp from "./pages/auth/SignUp";
-import UserList from "./pages/admin/UserList";
-import AdminSettings from "./pages/admin/AdminSettings";
-import AdminLogs from "./pages/admin/AdminLogs";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+
+// Lazy load components
+const Login = lazy(() => import("./pages/auth/Login"));
+const SignUp = lazy(() => import("./pages/auth/SignUp"));
+const ForgotPassword = lazy(() => import("./pages/auth/ForgotPassword"));
+const ResetPassword = lazy(() => import("./pages/auth/ResetPassword"));
+const VerifyEmail = lazy(() => import("./pages/auth/VerifyEmail"));
+const Dashboard = lazy(() => import("./pages/dashboard/Dashboard"));
+const CreateBlog = lazy(() => import("./pages/blogs/CreateBlog"));
+const BlogList = lazy(() => import("./pages/blogs/BlogList"));
+const BlogDetail = lazy(() => import("./pages/blogs/BlogDetail"));
+const UserProfile = lazy(() => import("./pages/profile/UserProfile"));
+const UserList = lazy(() => import("./pages/admin/UserList"));
+const UserDetails = lazy(() => import("./pages/admin/UserDetails"));
+const AdminSettings = lazy(() => import("./pages/admin/AdminSettings"));
+const AdminLogs = lazy(() => import("./pages/admin/AdminLogs"));
 
 // Loading component
 const LoadingPage = () => (
@@ -102,7 +104,11 @@ const router = createBrowserRouter([
         children: [
           {
             path: "",
-            element: <Dashboard />,
+            element: (
+              <Suspense fallback={<LoadingPage />}>
+                <Dashboard />
+              </Suspense>
+            ),
           },
           // User-only routes
           {
@@ -110,21 +116,37 @@ const router = createBrowserRouter([
             children: [
               {
                 path: "blogs",
-                element: <BlogList />,
+                element: (
+                  <Suspense fallback={<LoadingPage />}>
+                    <BlogList />
+                  </Suspense>
+                ),
               },
               {
                 path: "blogs/:id",
-                element: <BlogDetail />,
+                element: (
+                  <Suspense fallback={<LoadingPage />}>
+                    <BlogDetail />
+                  </Suspense>
+                ),
               },
               {
                 path: "blogs/create",
-                element: <CreateBlog />,
+                element: (
+                  <Suspense fallback={<LoadingPage />}>
+                    <CreateBlog />
+                  </Suspense>
+                ),
               },
             ],
           },
           {
             path: "profile",
-            element: <UserProfile />,
+            element: (
+              <Suspense fallback={<LoadingPage />}>
+                <UserProfile />
+              </Suspense>
+            ),
           },
           // Admin-only routes
           {

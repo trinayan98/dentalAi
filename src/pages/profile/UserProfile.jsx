@@ -288,7 +288,10 @@ export default function UserProfile() {
   return (
     <div className="max-w-full mx-auto space-y-6">
       <div className="flex items-center gap-2 text-xs">
-        <Link to="/dashboard/users" className="text-gray-500">
+        <Link
+          to="/dashboard/users"
+          className="text-gray-900 dark:text-gray-300"
+        >
           Users
         </Link>
         <ChevronRight className="h-3 w-3 text-gray-400" />
@@ -339,7 +342,7 @@ export default function UserProfile() {
                   )}
                 </div>
 
-                <div className="flex-1 space-y-4">
+                <div className="flex-1 space-y-3">
                   <Input
                     label="Full Name"
                     value={user?.name || ""}
@@ -387,211 +390,218 @@ export default function UserProfile() {
 
         {isOwnProfile && (
           <>
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3, delay: 0.1 }}
-            >
-              <Card className="px-3 py-3">
-                <CardHeader>
-                  <CardTitle>Password</CardTitle>
-                </CardHeader>
-                <CardContent className="pt-0">
-                  <form
-                    onSubmit={handleSubmitPassword(onSubmitPassword)}
-                    className="space-y-2 max-w-md"
-                  >
-                    <Input
-                      label="Current Password"
-                      type="password"
-                      {...registerPassword("currentPassword", {
-                        required: "Current password is required",
-                      })}
-                      error={passwordErrors.currentPassword?.message}
-                      leftIcon={<Lock className="h-4 w-4 text-gray-400" />}
-                      placeholder="Enter current password"
-                    />
-
-                    <Input
-                      label="New Password"
-                      type="password"
-                      {...registerPassword("newPassword", {
-                        required: "New password is required",
-                        minLength: {
-                          value: 8,
-                          message: "Password must be at least 8 characters",
-                        },
-                      })}
-                      error={passwordErrors.newPassword?.message}
-                      leftIcon={<Lock className="h-4 w-4 text-gray-400" />}
-                      placeholder="Enter new password"
-                    />
-
-                    <Input
-                      label="Confirm New Password"
-                      type="password"
-                      {...registerPassword("confirmPassword", {
-                        required: "Please confirm your password",
-                        validate: (value) =>
-                          value === watchPassword("newPassword") ||
-                          "Passwords do not match",
-                      })}
-                      error={passwordErrors.confirmPassword?.message}
-                      leftIcon={<Lock className="h-4 w-4 text-gray-400" />}
-                      placeholder="Confirm new password"
-                    />
-
-                    <Button
-                      type="submit"
-                      variant="primary"
-                      size="xs"
-                      disabled={isLoading}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3, delay: 0.1 }}
+              >
+                <Card className="px-3 py-3">
+                  <CardHeader>
+                    <CardTitle>Password</CardTitle>
+                  </CardHeader>
+                  <CardContent className="pt-0">
+                    <form
+                      onSubmit={handleSubmitPassword(onSubmitPassword)}
+                      className="space-y-2 max-w-md"
                     >
-                      {isLoading ? "Updating..." : "Update Password"}
-                    </Button>
-                  </form>
-                </CardContent>
-              </Card>
-            </motion.div>
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3, delay: 0.2 }}
-            >
-              <Card className="h-full px-3 py-3">
-                <CardHeader>
-                  <CardTitle>Notification Preferences</CardTitle>
-                </CardHeader>
-                <CardContent className="pt-0">
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <h4 className="text-xs font-medium text-gray-900 dark:text-white">
-                          Email Notifications
-                        </h4>
-                        <p className="text-xxs text-gray-500 dark:text-gray-400">
-                          Receive email notifications
-                        </p>
-                      </div>
-                      <button
-                        onClick={() =>
-                          handleToggleNotification("emailNotifications")
-                        }
-                        className={`relative inline-flex h-6 w-11 items-center rounded-full ${
-                          notificationPreferences.emailNotifications
-                            ? "bg-primary-500"
-                            : "bg-gray-200 dark:bg-gray-700"
-                        }`}
+                      <Input
+                        label="Current Password"
+                        type="password"
+                        {...registerPassword("currentPassword", {
+                          required: "Current password is required",
+                        })}
+                        error={passwordErrors.currentPassword?.message}
+                        leftIcon={<Lock className="h-4 w-4 text-gray-400" />}
+                        placeholder="Enter current password"
+                      />
+
+                      <Input
+                        label="New Password"
+                        type="password"
+                        {...registerPassword("newPassword", {
+                          required: "New password is required",
+                          minLength: {
+                            value: 8,
+                            message: "Password must be at least 8 characters",
+                          },
+                        })}
+                        error={passwordErrors.newPassword?.message}
+                        leftIcon={<Lock className="h-4 w-4 text-gray-400" />}
+                        placeholder="Enter new password"
+                      />
+
+                      <Input
+                        label="Confirm New Password"
+                        type="password"
+                        {...registerPassword("confirmPassword", {
+                          required: "Please confirm your password",
+                          validate: (value) =>
+                            value === watchPassword("newPassword") ||
+                            "Passwords do not match",
+                        })}
+                        error={passwordErrors.confirmPassword?.message}
+                        leftIcon={<Lock className="h-4 w-4 text-gray-400" />}
+                        placeholder="Confirm new password"
+                      />
+
+                      <Button
+                        type="submit"
+                        variant="primary"
+                        size="xs"
+                        disabled={isLoading}
                       >
-                        <span
-                          className={`${
+                        {isLoading ? "Updating..." : "Update Password"}
+                      </Button>
+                    </form>
+                  </CardContent>
+                </Card>
+              </motion.div>
+
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3, delay: 0.2 }}
+              >
+                <Card className="h-full px-3 py-3">
+                  <CardHeader>
+                    <CardTitle>Notification Preferences</CardTitle>
+                  </CardHeader>
+                  <CardContent className="pt-0">
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <h4 className="text-xs font-medium text-gray-900 dark:text-white">
+                            Email Notifications
+                          </h4>
+                          <p className="text-xxs text-gray-500 dark:text-gray-400">
+                            Receive email notifications
+                          </p>
+                        </div>
+                        <button
+                          onClick={() =>
+                            handleToggleNotification("emailNotifications")
+                          }
+                          className={`relative inline-flex h-6 w-11 items-center rounded-full ${
                             notificationPreferences.emailNotifications
-                              ? "translate-x-6"
-                              : "translate-x-1"
-                          } inline-block h-4 w-4 transform rounded-full bg-white transition-transform`}
-                        />
-                      </button>
-                    </div>
-
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <h4 className="text-xs font-medium text-gray-900 dark:text-white">
-                          Blog Updates
-                        </h4>
-                        <p className="text-xxs text-gray-500 dark:text-gray-400">
-                          Get notified about blog generation status
-                        </p>
+                              ? "bg-primary-500"
+                              : "bg-gray-200 dark:bg-gray-700"
+                          }`}
+                        >
+                          <span
+                            className={`${
+                              notificationPreferences.emailNotifications
+                                ? "translate-x-6"
+                                : "translate-x-1"
+                            } inline-block h-4 w-4 transform rounded-full bg-white transition-transform`}
+                          />
+                        </button>
                       </div>
-                      <button
-                        onClick={() => handleToggleNotification("blogUpdates")}
-                        className={`relative inline-flex h-6 w-11 items-center rounded-full ${
-                          notificationPreferences.blogUpdates
-                            ? "bg-primary-500"
-                            : "bg-gray-200 dark:bg-gray-700"
-                        }`}
-                      >
-                        <span
-                          className={`${
+
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <h4 className="text-xs font-medium text-gray-900 dark:text-white">
+                            Blog Updates
+                          </h4>
+                          <p className="text-xxs text-gray-500 dark:text-gray-400">
+                            Get notified about blog generation status
+                          </p>
+                        </div>
+                        <button
+                          onClick={() =>
+                            handleToggleNotification("blogUpdates")
+                          }
+                          className={`relative inline-flex h-6 w-11 items-center rounded-full ${
                             notificationPreferences.blogUpdates
-                              ? "translate-x-6"
-                              : "translate-x-1"
-                          } inline-block h-4 w-4 transform rounded-full bg-white transition-transform`}
-                        />
-                      </button>
-                    </div>
-
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <h4 className="text-xs font-medium text-gray-900 dark:text-white">
-                          New Features
-                        </h4>
-                        <p className="text-xxs text-gray-500 dark:text-gray-400">
-                          Learn about new features and updates
-                        </p>
+                              ? "bg-primary-500"
+                              : "bg-gray-200 dark:bg-gray-700"
+                          }`}
+                        >
+                          <span
+                            className={`${
+                              notificationPreferences.blogUpdates
+                                ? "translate-x-6"
+                                : "translate-x-1"
+                            } inline-block h-4 w-4 transform rounded-full bg-white transition-transform`}
+                          />
+                        </button>
                       </div>
-                      <button
-                        onClick={() => handleToggleNotification("newFeatures")}
-                        className={`relative inline-flex h-6 w-11 items-center rounded-full ${
-                          notificationPreferences.newFeatures
-                            ? "bg-primary-500"
-                            : "bg-gray-200 dark:bg-gray-700"
-                        }`}
-                      >
-                        <span
-                          className={`${
+
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <h4 className="text-xs font-medium text-gray-900 dark:text-white">
+                            New Features
+                          </h4>
+                          <p className="text-xxs text-gray-500 dark:text-gray-400">
+                            Learn about new features and updates
+                          </p>
+                        </div>
+                        <button
+                          onClick={() =>
+                            handleToggleNotification("newFeatures")
+                          }
+                          className={`relative inline-flex h-6 w-11 items-center rounded-full ${
                             notificationPreferences.newFeatures
-                              ? "translate-x-6"
-                              : "translate-x-1"
-                          } inline-block h-4 w-4 transform rounded-full bg-white transition-transform`}
-                        />
-                      </button>
-                    </div>
-
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <h4 className="text-xs font-medium text-gray-900 dark:text-white">
-                          Tips & Tutorials
-                        </h4>
-                        <p className="text-xxs text-gray-500 dark:text-gray-400">
-                          Receive tips for better blog creation
-                        </p>
+                              ? "bg-primary-500"
+                              : "bg-gray-200 dark:bg-gray-700"
+                          }`}
+                        >
+                          <span
+                            className={`${
+                              notificationPreferences.newFeatures
+                                ? "translate-x-6"
+                                : "translate-x-1"
+                            } inline-block h-4 w-4 transform rounded-full bg-white transition-transform`}
+                          />
+                        </button>
                       </div>
-                      <button
-                        onClick={() => handleToggleNotification("tips")}
-                        className={`relative inline-flex h-6 w-11 items-center rounded-full ${
-                          notificationPreferences.tips
-                            ? "bg-primary-500"
-                            : "bg-gray-200 dark:bg-gray-700"
-                        }`}
-                      >
-                        <span
-                          className={`${
+
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <h4 className="text-xs font-medium text-gray-900 dark:text-white">
+                            Tips & Tutorials
+                          </h4>
+                          <p className="text-xxs text-gray-500 dark:text-gray-400">
+                            Receive tips for better blog creation
+                          </p>
+                        </div>
+                        <button
+                          onClick={() => handleToggleNotification("tips")}
+                          className={`relative inline-flex h-6 w-11 items-center rounded-full ${
                             notificationPreferences.tips
-                              ? "translate-x-6"
-                              : "translate-x-1"
-                          } inline-block h-4 w-4 transform rounded-full bg-white transition-transform`}
-                        />
-                      </button>
+                              ? "bg-primary-500"
+                              : "bg-gray-200 dark:bg-gray-700"
+                          }`}
+                        >
+                          <span
+                            className={`${
+                              notificationPreferences.tips
+                                ? "translate-x-6"
+                                : "translate-x-1"
+                            } inline-block h-4 w-4 transform rounded-full bg-white transition-transform`}
+                          />
+                        </button>
+                      </div>
                     </div>
-                  </div>
-                </CardContent>
-                <CardFooter>
-                  <Button
-                    variant="outline"
-                    size="xs"
-                    onClick={() => {
-                      addToast({
-                        title: "Notification preferences saved",
-                        type: "success",
-                      });
-                    }}
-                    leftIcon={<Bell className="h-4 w-4" />}
-                  >
-                    Save Preferences
-                  </Button>
-                </CardFooter>
-              </Card>
-            </motion.div>
+                  </CardContent>
+                  <CardFooter>
+                    <Button
+                      variant="outline"
+                      size="xs"
+                      onClick={() => {
+                        addToast({
+                          title: "Notification preferences saved",
+                          type: "success",
+                        });
+                      }}
+                      leftIcon={<Bell className="h-4 w-4" />}
+                    >
+                      Save Preferences
+                    </Button>
+                  </CardFooter>
+                </Card>
+              </motion.div>
+            </div>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
@@ -663,6 +673,7 @@ export default function UserProfile() {
                           }
                           size="xs"
                           onClick={() => handleConnect("google")}
+                          className="text-gray-900 dark:text-gray-300"
                         >
                           {connectedAccounts.google ? "Disconnect" : "Connect"}
                         </Button>
@@ -746,6 +757,7 @@ export default function UserProfile() {
                           onClick={handleLogout}
                           size="sm"
                           leftIcon={<LogOut className="h-4 w-4" />}
+                          className="text-gray-900 dark:text-gray-300"
                         >
                           Log Out
                         </Button>

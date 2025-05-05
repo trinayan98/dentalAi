@@ -109,4 +109,22 @@ export const usersApi = {
     }
     return response.json();
   },
+
+  toggleUserStatus: async (token, userId, isCurrentlyActive) => {
+    const response = await fetch(`${API_URL}/users/${userId}/toggle-status`, {
+      method: "PUT",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        active: isCurrentlyActive ? 0 : 1, // Toggle between 0 and 1
+      }),
+    });
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.message || "Failed to toggle user status");
+    }
+    return response.json();
+  },
 };

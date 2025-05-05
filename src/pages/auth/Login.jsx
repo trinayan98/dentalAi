@@ -60,7 +60,7 @@ export default function Login() {
             type="button"
             variant="outline"
             fullWidth
-            className="border-gray-300 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700"
+            className="border-gray-300 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 dark:text-white"
           >
             <img
               className="h-4 w-4 mr-3"
@@ -73,7 +73,7 @@ export default function Login() {
             type="button"
             variant="outline"
             fullWidth
-            className="border-gray-300 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700"
+            className="border-gray-300 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 dark:text-white"
           >
             <img
               className="h-4 w-4 mr-3"

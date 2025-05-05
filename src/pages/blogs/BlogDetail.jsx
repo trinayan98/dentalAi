@@ -387,7 +387,7 @@ export default function BlogDetail() {
     <div className="max-w-full mx-auto">
       <div className="flex items-center gap-2 text-xs">
         <span
-          className="text-gray-900 cursor-pointer hover:text-primary-500"
+          className="text-gray-900 cursor-pointer hover:text-primary-500  dark:text-gray-300"
           onClick={() => navigate("/dashboard/blogs")}
         >
           My blogs
@@ -439,8 +439,8 @@ export default function BlogDetail() {
               <button
                 className={`px-3 mr-2 py-1.5 rounded text-sm font-medium text-xxs ${
                   viewMode === "edit"
-                    ? "bg-primary-100 text-primary-500 dark:bg-gray-700 dark:text-gray-900 dark:text-white"
-                    : "bg-gray-100 text-gray-600 dark:text-gray-300  hover:bg-primary-500 hover:text-white"
+                    ? "bg-primary-100 text-primary-500 dark:bg-gray-700  dark:text-gray-900 dark:text-white cursor-not-allowed"
+                    : "bg-gray-100 text-gray-600   hover:bg-primary-500 hover:text-white"
                 }`}
                 onClick={() => setViewMode("edit")}
               >
@@ -450,8 +450,8 @@ export default function BlogDetail() {
               <button
                 className={`px-3 py-1.5 rounded  font-medium text-xxs ${
                   viewMode === "preview"
-                    ? "bg-primary-100 text-primary-500 dark:bg-gray-700 dark:text-gray-900 dark:text-white cursor-none"
-                    : " bg-gray-100 text-gray-600 dark:text-gray-300  hover:bg-primary-500 hover:text-white"
+                    ? "bg-primary-100 text-primary-500 dark:bg-gray-700 dark:text-gray-900 dark:text-white cursor-not-allowed"
+                    : " bg-gray-100 text-gray-600   hover:bg-primary-500 hover:text-white"
                 }`}
                 onClick={() => setViewMode("preview")}
               >
@@ -547,7 +547,9 @@ export default function BlogDetail() {
           <Card>
             <CardContent className="p-6">
               <div className="prose dark:prose-invert max-w-none">
-                <h1 className="font-semibold">{editedBlog.title}</h1>
+                <h1 className="font-semibold mb-2 text-grey-900 dark:text-gray-400">
+                  {editedBlog.title}
+                </h1>
                 <div className="flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400 mb-8">
                   <div className="flex items-center text-xxs">
                     <Calendar className="h-3 w-3 mr-1" />
@@ -558,14 +560,15 @@ export default function BlogDetail() {
                     {editedBlog.tags?.join(", ") || "No tags"}
                   </div>
                 </div>
-                <div className="whitespace-pre-wrap text-xs">
+                <div className="whitespace-pre-wrap text-xs dark:text-gray-100 p-6 pt-0">
                   <span
-                    dangerouslySetInnerHTML={{
-                      __html:
-                        editedBlog.content
-                          ?.replace(/<[^>]*>/g, "")
-                          .substring(0, 200) + "...",
-                    }}
+                    // dangerouslySetInnerHTML={{
+                    //   __html:
+                    //     editedBlog.content
+                    //       ?.replace(/<[^>]*>/g, "")
+                    //       .substring(0, 200) + "...",
+                    // }}
+                    dangerouslySetInnerHTML={{ __html: editedBlog.content }}
                   />
                 </div>
               </div>

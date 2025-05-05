@@ -10,7 +10,7 @@ export const Input = forwardRef(
         {label && (
           <label
             htmlFor={id}
-            className="block text-xs font-medium text-[#374151] mb-1 "
+            className="block text-xxs font-medium text-gray-700 dark:text-gray-300 mb-1"
           >
             {label}
           </label>
@@ -28,11 +28,13 @@ export const Input = forwardRef(
             id={id}
             type={type}
             className={clsx(
-              "w-full text-xs px-2 pt-2.5 pb-2.5 py-1.5 rounded-md border",
-              "bg-white text-[#6B7280]",
+              "w-full text-xxs px-2 pt-2 pb-2 py-1.5 rounded-md border",
+              "bg-white dark:bg-gray-800 text-[#6B7280] dark:text-gray-300",
               "focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500",
               leftIcon && "pl-10",
-              error ? "border-red-300" : "border-gray-300",
+              error
+                ? "border-red-300 dark:border-red-500"
+                : "border-gray-300 dark:border-gray-600",
               className
             )}
             {...props}
