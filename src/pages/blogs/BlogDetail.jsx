@@ -22,6 +22,7 @@ import { useBlogStore } from "../../stores/blogStore";
 import { useToastStore } from "../../stores/toastStore";
 import { motion } from "framer-motion";
 import RichTextEditor from "../../components/ui/RichTextEditor";
+import { generateBlogPdf } from "../../utils/pdfGenerator";
 
 export default function BlogDetail() {
   const { id } = useParams();
@@ -221,12 +222,30 @@ export default function BlogDetail() {
     }
   };
 
-  const handleGeneratePdf = () => {
-    addToast({
-      title: "PDF generated",
-      description: "Your blog post has been downloaded as a PDF",
-      type: "success",
-    });
+  const handleGeneratePdf = async () => {
+    try {
+      const success = await generateBlogPdf(currentBlog);
+      if (success) {
+        addToast({
+          title: "PDF generated",
+          description: "Your blog post has been downloaded as a PDF",
+          type: "success",
+        });
+      } else {
+        addToast({
+          title: "PDF generation failed",
+          description: "Failed to generate PDF. Please try again.",
+          type: "error",
+        });
+      }
+    } catch (error) {
+      addToast({
+        title: "PDF generation failed",
+        description:
+          error.message || "Failed to generate PDF. Please try again.",
+        type: "error",
+      });
+    }
   };
 
   const renderFileUploadSection = () => (

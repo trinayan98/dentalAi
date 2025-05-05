@@ -25,6 +25,8 @@ import { useBlogStore } from "../../stores/blogStore";
 import { useToastStore } from "../../stores/toastStore";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
+import { generateBlogPdf } from "../../utils/pdfGenerator";
+
 export default function BlogList() {
   const navigate = useNavigate();
   const { blogs, fetchBlogs, deleteBlog, isLoading } = useBlogStore();
@@ -430,19 +432,40 @@ export default function BlogList() {
                                   Copy Link
                                 </button>
                                 <button
-                                  className="flex items-center w-full px-4 py-1 text-xxs text-primary-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
-                                  onClick={() => {
-                                    // In a real app, this would download the blog as PDF
-                                    addToast({
-                                      title: "Download started",
-                                      description:
-                                        "Your blog post is being downloaded",
-                                      type: "success",
-                                    });
+                                  className="flex items-center w-full px-4 py-2 text-xxs text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                                  onClick={async () => {
+                                    try {
+                                      const success = await generateBlogPdf(
+                                        blog
+                                      );
+                                      if (success) {
+                                        addToast({
+                                          title: "Download started",
+                                          description:
+                                            "Your blog post is being downloaded",
+                                          type: "success",
+                                        });
+                                      } else {
+                                        addToast({
+                                          title: "Download failed",
+                                          description:
+                                            "Failed to generate PDF. Please try again.",
+                                          type: "error",
+                                        });
+                                      }
+                                    } catch (error) {
+                                      addToast({
+                                        title: "Download failed",
+                                        description:
+                                          error.message ||
+                                          "Failed to generate PDF. Please try again.",
+                                        type: "error",
+                                      });
+                                    }
                                     setActiveDropdown(null);
                                   }}
                                 >
-                                  <Download className="h-3 w-3 mr-2" />
+                                  <Download className="h-4 w-4 mr-2" />
                                   Download PDF
                                 </button>
                               </div>
@@ -541,15 +564,36 @@ export default function BlogList() {
                                   Copy Link
                                 </button>
                                 <button
-                                  className="flex items-center w-full px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
-                                  onClick={() => {
-                                    // In a real app, this would download the blog as PDF
-                                    addToast({
-                                      title: "Download started",
-                                      description:
-                                        "Your blog post is being downloaded",
-                                      type: "success",
-                                    });
+                                  className="flex items-center w-full px-4 py-2 text-xxs text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                                  onClick={async () => {
+                                    try {
+                                      const success = await generateBlogPdf(
+                                        blog
+                                      );
+                                      if (success) {
+                                        addToast({
+                                          title: "Download started",
+                                          description:
+                                            "Your blog post is being downloaded",
+                                          type: "success",
+                                        });
+                                      } else {
+                                        addToast({
+                                          title: "Download failed",
+                                          description:
+                                            "Failed to generate PDF. Please try again.",
+                                          type: "error",
+                                        });
+                                      }
+                                    } catch (error) {
+                                      addToast({
+                                        title: "Download failed",
+                                        description:
+                                          error.message ||
+                                          "Failed to generate PDF. Please try again.",
+                                        type: "error",
+                                      });
+                                    }
                                     setActiveDropdown(null);
                                   }}
                                 >
