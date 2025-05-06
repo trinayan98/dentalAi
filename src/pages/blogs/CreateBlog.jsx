@@ -52,10 +52,13 @@ export default function CreateBlog() {
   // For step 3 (review)
   const [previewMode, setPreviewMode] = useState("edit");
 
-  const [selectedFiles, setSelectedFiles] = useState([]);
-  const [previewUrls, setPreviewUrls] = useState([]);
-  const [imageUploadType, setImageUploadType] = useState("file");
-  const [imageUrl, setImageUrl] = useState(""); // Changed from imageUrls array to single imageUrl
+  // Replace multiple image states with a single uploadedImage state
+  const [uploadedImage, setUploadedImage] = useState({
+    type: "file", // can be "file" or "url"
+    file: null,
+    url: "",
+    previewUrl: "",
+  });
 
   // Create blog mutation
   const createBlogMutation = useMutation({
@@ -189,8 +192,12 @@ export default function CreateBlog() {
     const files = Array.from(event.target.files);
     // Only take the first file
     if (files.length > 0) {
-      setSelectedFiles([files[0]]);
-      setPreviewUrls([URL.createObjectURL(files[0])]);
+      setUploadedImage({
+        type: "file",
+        file: files[0],
+        url: "",
+        previewUrl: URL.createObjectURL(files[0]),
+      });
     }
   };
 
@@ -215,17 +222,23 @@ export default function CreateBlog() {
         });
         return;
       }
-      setSelectedFiles([file]);
-      setPreviewUrls([URL.createObjectURL(file)]);
+      setUploadedImage({
+        type: "file",
+        file: file,
+        url: "",
+        previewUrl: URL.createObjectURL(file),
+      });
     }
   };
 
   // Clean up preview URLs when component unmounts
   React.useEffect(() => {
     return () => {
-      previewUrls.forEach((url) => URL.revokeObjectURL(url));
+      if (uploadedImage.previewUrl) {
+        URL.revokeObjectURL(uploadedImage.previewUrl);
+      }
     };
-  }, [previewUrls]);
+  }, [uploadedImage.previewUrl]);
 
   const handleSaveBlog = async () => {
     try {
@@ -277,12 +290,12 @@ export default function CreateBlog() {
         status: "draft",
       };
 
-      if (imageUploadType === "file" && selectedFiles.length > 0) {
+      if (uploadedImage.type === "file" && uploadedImage.file) {
         const formData = new FormData();
         formData.append("blogData", JSON.stringify(blogData));
 
         // Validate and append media file
-        const file = selectedFiles[0];
+        const file = uploadedImage.file;
         const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 
         if (!file.type.startsWith("image/")) {
@@ -294,9 +307,9 @@ export default function CreateBlog() {
         formData.append("media", file);
 
         createBlogMutation.mutate(formData);
-      } else if (imageUploadType === "url" && imageUrl) {
+      } else if (uploadedImage.type === "url" && uploadedImage.url) {
         // Add single image URL to the blog data
-        blogData.imageUrl = imageUrl;
+        blogData.imageUrl = uploadedImage.url;
         createBlogMutation.mutate(blogData);
       } else {
         // No image
@@ -599,10 +612,10 @@ export default function CreateBlog() {
                   <h1 className="mb-2 font-medium text-md text-gray-600 dark:text-gray-300">
                     {topic}
                   </h1>
-                  {previewUrls.length > 0 && (
+                  {uploadedImage.previewUrl && (
                     <div className="mb-4">
                       <img
-                        src={previewUrls[0]}
+                        src={uploadedImage.previewUrl}
                         alt="Featured"
                         className="w-full h-64 object-cover rounded-lg"
                       />
@@ -733,11 +746,15 @@ export default function CreateBlog() {
         <div className="flex space-x-4 mb-2">
           <button
             onClick={() => {
-              setImageUploadType("file");
-              setImageUrl("");
+              setUploadedImage({
+                type: "file",
+                file: null,
+                url: "",
+                previewUrl: "",
+              });
             }}
             className={`px-3 py-1.5 rounded text-xxs font-medium ${
-              imageUploadType === "file"
+              uploadedImage.type === "file"
                 ? "bg-primary-100 text-primary-500 dark:bg-gray-700"
                 : "bg-gray-100 text-gray-600 hover:bg-gray-200"
             }`}
@@ -746,12 +763,15 @@ export default function CreateBlog() {
           </button>
           <button
             onClick={() => {
-              setImageUploadType("url");
-              setSelectedFiles([]);
-              setPreviewUrls([]);
+              setUploadedImage({
+                type: "url",
+                file: null,
+                url: "",
+                previewUrl: "",
+              });
             }}
             className={`px-3 py-1.5 rounded text-xxs font-medium ${
-              imageUploadType === "url"
+              uploadedImage.type === "url"
                 ? "bg-primary-100 text-primary-500 dark:bg-gray-700"
                 : "bg-gray-100 text-gray-600 hover:bg-gray-200"
             }`}
@@ -761,24 +781,28 @@ export default function CreateBlog() {
         </div>
       </div>
 
-      {imageUploadType === "file" ? (
+      {uploadedImage.type === "file" ? (
         <div
           className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 dark:border-gray-700 border-dashed rounded-md"
           onDragOver={handleDragOver}
           onDrop={handleDrop}
         >
-          {previewUrls.length > 0 ? (
+          {uploadedImage.previewUrl && (
             <div className="space-y-4 w-full">
               <div className="relative">
                 <img
-                  src={previewUrls[0]}
+                  src={uploadedImage.previewUrl}
                   alt="Preview"
                   className="w-full h-40 object-cover rounded-md"
                 />
                 <button
                   onClick={() => {
-                    setPreviewUrls([]);
-                    setSelectedFiles([]);
+                    setUploadedImage({
+                      type: "file",
+                      file: null,
+                      url: "",
+                      previewUrl: "",
+                    });
                   }}
                   className="absolute top-2 right-2 bg-red-500 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
                 >
@@ -786,7 +810,8 @@ export default function CreateBlog() {
                 </button>
               </div>
             </div>
-          ) : (
+          )}
+          {!uploadedImage.previewUrl && (
             <div className="space-y-1 text-center">
               <Upload className="mx-auto h-12 w-12 text-gray-400" />
               <div className="flex text-sm text-gray-600 dark:text-gray-400">
@@ -817,14 +842,16 @@ export default function CreateBlog() {
           <div className="flex items-center space-x-2">
             <Input
               placeholder="Enter image URL"
-              value={imageUrl}
-              onChange={(e) => setImageUrl(e.target.value)}
+              value={uploadedImage.url}
+              onChange={(e) =>
+                setUploadedImage({ ...uploadedImage, url: e.target.value })
+              }
             />
           </div>
-          {imageUrl && (
+          {uploadedImage.url && (
             <div className="relative">
               <img
-                src={imageUrl}
+                src={uploadedImage.url}
                 alt="URL Image"
                 className="w-full h-40 object-cover rounded-md"
                 onError={(e) => {
@@ -833,7 +860,7 @@ export default function CreateBlog() {
                 }}
               />
               <button
-                onClick={() => setImageUrl("")}
+                onClick={() => setUploadedImage({ ...uploadedImage, url: "" })}
                 className="absolute top-2 right-2 bg-red-500 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
               >
                 <X className="h-4 w-4" />

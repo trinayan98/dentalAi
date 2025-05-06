@@ -25,6 +25,13 @@ import useAuthStore from "../../stores/authStore";
 import { useToastStore } from "../../stores/toastStore";
 import { motion } from "framer-motion";
 import { userApi } from "../../utils/api";
+import imageCompression from "browser-image-compression";
+
+const IMAGE_CONSTANTS = {
+  VALID_TYPES: ["image/jpeg", "image/png", "image/gif"],
+  MAX_SIZE: 5 * 1024 * 1024,
+  DEFAULT_AVATAR: "/default-avatar.png",
+};
 
 export default function UserProfile() {
   const { id: userId } = useParams();
@@ -93,24 +100,28 @@ export default function UserProfile() {
         let userData;
 
         if (isOwnProfile) {
-          userData = await userApi.getUserProfile(token);
-          if (userData) {
+          const response = await userApi.getUserProfile(token);
+          if (response.success && response.data) {
+            userData = response.data;
             updateUser(userData);
           }
         } else {
           // Fetch other user's profile
-          userData = await userApi.getUserById(token, userId);
-          setProfileUser(userData);
+          const response = await userApi.getUserById(token, userId);
+          if (response.success && response.data) {
+            userData = response.data;
+            setProfileUser(userData);
+          }
         }
 
         if (userData?.avatar) {
           setProfileImage(userData.avatar);
         }
 
-        if (isOwnProfile) {
-          setProfileValue("username", userData?.username || "");
-          setProfileValue("name", userData?.name || "");
-          setProfileValue("email", userData?.email || "");
+        if (isOwnProfile && userData) {
+          setProfileValue("username", userData.username || "");
+          setProfileValue("name", userData.name || "");
+          setProfileValue("email", userData.email || "");
         }
       } catch (error) {
         addToast({
@@ -134,25 +145,40 @@ export default function UserProfile() {
   const onSubmitProfile = async (data) => {
     try {
       setIsLoading(true);
+      console.log("Submitting profile data:", data);
 
-      // Create update data object
-      const updateData = {};
-      if (data.name !== undefined) updateData.name = data.name.trim();
-      if (data.username !== undefined)
-        updateData.username = data.username.trim();
+      // Create update data object with trimmed values
+      const updateData = {
+        name: data.name?.trim(),
+        username: data.username?.trim(),
+      };
 
-      console.log("Form data:", data);
-      console.log("Sending update data:", updateData);
+      // Only include fields that have values
+      Object.keys(updateData).forEach(
+        (key) => updateData[key] === undefined && delete updateData[key]
+      );
+
+      if (Object.keys(updateData).length === 0) {
+        addToast({
+          title: "No changes",
+          description: "No changes were made to your profile",
+          type: "info",
+        });
+        return;
+      }
 
       const response = await userApi.updateProfile(token, updateData);
+      console.log("Server response:", response); // Debug log
 
-      if (response.user) {
-        updateUser(response.user);
+      if (response.success && response.data) {
+        updateUser(response.data);
+
         // Update form values with the response
-        setProfileValue("name", response.user.name || "");
-        setProfileValue("username", response.user.username || "");
+        setProfileValue("name", response.data.name || "");
+        setProfileValue("username", response.data.username || "");
+
         addToast({
-          title: "Profile updated",
+          title: "Success",
           description: "Your profile has been updated successfully",
           type: "success",
         });
@@ -197,30 +223,111 @@ export default function UserProfile() {
 
   const handleImageChange = async (event) => {
     const file = event.target.files[0];
-    if (file) {
-      try {
-        setIsLoading(true);
-        const response = await userApi.updateProfile(token, {
-          avatar: file,
-        });
+    if (!file) return;
 
-        setProfileImage(response.user.avatar);
-        updateUser(response.user);
+    let previewUrl;
+    try {
+      setIsLoading(true);
+
+      // Validate file
+      validateImageFile(file);
+
+      // Create preview URL
+      previewUrl = URL.createObjectURL(file);
+      setProfileImage(previewUrl);
+
+      // Compress image before upload
+      const compressionOptions = {
+        maxSizeMB: 1,
+        maxWidthOrHeight: 800,
+        useWebWorker: true,
+        fileType: file.type,
+      };
+
+      let fileToUpload;
+      try {
+        fileToUpload = await imageCompression(file, compressionOptions);
+        console.log("Compression complete:", {
+          originalSize: (file.size / 1024 / 1024).toFixed(2) + "MB",
+          compressedSize: (fileToUpload.size / 1024 / 1024).toFixed(2) + "MB",
+        });
+      } catch (compressionError) {
+        console.warn("Image compression failed:", compressionError);
+        fileToUpload = file; // Use original file if compression fails
+      }
+
+      // Create and verify FormData
+      const formData = new FormData();
+      formData.append("avatar", fileToUpload);
+
+      // Log FormData content for debugging
+      console.log("FormData contents:");
+      for (let [key, value] of formData.entries()) {
+        console.log(
+          key,
+          ":",
+          value instanceof File
+            ? {
+                name: value.name,
+                type: value.type,
+                size: value.size,
+              }
+            : value
+        );
+      }
+
+      // Upload to server
+      const response = await userApi.updateProfile(token, formData);
+      console.log("Server response:", response);
+
+      if (!response.success) {
+        throw new Error(response.message || "Upload failed");
+      }
+
+      // Update UI with new avatar
+      const avatarUrl = response.data?.avatar;
+      if (avatarUrl) {
+        setProfileImage(avatarUrl);
+        updateUser(response.data);
 
         addToast({
-          title: "Profile picture updated",
-          description: "Your profile picture has been updated successfully",
+          title: "Success",
+          description: "Profile picture updated successfully",
           type: "success",
         });
-      } catch (error) {
-        addToast({
-          title: "Error",
-          description: error.message,
-          type: "error",
-        });
-      } finally {
-        setIsLoading(false);
       }
+    } catch (error) {
+      console.error("Profile picture upload error:", error);
+
+      // Revert to previous avatar
+      setProfileImage(user?.avatar || IMAGE_CONSTANTS.DEFAULT_AVATAR);
+
+      addToast({
+        title: "Error",
+        description: error.message || "Failed to update profile picture",
+        type: "error",
+      });
+    } finally {
+      setIsLoading(false);
+      if (previewUrl) {
+        URL.revokeObjectURL(previewUrl);
+      }
+      // Reset file input
+      event.target.value = "";
+    }
+  };
+
+  // Separate validation function
+  const validateImageFile = (file) => {
+    const validTypes = ["image/jpeg", "image/png", "image/gif"];
+    const maxSize = 5 * 1024 * 1024; // 5MB
+
+    if (!validTypes.includes(file.type)) {
+      throw new Error("Please upload a valid image file (JPG, PNG, or GIF)");
+    }
+
+    if (file.size > maxSize) {
+      throw new Error("Image size should be less than 5MB");
     }
   };
 
@@ -285,6 +392,21 @@ export default function UserProfile() {
     }
   };
 
+  const compressImage = async (file) => {
+    const options = {
+      maxSizeMB: 1,
+      maxWidthOrHeight: 1024,
+      useWebWorker: true,
+    };
+    try {
+      const compressedFile = await imageCompression(file, options);
+      return compressedFile;
+    } catch (error) {
+      console.warn("Image compression failed:", error);
+      return file;
+    }
+  };
+
   return (
     <div className="max-w-full mx-auto space-y-6">
       <div className="flex items-center gap-2 text-xs">
@@ -323,6 +445,14 @@ export default function UserProfile() {
                       <label
                         className="absolute bottom-0 right-0 bg-primary-500 text-white p-2 rounded-full shadow-sm hover:bg-primary-600 transition-colors cursor-pointer"
                         aria-label="Change profile picture"
+                        role="button"
+                        tabIndex={0}
+                        onKeyPress={(e) => {
+                          if (e.key === "Enter" || e.key === " ") {
+                            e.preventDefault();
+                            e.currentTarget.querySelector("input").click();
+                          }
+                        }}
                       >
                         <input
                           type="file"
@@ -330,8 +460,9 @@ export default function UserProfile() {
                           accept="image/*"
                           onChange={handleImageChange}
                           disabled={isLoading}
+                          aria-label="Upload profile picture"
                         />
-                        <Edit2 className="h-4 w-4" />
+                        <Edit2 className="h-4 w-4" aria-hidden="true" />
                       </label>
                     )}
                   </div>
@@ -343,45 +474,46 @@ export default function UserProfile() {
                 </div>
 
                 <div className="flex-1 space-y-3">
-                  <Input
-                    label="Full Name"
-                    value={user?.name || ""}
-                    disabled={!isOwnProfile || isLoading}
-                    {...(isOwnProfile && registerProfile("name"))}
-                    error={isOwnProfile && profileErrors.name?.message}
-                    leftIcon={<User className="h-4 w-4 text-gray-400" />}
-                    placeholder="Enter your full name"
-                  />
+                  <form onSubmit={handleSubmitProfile(onSubmitProfile)}>
+                    <Input
+                      label="Full Name"
+                      {...(isOwnProfile && registerProfile("name"))}
+                      error={isOwnProfile && profileErrors.name?.message}
+                      leftIcon={<User className="h-4 w-4 text-gray-400" />}
+                      placeholder="Enter your full name"
+                      disabled={!isOwnProfile || isLoading}
+                    />
 
-                  <Input
-                    label="Username"
-                    value={user?.username || ""}
-                    disabled={!isOwnProfile || isLoading}
-                    {...(isOwnProfile && registerProfile("username"))}
-                    error={isOwnProfile && profileErrors.username?.message}
-                    leftIcon={<AtSign className="h-4 w-4 text-gray-400" />}
-                    placeholder="Choose a unique username"
-                  />
+                    <Input
+                      label="Username"
+                      {...(isOwnProfile && registerProfile("username"))}
+                      error={isOwnProfile && profileErrors.username?.message}
+                      leftIcon={<AtSign className="h-4 w-4 text-gray-400" />}
+                      placeholder="Choose a unique username"
+                      disabled={!isOwnProfile || isLoading}
+                    />
 
-                  <Input
-                    label="Email Address"
-                    type="email"
-                    value={user?.email || ""}
-                    disabled={true}
-                    leftIcon={<Mail className="h-4 w-4 text-gray-400" />}
-                    placeholder="Email address"
-                  />
+                    <Input
+                      label="Email Address"
+                      type="email"
+                      value={user?.email || ""}
+                      disabled={true}
+                      leftIcon={<Mail className="h-4 w-4 text-gray-400" />}
+                      placeholder="Email address"
+                    />
 
-                  {isOwnProfile && (
-                    <Button
-                      type="submit"
-                      variant="primary"
-                      size="xs"
-                      disabled={isLoading}
-                    >
-                      {isLoading ? "Saving..." : "Save Changes"}
-                    </Button>
-                  )}
+                    {isOwnProfile && (
+                      <Button
+                        type="submit"
+                        variant="primary"
+                        size="xs"
+                        disabled={isLoading}
+                        className="mt-4"
+                      >
+                        {isLoading ? "Saving..." : "Save Changes"}
+                      </Button>
+                    )}
+                  </form>
                 </div>
               </div>
             </CardContent>

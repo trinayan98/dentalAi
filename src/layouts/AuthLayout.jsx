@@ -73,7 +73,7 @@ export default function AuthLayout() {
         <div className="flex items-center space-x-2">
           <Pen className="h-8 w-8 text-[#1850F0]" />
           <span className="text-xl font-bold text-gray-900 dark:text-white">
-            BlogGenius
+            Apisdor
           </span>
         </div>
         <ThemeToggle />
@@ -105,7 +105,7 @@ export default function AuthLayout() {
                 </h1>
                 <p className="text-sm text-gray-600 dark:text-gray-400">
                   {isSignUpPage
-                    ? "Join BlogGenius and start creating AI-powered blog content"
+                    ? "Join Apisdor and start creating AI-powered blog content"
                     : isForgotPassword
                     ? "We'll help you get back to creating amazing content"
                     : "Sign in to continue your content creation journey"}

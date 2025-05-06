@@ -34,10 +34,14 @@ export default function BlogDetail() {
   const [viewMode, setViewMode] = useState("preview");
   const [editedBlog, setEditedBlog] = useState(null);
   const [wordCount, setWordCount] = useState(0);
-  const [selectedFiles, setSelectedFiles] = useState([]);
-  const [previewUrls, setPreviewUrls] = useState([]);
-  const [imageUploadType, setImageUploadType] = useState("file");
-  const [imageUrl, setImageUrl] = useState("");
+
+  // Replace multiple image states with a single uploadedImage state
+  const [uploadedImage, setUploadedImage] = useState({
+    type: "file", // can be "file" or "url"
+    file: null,
+    url: "",
+    previewUrl: "",
+  });
 
   useEffect(() => {
     if (id) {
@@ -53,8 +57,12 @@ export default function BlogDetail() {
 
       // Set image URL if it exists
       if (currentBlog.imageUrl) {
-        setImageUrl(currentBlog.imageUrl);
-        setImageUploadType("url");
+        setUploadedImage({
+          type: "url",
+          file: null,
+          url: currentBlog.imageUrl,
+          previewUrl: currentBlog.imageUrl,
+        });
       }
     }
   }, [currentBlog]);
@@ -88,8 +96,12 @@ export default function BlogDetail() {
     const files = Array.from(event.target.files);
     // Only take the first file
     if (files.length > 0) {
-      setSelectedFiles([files[0]]);
-      setPreviewUrls([URL.createObjectURL(files[0])]);
+      setUploadedImage({
+        type: "file",
+        file: files[0],
+        url: "",
+        previewUrl: URL.createObjectURL(files[0]),
+      });
     }
   };
 
@@ -113,10 +125,23 @@ export default function BlogDetail() {
         });
         return;
       }
-      setSelectedFiles([file]);
-      setPreviewUrls([URL.createObjectURL(file)]);
+      setUploadedImage({
+        type: "file",
+        file: file,
+        url: "",
+        previewUrl: URL.createObjectURL(file),
+      });
     }
   };
+
+  // Clean up preview URLs when component unmounts
+  React.useEffect(() => {
+    return () => {
+      if (uploadedImage.previewUrl && uploadedImage.type === "file") {
+        URL.revokeObjectURL(uploadedImage.previewUrl);
+      }
+    };
+  }, [uploadedImage.previewUrl, uploadedImage.type]);
 
   const handleSave = async () => {
     if (editedBlog && id) {
@@ -127,11 +152,11 @@ export default function BlogDetail() {
           updatedAt: new Date().toISOString(),
         };
 
-        if (imageUploadType === "file" && selectedFiles.length > 0) {
+        if (uploadedImage.type === "file" && uploadedImage.file) {
           const formData = new FormData();
           formData.append("blogData", JSON.stringify(updatedBlog));
 
-          const file = selectedFiles[0];
+          const file = uploadedImage.file;
           const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 
           if (!file.type.startsWith("image/")) {
@@ -143,8 +168,8 @@ export default function BlogDetail() {
           formData.append("media", file);
 
           await updateBlog(id, formData);
-        } else if (imageUploadType === "url" && imageUrl) {
-          updatedBlog.imageUrl = imageUrl;
+        } else if (uploadedImage.type === "url" && uploadedImage.url) {
+          updatedBlog.imageUrl = uploadedImage.url;
           await updateBlog(id, updatedBlog);
         } else {
           // No image
@@ -257,11 +282,15 @@ export default function BlogDetail() {
         <div className="flex space-x-4 mb-2">
           <button
             onClick={() => {
-              setImageUploadType("file");
-              setImageUrl("");
+              setUploadedImage({
+                type: "file",
+                file: null,
+                url: "",
+                previewUrl: "",
+              });
             }}
             className={`px-3 py-1.5 rounded text-xxs font-medium ${
-              imageUploadType === "file"
+              uploadedImage.type === "file"
                 ? "bg-primary-100 text-primary-500 dark:bg-gray-700"
                 : "bg-gray-100 text-gray-600 hover:bg-gray-200"
             }`}
@@ -270,12 +299,15 @@ export default function BlogDetail() {
           </button>
           <button
             onClick={() => {
-              setImageUploadType("url");
-              setSelectedFiles([]);
-              setPreviewUrls([]);
+              setUploadedImage({
+                type: "url",
+                file: null,
+                url: "",
+                previewUrl: "",
+              });
             }}
             className={`px-3 py-1.5 rounded text-xxs font-medium ${
-              imageUploadType === "url"
+              uploadedImage.type === "url"
                 ? "bg-primary-100 text-primary-500 dark:bg-gray-700"
                 : "bg-gray-100 text-gray-600 hover:bg-gray-200"
             }`}
@@ -285,24 +317,28 @@ export default function BlogDetail() {
         </div>
       </div>
 
-      {imageUploadType === "file" ? (
+      {uploadedImage.type === "file" ? (
         <div
           className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 dark:border-gray-700 border-dashed rounded-md"
           onDragOver={handleDragOver}
           onDrop={handleDrop}
         >
-          {previewUrls.length > 0 ? (
+          {uploadedImage.previewUrl ? (
             <div className="space-y-4 w-full">
               <div className="relative">
                 <img
-                  src={previewUrls[0]}
+                  src={uploadedImage.previewUrl}
                   alt="Preview"
                   className="w-full h-40 object-cover rounded-md"
                 />
                 <button
                   onClick={() => {
-                    setPreviewUrls([]);
-                    setSelectedFiles([]);
+                    setUploadedImage({
+                      type: "file",
+                      file: null,
+                      url: "",
+                      previewUrl: "",
+                    });
                   }}
                   className="absolute top-2 right-2 bg-red-500 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
                 >
@@ -341,14 +377,16 @@ export default function BlogDetail() {
           <div className="flex items-center space-x-2">
             <Input
               placeholder="Enter image URL"
-              value={imageUrl}
-              onChange={(e) => setImageUrl(e.target.value)}
+              value={uploadedImage.url}
+              onChange={(e) =>
+                setUploadedImage({ ...uploadedImage, url: e.target.value })
+              }
             />
           </div>
-          {imageUrl && (
+          {uploadedImage.url && (
             <div className="relative">
               <img
-                src={imageUrl}
+                src={uploadedImage.url}
                 alt="URL Image"
                 className="w-full h-40 object-cover rounded-md"
                 onError={(e) => {
@@ -357,7 +395,7 @@ export default function BlogDetail() {
                 }}
               />
               <button
-                onClick={() => setImageUrl("")}
+                onClick={() => setUploadedImage({ ...uploadedImage, url: "" })}
                 className="absolute top-2 right-2 bg-red-500 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
               >
                 <X className="h-4 w-4" />

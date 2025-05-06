@@ -57,7 +57,7 @@ export default function SignUp() {
       navigate("/login");
       addToast({
         title: "Registration successful",
-        description: "Welcome to BlogGenius!",
+        description: "Welcome to Apisdor!",
         type: "success",
       });
     } catch (error) {

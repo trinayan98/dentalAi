@@ -49,43 +49,45 @@ export const authApi = {
 
 export const userApi = {
   updateProfile: async (token, data) => {
-    console.log("Updating profile with data:", data); // Debug log
-
-    const formData = new FormData();
-
-    // Handle name update
-    if (data.name !== undefined) {
-      formData.append("name", data.name);
-    }
-
-    // Handle username update
-    if (data.username !== undefined) {
-      formData.append("username", data.username);
-      console.log("FormData username value:", data.username);
-      // Log the actual FormData entries
-      for (let [key, value] of formData.entries()) {
-        console.log(`FormData ${key}:`, value);
-      }
-    }
-
-    // Handle avatar update
-    if (data.avatar && data.avatar instanceof File) {
-      formData.append("avatar", data.avatar);
-    }
-
-    const response = await fetch(`${API_URL}/users/profile`, {
-      method: "PUT",
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-      body: formData,
+    // Log the incoming data
+    console.log("updateProfile - Incoming data:", {
+      type: data instanceof FormData ? "FormData" : "JSON",
+      data:
+        data instanceof FormData ? Object.fromEntries(data.entries()) : data,
     });
+
+    let response;
+
+    if (data instanceof FormData) {
+      // Handle FormData (for file uploads)
+      response = await fetch(`${API_URL}/users/profile`, {
+        method: "PUT",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          // Don't set Content-Type for FormData
+        },
+        body: data,
+      });
+    } else {
+      // Handle JSON data (for regular updates)
+      response = await fetch(`${API_URL}/users/profile`, {
+        method: "PUT",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
+      });
+    }
 
     if (!response.ok) {
       const error = await response.json();
       throw new Error(error.message || "Failed to update profile");
     }
-    return response.json();
+
+    const result = await response.json();
+    console.log("Profile update response:", result);
+    return result;
   },
 
   changePassword: async (token, passwordData) => {
