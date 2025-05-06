@@ -26,6 +26,7 @@ import { useToastStore } from "../../stores/toastStore";
 import { motion } from "framer-motion";
 import { userApi } from "../../utils/api";
 import imageCompression from "browser-image-compression";
+import ImageCropper from "../../components/ImageCropper";
 
 const IMAGE_CONSTANTS = {
   VALID_TYPES: ["image/jpeg", "image/png", "image/gif"],
@@ -43,6 +44,8 @@ export default function UserProfile() {
   const [profileImage, setProfileImage] = useState(
     "https://images.pexels.com/photos/415829/pexels-photo-415829.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2"
   );
+  const [showCropper, setShowCropper] = useState(false);
+  const [cropperImage, setCropperImage] = useState(null);
 
   const isOwnProfile = !userId || userId === currentUser?.id;
   const user = isOwnProfile ? currentUser : profileUser;
@@ -225,56 +228,62 @@ export default function UserProfile() {
     const file = event.target.files[0];
     if (!file) return;
 
-    let previewUrl;
     try {
-      setIsLoading(true);
-
       // Validate file
       validateImageFile(file);
 
-      // Create preview URL
-      previewUrl = URL.createObjectURL(file);
-      setProfileImage(previewUrl);
+      // Create preview URL and show cropper
+      const previewUrl = URL.createObjectURL(file);
+      setCropperImage(previewUrl);
+      setShowCropper(true);
+    } catch (error) {
+      console.error("Profile picture upload error:", error);
+      addToast({
+        title: "Error",
+        description: error.message || "Failed to process image",
+        type: "error",
+      });
+    } finally {
+      // Reset file input
+      event.target.value = "";
+    }
+  };
+
+  const handleCropComplete = async (croppedImage) => {
+    setShowCropper(false);
+    URL.revokeObjectURL(cropperImage);
+    setCropperImage(null);
+
+    try {
+      setIsLoading(true);
+      setProfileImage(croppedImage.url);
 
       // Compress image before upload
       const compressionOptions = {
         maxSizeMB: 1,
         maxWidthOrHeight: 800,
         useWebWorker: true,
-        fileType: file.type,
       };
 
       let fileToUpload;
       try {
-        fileToUpload = await imageCompression(file, compressionOptions);
+        fileToUpload = await imageCompression(
+          croppedImage.file,
+          compressionOptions
+        );
         console.log("Compression complete:", {
-          originalSize: (file.size / 1024 / 1024).toFixed(2) + "MB",
+          originalSize:
+            (croppedImage.file.size / 1024 / 1024).toFixed(2) + "MB",
           compressedSize: (fileToUpload.size / 1024 / 1024).toFixed(2) + "MB",
         });
       } catch (compressionError) {
         console.warn("Image compression failed:", compressionError);
-        fileToUpload = file; // Use original file if compression fails
+        fileToUpload = croppedImage.file;
       }
 
       // Create and verify FormData
       const formData = new FormData();
       formData.append("avatar", fileToUpload);
-
-      // Log FormData content for debugging
-      console.log("FormData contents:");
-      for (let [key, value] of formData.entries()) {
-        console.log(
-          key,
-          ":",
-          value instanceof File
-            ? {
-                name: value.name,
-                type: value.type,
-                size: value.size,
-              }
-            : value
-        );
-      }
 
       // Upload to server
       const response = await userApi.updateProfile(token, formData);
@@ -309,11 +318,15 @@ export default function UserProfile() {
       });
     } finally {
       setIsLoading(false);
-      if (previewUrl) {
-        URL.revokeObjectURL(previewUrl);
-      }
-      // Reset file input
-      event.target.value = "";
+      URL.revokeObjectURL(croppedImage.url);
+    }
+  };
+
+  const handleCropCancel = () => {
+    setShowCropper(false);
+    if (cropperImage) {
+      URL.revokeObjectURL(cropperImage);
+      setCropperImage(null);
     }
   };
 
@@ -409,6 +422,15 @@ export default function UserProfile() {
 
   return (
     <div className="max-w-full mx-auto space-y-6">
+      {showCropper && cropperImage && (
+        <ImageCropper
+          imageSrc={cropperImage}
+          onCropComplete={handleCropComplete}
+          onCancel={handleCropCancel}
+          aspectRatio={1}
+        />
+      )}
+
       <div className="flex items-center gap-2 text-xs">
         <Link
           to="/dashboard/users"
