@@ -22,7 +22,7 @@ export const Button = ({
     secondary:
       "bg-secondary-500 text-white hover:bg-secondary-600 focus-visible:ring-secondary-500",
     outline:
-      "border border-gray-300 bg-transparent hover:bg-gray-100 dark:border-gray-700 dark:hover:bg-gray-800 focus-visible:ring-gray-500",
+      "border border-gray-300 bg-transparent hover:bg-gray-100 dark:border-gray-100 dark:text-gray-100 dark:hover:bg-gray-800 focus-visible:ring-gray-500",
     ghost:
       "bg-transparent hover:bg-gray-100 dark:hover:bg-gray-800 focus-visible:ring-gray-500",
     link: "bg-transparent underline-offset-4 hover:underline text-primary-500 hover:text-primary-600 focus-visible:ring-primary-500 p-0 height-auto",

@@ -268,7 +268,7 @@ export default function TranscriptionDetail() {
               <>
                 <Button
                   size="sm"
-                  variant="outline"
+                  variant="danger"
                   onClick={() => {
                     setIsEditing(false);
                     setFormData({
@@ -322,7 +322,7 @@ export default function TranscriptionDetail() {
                 </Button>
                 <Button
                   size="sm"
-                  variant="outline"
+                  variant="danger"
                   onClick={handleDelete}
                   disabled={isDeleting}
                   className="text-error-600 hover:text-error-700"
@@ -443,7 +443,7 @@ export default function TranscriptionDetail() {
                     className="font-mono"
                   />
                 ) : (
-                  <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg font-mono text-sm whitespace-pre-wrap">
+                  <div className="p-4 bg-gray-50 dark:bg-gray-700 rounded-lg font-mono text-sm whitespace-pre-wrap dark:text-gray-100">
                     <style>{`.transcription-section-header { background: #e0f2fe; color: #0c4a6e; padding: 1px 4px; border-radius: 4px; font-weight: bold; display: inline-block; margin-bottom: 0.1em; }`}</style>
                     <span
                       dangerouslySetInnerHTML={{
@@ -480,7 +480,7 @@ export default function TranscriptionDetail() {
                       <option value="ko">Korean</option>
                     </select>
                   ) : (
-                    <div className="p-2 bg-gray-50 dark:bg-gray-800 rounded-lg text-xs">
+                    <div className="p-2 bg-gray-50 dark:text-gray-100 rounded-lg text-xs dark:bg-gray-700">
                       {transcription.language || "Unknown"}
                     </div>
                   )}
@@ -525,7 +525,7 @@ export default function TranscriptionDetail() {
                     placeholder="Add any additional notes"
                   />
                 ) : (
-                  <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg text-xs">
+                  <div className="p-4 bg-gray-50 dark:bg-gray-700 rounded-lg font-mono text-sm whitespace-pre-wrap dark:text-gray-100">
                     {transcription.notes || "No notes"}
                   </div>
                 )}
