@@ -28,6 +28,30 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 
+// Utility function to prettify medical transcription and highlight section headers
+function prettifyTranscription(text) {
+  if (!text) return "";
+
+  // Highlight section headers (text between **...**)
+  let formatted = text.replace(/\*\*(.+?)\*\*/g, (match, p1) => {
+    return `<span class='transcription-section-header'>${p1}</span>`;
+  });
+
+  // Add a single line break after section headers
+  formatted = formatted.replace(
+    /(<span class='transcription-section-header'>.+?<\/span>)/g,
+    "$1<br>"
+  );
+
+  // Convert all remaining newlines to <br>
+  // formatted = formatted.replace(/\n/g, "<br>");
+
+  // Remove leading/trailing whitespace
+  formatted = formatted.trim();
+
+  return formatted;
+}
+
 export default function TranscriptionDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -202,9 +226,9 @@ export default function TranscriptionDetail() {
   if (!transcription) return null;
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
+    <div className="max-w-full space-y-6">
       {/* Breadcrumbs */}
-      <div className="flex items-center gap-2 text-xs">
+      <div className="flex items-center gap-2 text-xs ">
         <button
           onClick={() => navigate("/dashboard/transcriptions")}
           className="text-gray-500 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
@@ -216,107 +240,107 @@ export default function TranscriptionDetail() {
           {transcription.title || "Transcription"}
         </span>
       </div>
+      <div className="max-w-4xl mx-auto space-y-6">
+        {/* Header */}
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-md font-semibold text-gray-900 dark:text-white">
+              {!isEditing && transcription.title}
+            </h1>
+            <div className="flex items-center gap-4 mt-2 text-xs text-gray-500 dark:text-gray-400">
+              <div className="flex items-center gap-1">
+                <Clock className="h-4 w-4" />
+                {new Date(transcription.createdAt).toLocaleDateString()}
+              </div>
+              <div className="flex items-center gap-1">
+                <Tag className="h-4 w-4" />
+                {transcription.language || "Unknown"}
+              </div>
+              <div className="flex items-center gap-1">
+                <FileText className="h-4 w-4" />
+                {transcription.status || "Unknown"}
+              </div>
+            </div>
+          </div>
 
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-xl font-semibold text-gray-900 dark:text-white">
-            {!isEditing && transcription.title}
-          </h1>
-          <div className="flex items-center gap-4 mt-2 text-sm text-gray-500 dark:text-gray-400">
-            <div className="flex items-center gap-1">
-              <Clock className="h-4 w-4" />
-              {new Date(transcription.createdAt).toLocaleDateString()}
-            </div>
-            <div className="flex items-center gap-1">
-              <Tag className="h-4 w-4" />
-              {transcription.language || "Unknown"}
-            </div>
-            <div className="flex items-center gap-1">
-              <FileText className="h-4 w-4" />
-              {transcription.status || "Unknown"}
-            </div>
+          <div className="flex items-center gap-2 mb-2">
+            {isEditing ? (
+              <>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => {
+                    setIsEditing(false);
+                    setFormData({
+                      title: transcription.title || "",
+                      transcription: transcription.transcription || "",
+                      language: transcription.language || "en",
+                      tags: transcription.tags?.join(", ") || "",
+                      notes: transcription.notes || "",
+                    });
+                  }}
+                  disabled={isSaving}
+                >
+                  <X className="h-4 w-4 mr-2" />
+                  Cancel
+                </Button>
+                <Button onClick={handleSave} disabled={isSaving} size="sm">
+                  {isSaving ? (
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  ) : (
+                    <Save className="h-4 w-4 mr-2" />
+                  )}
+                  Save Changes
+                </Button>
+              </>
+            ) : (
+              <>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => {
+                    navigator.clipboard.writeText(
+                      window.location.origin + `/dashboard/transcribe/${id}`
+                    );
+                    addToast({
+                      title: "Link copied",
+                      description: "Transcription link copied to clipboard",
+                      type: "success",
+                    });
+                  }}
+                >
+                  <Copy className="h-4 w-4 mr-2" />
+                  Copy Link
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setIsEditing(true)}
+                >
+                  <Edit className="h-4 w-4 mr-2" />
+                  Edit
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={handleDelete}
+                  disabled={isDeleting}
+                  className="text-error-600 hover:text-error-700"
+                >
+                  {isDeleting ? (
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  ) : (
+                    <Trash className="h-4 w-4 mr-2" />
+                  )}
+                  Delete
+                </Button>
+              </>
+            )}
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
-          {isEditing ? (
-            <>
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => {
-                  setIsEditing(false);
-                  setFormData({
-                    title: transcription.title || "",
-                    transcription: transcription.transcription || "",
-                    language: transcription.language || "en",
-                    tags: transcription.tags?.join(", ") || "",
-                    notes: transcription.notes || "",
-                  });
-                }}
-                disabled={isSaving}
-              >
-                <X className="h-4 w-4 mr-2" />
-                Cancel
-              </Button>
-              <Button onClick={handleSave} disabled={isSaving} size="sm">
-                {isSaving ? (
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                ) : (
-                  <Save className="h-4 w-4 mr-2" />
-                )}
-                Save Changes
-              </Button>
-            </>
-          ) : (
-            <>
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => {
-                  navigator.clipboard.writeText(
-                    window.location.origin + `/dashboard/transcribe/${id}`
-                  );
-                  addToast({
-                    title: "Link copied",
-                    description: "Transcription link copied to clipboard",
-                    type: "success",
-                  });
-                }}
-              >
-                <Copy className="h-4 w-4 mr-2" />
-                Copy Link
-              </Button>
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => setIsEditing(true)}
-              >
-                <Edit className="h-4 w-4 mr-2" />
-                Edit
-              </Button>
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={handleDelete}
-                disabled={isDeleting}
-                className="text-error-600 hover:text-error-700"
-              >
-                {isDeleting ? (
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                ) : (
-                  <Trash className="h-4 w-4 mr-2" />
-                )}
-                Delete
-              </Button>
-            </>
-          )}
-        </div>
-      </div>
-
-      {/* Audio Player */}
-      {/* {transcription.audioUrl && (
+        {/* Audio Player */}
+        {/* {transcription.audioUrl && (
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-4">
@@ -388,120 +412,128 @@ export default function TranscriptionDetail() {
         </Card>
       )} */}
 
-      {/* Transcription Content */}
-      <Card>
-        <CardContent className="p-6">
-          <div className="space-y-4">
-            {isEditing && (
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Title
-                </label>
-                <Input
-                  name="title"
-                  value={formData.title}
-                  onChange={handleInputChange}
-                  className="text-2xl font-semibold"
-                />
-              </div>
-            )}
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Transcription
-              </label>
-              {isEditing ? (
-                <Textarea
-                  name="transcription"
-                  value={formData.transcription}
-                  onChange={handleInputChange}
-                  rows={10}
-                  className="font-mono"
-                />
-              ) : (
-                <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg font-mono text-sm whitespace-pre-wrap">
-                  {transcription.transcription}
+        {/* Transcription Content */}
+        <Card>
+          <CardContent className="p-6">
+            <div className="space-y-4">
+              {isEditing && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Title
+                  </label>
+                  <Input
+                    name="title"
+                    value={formData.title}
+                    onChange={handleInputChange}
+                    className="text-2xl font-semibold"
+                  />
                 </div>
               )}
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Language
-                </label>
-                {isEditing ? (
-                  <select
-                    name="language"
-                    value={formData.language}
-                    onChange={handleInputChange}
-                    className="w-full rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
-                  >
-                    <option value="en">English</option>
-                    <option value="es">Spanish</option>
-                    <option value="fr">French</option>
-                    <option value="de">German</option>
-                    <option value="it">Italian</option>
-                    <option value="pt">Portuguese</option>
-                    <option value="ru">Russian</option>
-                    <option value="zh">Chinese</option>
-                    <option value="ja">Japanese</option>
-                    <option value="ko">Korean</option>
-                  </select>
-                ) : (
-                  <div className="p-2 bg-gray-50 dark:bg-gray-800 rounded-lg text-xs">
-                    {transcription.language || "Unknown"}
-                  </div>
-                )}
-              </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Tags
+                  Transcription
                 </label>
                 {isEditing ? (
-                  <Input
-                    name="tags"
-                    value={formData.tags}
+                  <Textarea
+                    name="transcription"
+                    value={formData.transcription}
                     onChange={handleInputChange}
-                    placeholder="Enter tags (comma-separated)"
+                    rows={10}
+                    className="font-mono"
                   />
                 ) : (
-                  <div className="flex flex-wrap gap-2">
-                    {transcription.tags?.map((tag, index) => (
-                      <span
-                        key={index}
-                        className="px-2 py-1 bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 rounded-full text-xxs"
-                      >
-                        {tag}
-                      </span>
-                    ))}
+                  <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg font-mono text-sm whitespace-pre-wrap">
+                    <style>{`.transcription-section-header { background: #e0f2fe; color: #0c4a6e; padding: 1px 4px; border-radius: 4px; font-weight: bold; display: inline-block; margin-bottom: 0.1em; }`}</style>
+                    <span
+                      dangerouslySetInnerHTML={{
+                        __html: prettifyTranscription(
+                          transcription.transcription
+                        ),
+                      }}
+                    />
+                  </div>
+                )}
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Language
+                  </label>
+                  {isEditing ? (
+                    <select
+                      name="language"
+                      value={formData.language}
+                      onChange={handleInputChange}
+                      className="w-full rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                    >
+                      <option value="en">English</option>
+                      <option value="es">Spanish</option>
+                      <option value="fr">French</option>
+                      <option value="de">German</option>
+                      <option value="it">Italian</option>
+                      <option value="pt">Portuguese</option>
+                      <option value="ru">Russian</option>
+                      <option value="zh">Chinese</option>
+                      <option value="ja">Japanese</option>
+                      <option value="ko">Korean</option>
+                    </select>
+                  ) : (
+                    <div className="p-2 bg-gray-50 dark:bg-gray-800 rounded-lg text-xs">
+                      {transcription.language || "Unknown"}
+                    </div>
+                  )}
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Tags
+                  </label>
+                  {isEditing ? (
+                    <Input
+                      name="tags"
+                      value={formData.tags}
+                      onChange={handleInputChange}
+                      placeholder="Enter tags (comma-separated)"
+                    />
+                  ) : (
+                    <div className="flex flex-wrap gap-2">
+                      {transcription.tags?.map((tag, index) => (
+                        <span
+                          key={index}
+                          className="px-2 py-1 bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 rounded-full text-xxs"
+                        >
+                          {tag}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Notes
+                </label>
+                {isEditing ? (
+                  <Textarea
+                    name="notes"
+                    value={formData.notes}
+                    onChange={handleInputChange}
+                    rows={3}
+                    placeholder="Add any additional notes"
+                  />
+                ) : (
+                  <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg text-xs">
+                    {transcription.notes || "No notes"}
                   </div>
                 )}
               </div>
             </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Notes
-              </label>
-              {isEditing ? (
-                <Textarea
-                  name="notes"
-                  value={formData.notes}
-                  onChange={handleInputChange}
-                  rows={3}
-                  placeholder="Add any additional notes"
-                />
-              ) : (
-                <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg text-xs">
-                  {transcription.notes || "No notes"}
-                </div>
-              )}
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }

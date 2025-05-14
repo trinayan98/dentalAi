@@ -394,10 +394,10 @@ export default function CreateTranscription() {
                             className="hidden"
                           />
                           <Upload className="h-8 w-8 mx-auto text-gray-400 mb-4" />
-                          <h3 className="text-md font-medium text-gray-900 dark:text-white mb-2">
+                          <h3 className="text-sm font-medium text-gray-900 dark:text-white mb-2">
                             Upload Audio File
                           </h3>
-                          <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">
+                          <p className="text-xxs text-gray-500 dark:text-gray-400 mb-4">
                             Supported formats: FLAC, M4A, MP3, MP4, MPEG, MPGA,
                             OGA, OGG, WAV, WEBM
                           </p>
@@ -419,10 +419,10 @@ export default function CreateTranscription() {
                         {/* Record Section */}
                         <div className="border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-lg p-8 text-center">
                           <Mic className="h-8 w-8 mx-auto text-gray-400 mb-4" />
-                          <h3 className="text-md font-medium text-gray-900 dark:text-white mb-2">
+                          <h3 className="text-sm font-medium text-gray-900 dark:text-white mb-2">
                             Record Audio
                           </h3>
-                          <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">
+                          <p className="text-xxs text-gray-500 dark:text-gray-400 mb-4">
                             Record audio directly in your browser
                           </p>
                           {!isRecording ? (

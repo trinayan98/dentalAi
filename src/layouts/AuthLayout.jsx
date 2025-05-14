@@ -24,18 +24,18 @@ const workspaceImg = new URL(
 
 const signUpFeatures = [
   {
-    title: "AI-Powered Writing",
-    description: "Generate high-quality blog posts instantly",
+    title: "Accurate Medical Transcription",
+    description: "Convert medical dictations to text with high accuracy",
     icon: Sparkles,
   },
   {
-    title: "SEO Optimization",
-    description: "Rank higher in search results",
-    icon: Target,
+    title: "HIPAA Compliant",
+    description: "Secure handling of sensitive medical information",
+    icon: Shield,
   },
   {
-    title: "Easy Integration",
-    description: "Works with your favorite platforms",
+    title: "EHR Integration",
+    description: "Seamless integration with Electronic Health Records",
     icon: Zap,
   },
 ];
@@ -43,18 +43,18 @@ const signUpFeatures = [
 const authFeatures = [
   {
     title: "Secure Access",
-    description: "Your data is protected with enterprise-grade security",
+    description: "HIPAA-compliant security for all medical data",
     icon: Shield,
   },
   {
-    title: "Smart Collaboration",
-    description: "Work together with your team seamlessly",
-    icon: Users,
+    title: "Medical Templates",
+    description: "Pre-built templates for various medical specialties",
+    icon: BookOpen,
   },
   {
-    title: "Privacy First",
-    description: "Your content, your control, always protected",
-    icon: Lock,
+    title: "Quality Assurance",
+    description: "Built-in quality checks for medical accuracy",
+    icon: Check,
   },
 ];
 
@@ -89,24 +89,24 @@ export default function AuthLayout() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5 }}
-              className="space-y-3"
+              className="space-y-6"
             >
               <div className="space-y-1">
                 <h1
                   className={`text-xl font-bold dark:text-blue-500 dark:text-blue-500 text-gray-800`}
                 >
                   {isSignUpPage
-                    ? "Create your account"
+                    ? "Create your medical transcription account"
                     : isForgotPassword
                     ? "Password Recovery"
-                    : "Welcome back"}
+                    : "Welcome to Medical Transcription"}
                 </h1>
                 <p className="text-sm text-gray-600 dark:text-gray-400">
                   {isSignUpPage
-                    ? "Join Apisdor and start creating AI-powered blog content"
+                    ? "Join our platform and streamline your medical documentation process"
                     : isForgotPassword
-                    ? "We'll help you get back to creating amazing content"
-                    : "Sign in to continue your content creation journey"}
+                    ? "We'll help you regain access to your medical transcription account"
+                    : "Sign in to access your medical transcription workspace"}
                 </p>
               </div>
 
@@ -118,19 +118,19 @@ export default function AuthLayout() {
                   {workspaceImg ? (
                     isLoginPage ? (
                       <img
-                        src="https://img.freepik.com/free-photo/blogging-gone-viral-camera-concept_53876-127618.jpg?ga=GA1.1.1194710755.1726822523&semt=ais_hybrid&w=740"
+                        src="/signinTrans.svg"
                         alt="Businessman using laptop in modern office"
                         className="w-full h-full object-cover"
                       />
                     ) : isSignUpPage ? (
                       <img
-                        src="https://img.freepik.com/free-photo/man-is-using-laptop-books-notebook-top-view_169016-49211.jpg"
+                        src="/transLogin.svg"
                         alt="Modern workspace setup with laptop and monitor"
                         className="w-full h-full object-cover"
                       />
                     ) : isForgotPassword ? (
                       <img
-                        src="https://img.freepik.com/free-vector/forgot-password-concept-illustration_114360-1010.jpg?ga=GA1.1.1194710755.1726822523&semt=ais_hybrid&w=740"
+                        src="/forgotPwdTrans.svg"
                         alt="Security concept with lock"
                         className="w-full h-full object-cover"
                       />

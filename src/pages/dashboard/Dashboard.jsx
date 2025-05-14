@@ -316,7 +316,7 @@ const Dashboard = () => {
                         </p>
                         <div className="flex items-center justify-between">
                           <Link
-                            to={`${baseUrl}/transcribe/${transcription._id}`}
+                            to={`dashboard/transcription/${transcription._id}`}
                             className="inline-flex px-4 py-2 bg-primary-50 pt-1 pb-1 text-primary-600 text-2xs rounded-md hover:text-white hover:bg-primary-700 transition-colors w-fit"
                           >
                             View Details
