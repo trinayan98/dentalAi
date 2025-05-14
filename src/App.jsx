@@ -3,13 +3,15 @@ import {
   RouterProvider,
   Navigate,
 } from "react-router-dom";
-import { Suspense, lazy } from "react";
+import { Suspense, lazy, useEffect } from "react";
 import AuthLayout from "./layouts/AuthLayout";
 import DashboardLayout from "./layouts/DashboardLayout";
 import { Toaster } from "./components/ui/Toaster";
 import RequiredAuth from "./components/RequiredAuth";
 import RequireRole from "./components/RequireRole";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import useAuthStore from "./stores/authStore";
+import { authApi } from "./utils/api";
 
 // Lazy load components
 const Login = lazy(() => import("./pages/auth/Login"));
@@ -18,9 +20,15 @@ const ForgotPassword = lazy(() => import("./pages/auth/ForgotPassword"));
 const ResetPassword = lazy(() => import("./pages/auth/ResetPassword"));
 const VerifyEmail = lazy(() => import("./pages/auth/VerifyEmail"));
 const Dashboard = lazy(() => import("./pages/dashboard/Dashboard"));
-const CreateBlog = lazy(() => import("./pages/blogs/CreateBlog"));
-const BlogList = lazy(() => import("./pages/blogs/BlogList"));
-const BlogDetail = lazy(() => import("./pages/blogs/BlogDetail"));
+const CreateTranscription = lazy(() =>
+  import("./pages/transcribe/CreateTranscription")
+);
+const TranscriptionList = lazy(() =>
+  import("./pages/transcribe/TranscribeList")
+);
+const TranscriptionDetail = lazy(() =>
+  import("./pages/transcribe/TranscriptionDetail")
+);
 const UserProfile = lazy(() => import("./pages/profile/UserProfile"));
 const UserList = lazy(() => import("./pages/admin/UserList"));
 const UserDetails = lazy(() => import("./pages/admin/UserDetails"));
@@ -115,26 +123,26 @@ const router = createBrowserRouter([
             element: <RequireRole allowedRoles={["user"]} />,
             children: [
               {
-                path: "blogs",
+                path: "transcriptions",
                 element: (
                   <Suspense fallback={<LoadingPage />}>
-                    <BlogList />
+                    <TranscriptionList />
                   </Suspense>
                 ),
               },
               {
-                path: "blogs/:id",
+                path: "transcription/:id",
                 element: (
                   <Suspense fallback={<LoadingPage />}>
-                    <BlogDetail />
+                    <TranscriptionDetail />
                   </Suspense>
                 ),
               },
               {
-                path: "blogs/create",
+                path: "transcribe/create",
                 element: (
                   <Suspense fallback={<LoadingPage />}>
-                    <CreateBlog />
+                    <CreateTranscription />
                   </Suspense>
                 ),
               },
@@ -197,6 +205,27 @@ const router = createBrowserRouter([
 ]);
 
 function App() {
+  const { token, setAuth } = useAuthStore();
+
+  useEffect(() => {
+    const verifyAuth = async () => {
+      const storedToken = localStorage.getItem("token");
+      if (storedToken) {
+        try {
+          const response = await authApi.getCurrentUser(storedToken);
+          if (response.data) {
+            setAuth(response.data.user, storedToken);
+          }
+        } catch (error) {
+          console.error("Auth verification failed:", error);
+          localStorage.removeItem("token");
+        }
+      }
+    };
+
+    verifyAuth();
+  }, []);
+
   return (
     <QueryClientProvider client={queryClient}>
       <RouterProvider router={router} basename="/admin" />

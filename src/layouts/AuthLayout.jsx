@@ -71,9 +71,9 @@ export default function AuthLayout() {
       {/* Header - Logo and Theme Toggle */}
       <div className="w-full px-4 sm:px-6 py-4 flex justify-between items-center">
         <div className="flex items-center space-x-2">
-          <Pen className="h-8 w-8 text-[#1850F0]" />
-          <span className="text-xl font-bold text-gray-900 dark:text-white">
-            Apisdor
+          <Pen className="h-5 w-5 text-[#1850F0]" />
+          <span className="text-md font-medium text-gray-900 dark:text-white">
+            logo
           </span>
         </div>
         <ThemeToggle />
@@ -93,9 +93,7 @@ export default function AuthLayout() {
             >
               <div className="space-y-1">
                 <h1
-                  className={`text-xl font-bold ${
-                    isSignUpPage ? "text-[#1850F0]" : "text-[#1850F0]"
-                  } dark:text-blue-500`}
+                  className={`text-xl font-bold dark:text-blue-500 dark:text-blue-500 text-gray-800`}
                 >
                   {isSignUpPage
                     ? "Create your account"
@@ -154,8 +152,8 @@ export default function AuthLayout() {
                     transition={{ delay: 0.1 * index, duration: 0.3 }}
                     className="flex items-start space-x-3 p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors duration-200"
                   >
-                    <div className="flex-shrink-0 w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
-                      <feature.icon className="h-5 w-5 text-[#1850F0] dark:text-blue-400" />
+                    <div className="flex-shrink-0 w-10 h-10 rounded-full bg-gray-100 dark:bg-blue-900/30 flex items-center justify-center">
+                      <feature.icon className="h-5 w-5 text-[#1850F0] dark:text-gray-400" />
                     </div>
                     <div className="mb-0">
                       <h3 className="text-sm font-medium text-gray-900 dark:text-white ">

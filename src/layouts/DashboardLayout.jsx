@@ -4,7 +4,7 @@ import useAuthStore from "../stores/authStore";
 import {
   Pen,
   LayoutDashboard,
-  FileText,
+  Mic,
   PlusCircle,
   Settings,
   LogOut,
@@ -21,14 +21,17 @@ import { ThemeToggle } from "../components/ThemeToggle";
 const navigation = {
   common: [{ name: "Dashboard", href: "/dashboard", icon: LayoutDashboard }],
   user: [
-    { name: "Blogs", href: "/dashboard/blogs", icon: FileText },
-    { name: "Create Blog", href: "/dashboard/blogs/create", icon: PlusCircle },
+    { name: "Transcriptions", href: "/dashboard/transcriptions", icon: Mic },
+    {
+      name: "New Transcription",
+      href: "/dashboard/transcribe/create",
+      icon: PlusCircle,
+    },
     { name: "Profile", href: "/dashboard/profile", icon: Users },
   ],
   admin: [
     { name: "Users", href: "/dashboard/users", icon: Users },
     { name: "Settings", href: "/dashboard/settings", icon: Settings },
-    // { name: "Profile", href: "/dashboard/profile", icon: Users },
     { name: "System Logs", href: "/dashboard/logs", icon: ScrollText },
   ],
 };

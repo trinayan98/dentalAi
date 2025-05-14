@@ -7,7 +7,7 @@ import {
   Clock,
   BarChart,
   ArrowRight,
-  Bookmark,
+  Mic,
   CheckCircle2,
   Edit3,
   Settings,
@@ -24,7 +24,7 @@ import {
 } from "../../components/ui/Card";
 import { Button } from "../../components/ui/Button";
 import useAuthStore from "../../stores/authStore";
-import { useBlogStore } from "../../stores/blogStore";
+import { useTranscribeStore } from "../../stores/transcribeStore";
 import { motion } from "framer-motion";
 import axios from "axios";
 import Skeleton from "../../components/ui/Skeleton";
@@ -54,19 +54,19 @@ const adminRecentActivity = [
 // User activity data
 const userRecentActivity = [
   {
-    title: 'Published "How to Optimize Your Content for Search Engines"',
+    title: 'Completed "Meeting Transcription"',
     date: "Mar 15, 2025",
     icon: CheckCircle2,
     iconBg: "bg-green-500",
   },
   {
-    title: 'Created "The Future of AI in Content Creation"',
+    title: 'Created "Interview Recording"',
     date: "Mar 10, 2025",
     icon: PlusCircle,
     iconBg: "bg-primary-500",
   },
   {
-    title: 'Updated "10 Effective Email Marketing Strategies for 2025"',
+    title: 'Updated "Conference Call Notes"',
     date: "Mar 8, 2025",
     icon: Edit3,
     iconBg: "bg-yellow-500",
@@ -75,7 +75,8 @@ const userRecentActivity = [
 
 const Dashboard = () => {
   const { user } = useAuthStore();
-  const { blogs, fetchBlogs, isLoading } = useBlogStore();
+  const { transcriptions, fetchTranscriptions, isLoading } =
+    useTranscribeStore();
   const isAdmin = user?.role === "admin";
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -102,9 +103,9 @@ const Dashboard = () => {
 
     fetchStats();
     if (!isAdmin) {
-      fetchBlogs();
+      fetchTranscriptions(new URLSearchParams({ limit: 3 }));
     }
-  }, [fetchBlogs, isAdmin]);
+  }, [fetchTranscriptions, isAdmin]);
 
   const getTimeOfDay = () => {
     const hour = new Date().getHours();
@@ -132,10 +133,10 @@ const Dashboard = () => {
           color: stats?.activeUsers?.color || "bg-success-500",
         },
         {
-          title: "Total Blogs",
-          icon: FileText,
-          value: stats?.totalBlogs?.value || "0",
-          color: stats?.totalBlogs?.color || "bg-warning-500",
+          title: "Total Transcriptions",
+          icon: Mic,
+          value: stats?.totalTranscriptions?.value || "0",
+          color: stats?.totalTranscriptions?.color || "bg-warning-500",
         },
         {
           title: "System Health",
@@ -146,33 +147,33 @@ const Dashboard = () => {
       ]
     : [
         {
-          title: stats?.totalBlogs?.title || "Total Blogs",
-          icon: FileText,
-          value: stats?.totalBlogs?.value || "0",
-          color: stats?.totalBlogs?.color || "bg-primary-500",
+          title: stats?.totalTranscriptions?.title || "Total Transcriptions",
+          icon: Mic,
+          value: stats?.totalTranscriptions?.value || "0",
+          color: stats?.totalTranscriptions?.color || "bg-primary-500",
         },
         {
-          title: stats?.published?.title || "Published",
-          icon: PlusCircle,
-          value: stats?.published?.value || "0",
-          color: stats?.published?.color || "bg-success-500",
+          title: stats?.completed?.title || "Completed",
+          icon: CheckCircle2,
+          value: stats?.completed?.value || "0",
+          color: stats?.completed?.color || "bg-success-500",
         },
         {
-          title: stats?.drafts?.title || "Drafts",
-          icon: Bookmark,
-          value: stats?.drafts?.value || "0",
-          color: stats?.drafts?.color || "bg-warning-500",
+          title: stats?.processing?.title || "Processing",
+          icon: Clock,
+          value: stats?.processing?.value || "0",
+          color: stats?.processing?.color || "bg-warning-500",
         },
         {
-          title: stats?.totalWords?.title || "Total Words",
+          title: stats?.totalDuration?.title || "Total Duration",
           icon: BarChart,
-          value: stats?.totalWords?.value || "0",
-          color: stats?.totalWords?.color || "bg-secondary-500",
+          value: stats?.totalDuration?.value || "0 min",
+          color: stats?.totalDuration?.color || "bg-secondary-500",
         },
       ];
 
   const recentActivity = isAdmin ? adminRecentActivity : userRecentActivity;
-  const recentBlogs = blogs.slice(0, 3);
+  const recentTranscriptions = transcriptions.slice(0, 3);
 
   return (
     <div className="space-y-8">
@@ -194,16 +195,16 @@ const Dashboard = () => {
             <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
               {isAdmin
                 ? "Here's an overview of your system and users."
-                : "Here's what's happening with your blog posts today."}
+                : "Here's what's happening with your transcriptions today."}
             </p>
           </div>
           {!isAdmin && (
             <Link
-              to={`${baseUrl}/blogs/create`}
+              to={`${baseUrl}/transcribe/create`}
               className="inline-flex items-center px-4 py-2 bg-primary-600 text-white text-xxs font-medium rounded-md hover:bg-primary-700 transition-colors gap-2"
             >
               <PlusCircle className="h-3 w-3" />
-              Create New Blog
+              New Transcription
             </Link>
           )}
         </div>
@@ -236,15 +237,15 @@ const Dashboard = () => {
         ))}
       </div>
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Recent Blogs */}
+        {/* Recent Transcriptions */}
         {!isAdmin && (
           <div className="lg:col-span-2 space-y-4">
             <div className="flex items-center justify-between">
               <h2 className="text-sm font-semibold text-gray-900 dark:text-white">
-                Recent Blogs
+                Recent Transcriptions
               </h2>
               <Link
-                to={`${baseUrl}/blogs`}
+                to={`${baseUrl}/transcribe`}
                 className="text-xs text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300 inline-flex items-center"
               >
                 View all
@@ -277,81 +278,59 @@ const Dashboard = () => {
                   ))}
                 </>
               ) : (
-                recentBlogs.map((blog, index) => (
+                recentTranscriptions.map((transcription, index) => (
                   <motion.div
-                    key={blog.id}
+                    key={transcription._id}
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.3, delay: index * 0.1 }}
                     className="h-full"
                   >
                     <Card className="flex flex-col h-full">
-                      <div className="relative w-full">
-                        <img
-                          src={
-                            blog.imageUrl ||
-                            "https://via.placeholder.com/400x200"
-                          }
-                          alt={blog.title}
-                          className="w-full h-32 object-cover rounded-t-md rounded-bl-[8px] rounded-br-[8px]"
-                        />
-                      </div>
+                      {/* <div className="relative w-full">
+                        <div className="w-full h-32 bg-gray-100 dark:bg-gray-800 flex items-center justify-center rounded-t-md">
+                          <Mic className="h-8 w-8 text-gray-400" />
+                        </div>
+                      </div> */}
 
                       <div className="flex flex-col flex-grow p-5 space-y-2">
                         <div className="flex items-center justify-between text-gray-500">
                           <div className="flex items-center gap-2">
                             <Clock className="h-2.5 w-2.5" />
                             <span className="text-2xs">
-                              {new Date(blog.createdAt).toLocaleDateString(
-                                "en-US",
-                                {
-                                  month: "long",
-                                  day: "numeric",
-                                  year: "numeric",
-                                }
-                              )}{" "}
-                              ·{" "}
-                              {new Date(blog.createdAt).toLocaleTimeString(
-                                "en-US",
-                                {
-                                  hour: "numeric",
-                                  minute: "numeric",
-                                  hour12: true,
-                                }
-                              )}
+                              {new Date(
+                                transcription.createdAt
+                              ).toLocaleDateString("en-US", {
+                                month: "long",
+                                day: "numeric",
+                                year: "numeric",
+                              })}
                             </span>
                           </div>
                         </div>
                         <h3 className="text-xxs font-semibold text-gray-900 dark:text-white">
-                          {blog.title}
+                          {transcription.title}
                         </h3>
                         <p className="text-2xs text-gray-600 dark:text-gray-400 line-clamp-2 flex-grow">
-                          <span
-                            dangerouslySetInnerHTML={{
-                              __html:
-                                blog.content
-                                  ?.replace(/<[^>]*>/g, "")
-                                  .substring(0, 100) + "...",
-                            }}
-                          />
+                          {transcription.transcription?.substring(0, 100)}...
                         </p>
                         <div className="flex items-center justify-between">
                           <Link
-                            to={`${baseUrl}/blogs/${blog._id}`}
-                            className="inline-flex px-4 py-2 bg-primary-50 pt-1 pb-1 text-primary-600 text-xxs rounded-md hover:text-white hover:bg-primary-700 transition-colors w-fit"
+                            to={`${baseUrl}/transcribe/${transcription._id}`}
+                            className="inline-flex px-4 py-2 bg-primary-50 pt-1 pb-1 text-primary-600 text-2xs rounded-md hover:text-white hover:bg-primary-700 transition-colors w-fit"
                           >
                             View Details
                           </Link>
 
                           <span
                             className={`text-[10px] px-2 py-1 rounded-full ${
-                              blog.status === "published"
+                              transcription.status === "completed"
                                 ? "bg-green-50 text-green-700"
                                 : "bg-yellow-50 text-yellow-700"
                             }`}
                           >
-                            {blog.status.charAt(0).toUpperCase() +
-                              blog.status.slice(1)}
+                            {transcription.status.charAt(0).toUpperCase() +
+                              transcription.status.slice(1)}
                           </span>
                         </div>
                       </div>
@@ -390,65 +369,6 @@ const Dashboard = () => {
             </CardContent>
           </Card>
         </div>
-      </div>
-
-      {/* Quick Actions */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Recent Activity */}
-
-        {/* <div className="lg:col-span-2 space-y-4">
-
-          {isAdmin && (
-            <div className="space-y-4">
-              <h2 className="text-sm font-semibold text-gray-900 dark:text-white">
-                Quick Links
-              </h2>
-              <Card>
-                <CardContent className="space-y-2">
-                  <>
-                    <Link
-                      to="/admin/users"
-                      className="flex items-center justify-between p-3 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-lg group"
-                    >
-                      <div className="flex items-center space-x-3">
-                        <Users className="h-4 w-4 text-primary-500" />
-                        <span className="text-sm text-gray-700 dark:text-gray-300">
-                          Manage Users
-                        </span>
-                      </div>
-                      <ArrowRight className="h-4 w-4 text-gray-400 group-hover:text-gray-500" />
-                    </Link>
-                    <Link
-                      to="/admin/settings"
-                      className="flex items-center justify-between p-3 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-lg group"
-                    >
-                      <div className="flex items-center space-x-3">
-                        <Settings className="h-4 w-4 text-primary-500" />
-                        <span className="text-sm text-gray-700 dark:text-gray-300">
-                          System Settings
-                        </span>
-                      </div>
-                      <ArrowRight className="h-4 w-4 text-gray-400 group-hover:text-gray-500" />
-                    </Link>
-                  </>
-
-                  <Link
-                    to={`${baseUrl}/profile`}
-                    className="flex items-center justify-between p-3 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-lg group"
-                  >
-                    <div className="flex items-center space-x-3">
-                      <Users className="h-4 w-4 text-primary-500" />
-                      <span className="text-sm text-gray-700 dark:text-gray-300">
-                        Profile Settings
-                      </span>
-                    </div>
-                    <ArrowRight className="h-4 w-4 text-gray-400 group-hover:text-gray-500" />
-                  </Link>
-                </CardContent>
-              </Card>
-            </div>
-          )}
-        </div> */}
       </div>
     </div>
   );
