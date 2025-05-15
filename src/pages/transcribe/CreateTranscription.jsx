@@ -67,6 +67,7 @@ export default function CreateTranscription() {
   const [audioUrl, setAudioUrl] = useState("");
   const [uploadStatus, setUploadStatus] = useState("uploading");
   const [fileError, setFileError] = useState("");
+  const [progress, setProgress] = useState(0);
   const [chatId] = useState(() => {
     return `chat_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
   });
@@ -95,9 +96,21 @@ export default function CreateTranscription() {
   const sendAudioToWebhook = async (file) => {
     try {
       setUploadStatus("uploading");
+      setProgress(0);
       const formData = new FormData();
       formData.append("audioFile", file);
       formData.append("chatId", chatId);
+
+      // Simulate progress updates
+      const progressInterval = setInterval(() => {
+        setProgress((prev) => {
+          if (prev >= 90) {
+            clearInterval(progressInterval);
+            return prev;
+          }
+          return prev + 10;
+        });
+      }, 1000);
 
       const response = await fetch(
         "https://n8n.apisdor.com/webhook/37d0103a-0a5d-49d7-ac89-6688b0d52097",
@@ -117,8 +130,10 @@ export default function CreateTranscription() {
         setValue("transcription", data[0].transcribedText);
       }
 
+      clearInterval(progressInterval);
+      setProgress(100);
       setUploadStatus("success");
-      cleanupAudio(); // Clean up audio after successful API call
+      cleanupAudio();
       return data;
     } catch (error) {
       console.error("Error sending audio file:", error);
@@ -534,15 +549,6 @@ export default function CreateTranscription() {
                   <Card>
                     <CardContent className="p-6">
                       <div className="mb-8">
-                        {/* <div className="inline-block p-4 bg-primary-100 dark:bg-primary-900/30 rounded-full mb-4">
-                          {uploadStatus === "uploading" ? (
-                            <Loader2 className="h-8 w-8 text-primary-600 dark:text-primary-400 animate-spin" />
-                          ) : uploadStatus === "success" ? (
-                            <CheckCircle2 className="h-8 w-8 text-success-600 dark:text-success-400" />
-                          ) : (
-                            <AlertCircle className="h-8 w-8 text-error-600 dark:text-error-400" />
-                          )}
-                        </div> */}
                         <h2 className="text-md font-bold text-gray-900 dark:text-white mb-1">
                           {uploadStatus === "uploading"
                             ? "Processing Audio"
@@ -561,6 +567,19 @@ export default function CreateTranscription() {
 
                       <div className="max-w-md mx-auto">
                         <div className="space-y-4">
+                          <div className="flex items-center gap-3">
+                            <div className="flex-1">
+                              <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5">
+                                <div
+                                  className="bg-primary-500 h-2.5 rounded-full transition-all duration-300 ease-in-out"
+                                  style={{ width: `${progress}%` }}
+                                ></div>
+                              </div>
+                              <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                                {progress}% Complete
+                              </p>
+                            </div>
+                          </div>
                           <div className="flex items-center gap-3">
                             <div
                               className={`p-2 rounded ${
@@ -590,30 +609,6 @@ export default function CreateTranscription() {
                           </div>
                         </div>
                       </div>
-
-                      {/* <div className="mt-8 flex justify-between">
-                        <Button
-                          variant="outline"
-                          size="xs"
-                          onClick={() => setCurrentStage(STAGES.UPLOAD)}
-                          leftIcon={
-                            <ChevronLeft className="h-3.5 w-3.5 mr-1" />
-                          }
-                        >
-                          Back
-                        </Button>
-                        {uploadStatus === "success" && (
-                          <Button
-                            size="xs"
-                            onClick={() => setCurrentStage(STAGES.REVIEW)}
-                            rightIcon={
-                              <ChevronRight className="h-3.5 w-3.5 ml-1" />
-                            }
-                          >
-                            Continue
-                          </Button>
-                        )}
-                      </div> */}
                     </CardContent>
                   </Card>
                 </motion.div>
@@ -734,7 +729,7 @@ export default function CreateTranscription() {
                             type="button"
                             variant="outline"
                             size="xs"
-                            onClick={() => setCurrentStage(STAGES.PROCESSING)}
+                            onClick={() => setCurrentStage(STAGES.UPLOAD)}
                             leftIcon={
                               <ChevronLeft className="h-3.5 w-3.5 mr-1" />
                             }

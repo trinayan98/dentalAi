@@ -122,7 +122,7 @@ export default function DashboardLayout() {
       </aside>
 
       {/* Main content */}
-      <div className="md:pl-[158px] lg:pl-[210px] xl:pl-[224px] flex-1 flex flex-col min-h-screen">
+      <div className="md:pl-[192px] lg:pl-[210px] xl:pl-[224px] flex-1 flex flex-col min-h-screen">
         {/* Header */}
         <header className="sticky top-0 z-10 bg-white/100 dark:bg-gray-800 backdrop-blur-sm dark:border-gray-700">
           <div className="px-4 sm:px-6 h-16 flex items-center justify-between">
