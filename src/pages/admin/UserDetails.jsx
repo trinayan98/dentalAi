@@ -10,36 +10,38 @@ import { ChevronRight, User, Mail, Calendar, BookOpen } from "lucide-react";
 import { useToastStore } from "../../stores/toastStore";
 import useAuthStore from "../../stores/authStore";
 import { motion } from "framer-motion";
-import { format } from "date-fns";
+import { format, isValid } from "date-fns";
 import { Table, Thead, Tbody, Tr, Th, Td } from "react-super-responsive-table";
 import "react-super-responsive-table/dist/SuperResponsiveTableStyle.css";
 import { userApi } from "../../utils/api";
+import { useQuery } from "@tanstack/react-query";
+
+// Helper function to safely format dates
+const formatDate = (dateString) => {
+  const date = new Date(dateString);
+  return isValid(date) ? format(date, "MMM d, yyyy") : "Invalid date";
+};
 
 export default function UserDetails() {
   const { id: userId } = useParams();
   const { token } = useAuthStore();
   const { addToast } = useToastStore();
-  const [userDetails, setUserDetails] = useState(null);
-  const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    const fetchUserDetails = async () => {
-      try {
-        const data = await userApi.getUserDetails(token, userId);
-        setUserDetails(data);
-      } catch (error) {
-        addToast({
-          title: "Error",
-          description: error.message || "Failed to load user details",
-          type: "error",
-        });
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchUserDetails();
-  }, [userId, token, addToast]);
+  const { data, isLoading, error } = useQuery({
+    queryKey: ["userDetails", userId],
+    queryFn: async () => {
+      const response = await userApi.getUserDetails(token, userId);
+      // Adjust this according to your API response structure
+      return response;
+    },
+    onError: (error) => {
+      addToast({
+        title: "Error",
+        description: error.message || "Failed to load user details",
+        type: "error",
+      });
+    },
+  });
 
   if (isLoading) {
     return (
@@ -49,10 +51,10 @@ export default function UserDetails() {
     );
   }
 
-  if (!userDetails) {
+  if (error || !data) {
     return (
       <div className="text-center text-gray-500 dark:text-gray-400">
-        User not found
+        Error loading user details
       </div>
     );
   }
@@ -82,14 +84,22 @@ export default function UserDetails() {
             <CardContent className="space-y-4">
               <div className="flex items-center gap-4">
                 <div className="h-16 w-16 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
-                  <User className="h-8 w-8 text-gray-500" />
+                  {data.user.avatar ? (
+                    <img
+                      src={data.user.avatar}
+                      alt={data.user.name}
+                      className="h-16 w-16 rounded-full object-cover"
+                    />
+                  ) : (
+                    <User className="h-8 w-8 text-gray-500" />
+                  )}
                 </div>
                 <div>
                   <h3 className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                    {userDetails.name}
+                    {data.user.name}
                   </h3>
                   <p className="text-xs text-gray-500 dark:text-gray-400">
-                    {userDetails.username}
+                    {data.user.username}
                   </p>
                 </div>
               </div>
@@ -100,7 +110,7 @@ export default function UserDetails() {
                   </p>
                   <p className="text-xxs font-medium text-gray-900 dark:text-gray-100 flex items-center gap-1">
                     <Mail className="h-3 w-3" />
-                    {userDetails.email}
+                    {data.user.email}
                   </p>
                 </div>
                 <div>
@@ -109,7 +119,7 @@ export default function UserDetails() {
                   </p>
                   <p className="text-xxs font-medium">
                     <span className="inline-flex items-center px-2.5 py-0.5 rounded-medium text-xs font-medium bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300">
-                      {userDetails.role}
+                      {data.user.role}
                     </span>
                   </p>
                 </div>
@@ -119,7 +129,7 @@ export default function UserDetails() {
                   </p>
                   <p className="text-xxs font-medium text-gray-900 dark:text-gray-100 flex items-center gap-2">
                     <Calendar className="h-4 w-4" />
-                    {format(new Date(userDetails.createdAt), "MMM d, yyyy")}
+                    {formatDate(data.user.createdAt)}
                   </p>
                 </div>
                 <div>
@@ -127,7 +137,7 @@ export default function UserDetails() {
                     Last Updated
                   </p>
                   <p className="text-xxs font-medium text-gray-900 dark:text-gray-100">
-                    {format(new Date(userDetails.updatedAt), "MMM d, yyyy")}
+                    {formatDate(data.user.updatedAt)}
                   </p>
                 </div>
               </div>
@@ -135,7 +145,7 @@ export default function UserDetails() {
           </Card>
         </motion.div>
 
-        {/* Blog Stats Card */}
+        {/* Recent Transcriptions Card */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -143,154 +153,46 @@ export default function UserDetails() {
         >
           <Card>
             <CardHeader className="text-md p-0">
-              <CardTitle>Blog Statistics</CardTitle>
+              <CardTitle>Recent Transcriptions</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-2 gap-3">
-                <div className="bg-primary-100 dark:bg-primary-900/40 p-4 rounded-lg">
-                  <p className="text-sm text-gray-700 dark:text-gray-300">
-                    Total Blogs
+              <div className="space-y-4">
+                {data.recentTranscriptions?.map((transcription) => (
+                  <div
+                    key={transcription._id}
+                    className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg"
+                  >
+                    <h4 className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                      {transcription.title}
+                    </h4>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                      Status:{" "}
+                      <span
+                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xxs font-medium ${
+                          transcription.status === "published"
+                            ? "bg-green-100 text-green-800"
+                            : "bg-yellow-100 text-yellow-800"
+                        }`}
+                      >
+                        {transcription.status}
+                      </span>
+                    </p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                      Created: {formatDate(transcription.createdAt)}
+                    </p>
+                  </div>
+                ))}
+                {(!data.recentTranscriptions ||
+                  data.recentTranscriptions.length === 0) && (
+                  <p className="text-sm text-gray-500 dark:text-gray-400 text-center">
+                    No recent transcriptions found
                   </p>
-                  <p className="text-xl font-semibold text-primary-800 dark:text-primary-300">
-                    {userDetails.blogStats.total}
-                  </p>
-                </div>
-                <div className="bg-success-100 dark:bg-success-900/40 p-4 rounded-lg">
-                  <p className="text-sm text-gray-700 dark:text-gray-300">
-                    Published
-                  </p>
-                  <p className="text-xl font-semibold text-success-800 dark:text-success-300">
-                    {userDetails.blogStats.published}
-                  </p>
-                </div>
-                <div className="bg-warning-100 dark:bg-warning-900/40 p-4 rounded-lg">
-                  <p className="text-sm text-gray-700 dark:text-gray-300">
-                    Draft
-                  </p>
-                  <p className="text-xl font-semibold text-warning-800 dark:text-warning-300">
-                    {userDetails.blogStats.draft}
-                  </p>
-                </div>
-                <div className="bg-secondary-100 dark:bg-secondary-900/40 p-4 rounded-lg">
-                  <p className="text-sm text-gray-700 dark:text-gray-300">
-                    Total Views
-                  </p>
-                  <p className="text-xl font-semibold text-secondary-800 dark:text-secondary-300">
-                    {userDetails.blogStats.totalViews}
-                  </p>
-                </div>
+                )}
               </div>
             </CardContent>
           </Card>
         </motion.div>
       </div>
-
-      {/* Monthly Blog Activity */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3, delay: 0.2 }}
-      >
-        <Card>
-          <CardHeader>
-            <CardTitle>Monthly Blog Activity</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 ">
-              {userDetails.monthlyBlogCount.map((month) => (
-                <div
-                  key={`${month._id.year}-${month._id.month}`}
-                  className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg dark:bg-white"
-                >
-                  <p className="text-sm text-gray-500 dark:text-gray-600">
-                    {format(
-                      new Date(month._id.year, month._id.month - 1),
-                      "MMM yyyy"
-                    )}
-                  </p>
-                  <p className="text-xl font-semibold text-gray-900 dark:text-gray-900">
-                    {month.count} posts
-                  </p>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      </motion.div>
-
-      {/* Recent Blogs */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3, delay: 0.3 }}
-      >
-        <Card>
-          <CardHeader>
-            <CardTitle>Recent Blogs</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Table>
-              <Thead className="divide-gray-200 dark:divide-gray-700 border-b border-primary-200 ">
-                <Tr>
-                  <Th className=" pt-0 py-6 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-100">
-                    Title
-                  </Th>
-                  <Th className="pt-0 py-6 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-100">
-                    Status
-                  </Th>
-                  <Th className="pt-0 py-6 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-100">
-                    Views
-                  </Th>
-                  <Th className="pt-0 py-6 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-100">
-                    Engagement
-                  </Th>
-                  <Th className="pt-0 py-6 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-100">
-                    Created
-                  </Th>
-                </Tr>
-              </Thead>
-              <Tbody>
-                {userDetails.blogs.map((blog) => (
-                  <Tr
-                    key={blog._id}
-                    className="hover:bg-gray-50 dark:hover:bg-gray-800 dark:text-gray-400"
-                  >
-                    <Td className="py-4 ">
-                      <div className="flex items-center">
-                        <BookOpen className="h-4 w-4 text-gray-400 mr-2" />
-                        <span className="text-xs font-medium">
-                          {blog.title}
-                        </span>
-                      </div>
-                    </Td>
-                    <Td>
-                      <span
-                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xxs font-medium ${
-                          blog.status === "published"
-                            ? "bg-green-100 text-green-800"
-                            : "bg-yellow-100 text-yellow-800"
-                        }`}
-                      >
-                        {blog.status}
-                      </span>
-                    </Td>
-                    <Td className="text-xs">{blog.views}</Td>
-                    <Td className="text-xs">
-                      <div className="flex items-center gap-4">
-                        <span>{blog.likes} likes</span>
-                        <span>{blog.comments} comments</span>
-                      </div>
-                    </Td>
-                    <Td className="text-xs">
-                      {format(new Date(blog.createdAt), "MMM d, yyyy")}
-                    </Td>
-                  </Tr>
-                ))}
-              </Tbody>
-            </Table>
-          </CardContent>
-        </Card>
-      </motion.div>
     </div>
   );
 }

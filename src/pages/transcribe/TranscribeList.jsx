@@ -26,6 +26,7 @@ import { useTranscribeStore } from "../../stores/transcribeStore";
 import { useToastStore } from "../../stores/toastStore";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
+import { generateTranscriptionPdf } from "../../utils/pdfGenerator";
 
 export default function TranscribeList() {
   const navigate = useNavigate();
@@ -354,7 +355,7 @@ export default function TranscribeList() {
                       <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
                         {transcription.title}
                       </h3>
-                      <p className="text-xs text-gray-600 dark:text-gray-400 line-clamp-2 flex-grow">
+                      <p className="text-xxs text-gray-600 dark:text-gray-400 line-clamp-2 flex-grow">
                         {transcription.transcription?.substring(0, 150) + "..."}
                       </p>
                       <div className="flex items-center justify-between">
@@ -416,13 +417,29 @@ export default function TranscribeList() {
                               </button>
                               <button
                                 className="flex items-center w-full px-4 py-2 text-xxs text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
-                                onClick={() => {
-                                  // Handle download
+                                onClick={async () => {
+                                  try {
+                                    await generateTranscriptionPdf(
+                                      transcription
+                                    );
+                                    addToast({
+                                      title: "PDF Downloaded",
+                                      description:
+                                        "The transcription has been downloaded as PDF",
+                                      type: "success",
+                                    });
+                                  } catch (error) {
+                                    addToast({
+                                      title: "Download Failed",
+                                      description: "Failed to generate PDF",
+                                      type: "error",
+                                    });
+                                  }
                                   setActiveDropdown(null);
                                 }}
                               >
                                 <Download className="h-4 w-4 mr-2" />
-                                Download
+                                Download PDF
                               </button>
                             </div>
                           )}

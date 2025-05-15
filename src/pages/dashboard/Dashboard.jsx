@@ -123,7 +123,7 @@ const Dashboard = () => {
         {
           title: "Total Users",
           icon: Users,
-          value: stats?.totalUsers?.value || "0",
+          value: stats?.totalUsers || "0",
           color: stats?.totalUsers?.color || "bg-primary-500",
         },
         {
@@ -135,7 +135,7 @@ const Dashboard = () => {
         {
           title: "Total Transcriptions",
           icon: Mic,
-          value: stats?.totalTranscriptions?.value || "0",
+          value: stats?.totalTranscriptions || "0",
           color: stats?.totalTranscriptions?.color || "bg-warning-500",
         },
         {
@@ -147,10 +147,11 @@ const Dashboard = () => {
       ]
     : [
         {
-          title: stats?.totalTranscriptions?.title || "Total Transcriptions",
+          title:
+            stats?.data?.totalTranscriptions?.title || "Total Transcriptions",
           icon: Mic,
-          value: stats?.totalTranscriptions?.value || "0",
-          color: stats?.totalTranscriptions?.color || "bg-primary-500",
+          value: stats?.totalTranscriptions || "0",
+          color: stats?.data?.totalTranscriptions?.color || "bg-primary-500",
         },
         {
           title: stats?.completed?.title || "Completed",
