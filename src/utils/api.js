@@ -13,7 +13,7 @@ export const authApi = {
     });
     if (!response.ok) {
       const error = await response.json();
-      throw new Error(error.message || "Registration failed");
+      throw new Error(error.error || "Registration failed");
     }
     return response.json();
   },
@@ -34,6 +34,20 @@ export const authApi = {
     return data;
   },
 
+  verifyEmail: async (token) => {
+    const response = await fetch(`${API_URL}/auth/verify-email/${token}`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || "Email verification failed");
+    }
+    return response.json();
+  },
+
   getCurrentUser: async (token) => {
     const response = await fetch(`${API_URL}/auth/me`, {
       headers: {
@@ -46,8 +60,8 @@ export const authApi = {
     return response.json();
   },
 
-  resetPassword: async (email) => {
-    const response = await fetch(`${API_URL}/auth/reset-password`, {
+  forgotPassword: async (email) => {
+    const response = await fetch(`${API_URL}/auth/forgot-password`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -56,22 +70,22 @@ export const authApi = {
     });
     if (!response.ok) {
       const error = await response.json();
-      throw new Error(error.message || "Failed to send reset password email");
+      throw new Error(error.error || "Failed to send password reset email");
     }
     return response.json();
   },
 
-  setNewPassword: async (password, token) => {
-    const response = await fetch(`${API_URL}/auth/reset-password/confirm`, {
+  resetPassword: async (token, newPassword) => {
+    const response = await fetch(`${API_URL}/auth/reset-password`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ password, token }),
+      body: JSON.stringify({ token, newPassword }),
     });
     if (!response.ok) {
       const error = await response.json();
-      throw new Error(error.message || "Failed to reset password");
+      throw new Error(error.error || "Failed to reset password");
     }
     return response.json();
   },
@@ -112,7 +126,7 @@ export const userApi = {
 
     if (!response.ok) {
       const error = await response.json();
-      throw new Error(error.message || "Failed to update profile");
+      throw new Error(error.error || "Failed to update profile");
     }
 
     const result = await response.json();
@@ -131,7 +145,7 @@ export const userApi = {
     });
     if (!response.ok) {
       const error = await response.json();
-      throw new Error(error.message || "Failed to change password");
+      throw new Error(error.error || "Failed to change password");
     }
     return response.json();
   },
@@ -150,7 +164,7 @@ export const userApi = {
     if (!response.ok) {
       const errorData = await response.json();
       console.error("Profile error:", errorData);
-      throw new Error(errorData.message || "Failed to get user profile");
+      throw new Error(errorDataerror.error || "Failed to get user profile");
     }
     return response.json();
   },
@@ -163,7 +177,7 @@ export const userApi = {
     });
     if (!response.ok) {
       const errorData = await response.json();
-      throw new Error(errorData.message || "Failed to get user profile");
+      throw new Error(errorDataerror.error || "Failed to get user profile");
     }
     return response.json();
   },
@@ -176,7 +190,7 @@ export const userApi = {
     });
     if (!response.ok) {
       const errorData = await response.json();
-      throw new Error(errorData.message || "Failed to fetch user details");
+      throw new Error(errorDataerror.error || "Failed to fetch user details");
     }
     const { data } = await response.json();
     return data;

@@ -127,4 +127,20 @@ export const usersApi = {
     }
     return response.json();
   },
+
+  sendVerificationEmail: async (token, userId) => {
+    const response = await fetch(`${API_URL}/auth/admin/send-verification`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ userId }),
+    });
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.message || "Failed to send verification email");
+    }
+    return response.json();
+  },
 };

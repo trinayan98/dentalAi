@@ -3,14 +3,14 @@ import { Link } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { Input } from "../../components/ui/Input";
 import { Button } from "../../components/ui/Button";
-import useAuthStore from "../../stores/authStore";
 import { useToastStore } from "../../stores/toastStore";
 import { Mail, ArrowLeft } from "lucide-react";
 import { motion } from "framer-motion";
+import { authApi } from "../../utils/api";
 
 export default function ForgotPassword() {
-  const { resetPassword, isLoading } = useAuthStore();
   const { addToast } = useToastStore();
+  const [isLoading, setIsLoading] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
 
   const {
@@ -24,8 +24,9 @@ export default function ForgotPassword() {
   });
 
   const onSubmit = async (data) => {
+    setIsLoading(true);
     try {
-      await resetPassword(data.email);
+      await authApi.forgotPassword(data.email);
       setIsSubmitted(true);
       addToast({
         title: "Recovery email sent",
@@ -33,12 +34,14 @@ export default function ForgotPassword() {
         type: "success",
       });
     } catch (error) {
+      console.log("Error sending recovery email:console", error.message);
       addToast({
         title: "Failed to send recovery email",
-        description:
-          error instanceof Error ? error.message : "Please try again later",
+        description: error.message || "Please try again later",
         type: "error",
       });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -92,7 +95,7 @@ export default function ForgotPassword() {
             <div className="mt-6 text-center">
               <Link
                 to="/login"
-                className=" text-sm inline-flex items-center font-medium text-[#1850F0] hover:text-blue-600 dark:text-blue-400"
+                className="text-sm inline-flex items-center font-medium text-[#1850F0] hover:text-blue-600 dark:text-blue-400"
               >
                 <ArrowLeft className="h-4 w-4 mr-1" />
                 Back to login

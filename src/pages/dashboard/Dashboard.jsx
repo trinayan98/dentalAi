@@ -201,7 +201,7 @@ const Dashboard = () => {
           </div>
           {!isAdmin && (
             <Link
-              to={`${baseUrl}/transcribe/create`}
+              to={`/dashboard/transcribe/create`}
               className="inline-flex items-center px-4 py-2 bg-primary-600 text-white text-xxs font-medium rounded-md hover:bg-primary-700 transition-colors gap-2"
             >
               <PlusCircle className="h-3 w-3" />
@@ -246,7 +246,7 @@ const Dashboard = () => {
                 Recent Transcriptions
               </h2>
               <Link
-                to={`${baseUrl}/transcribe`}
+                to={`/dashboard/transcriptions`}
                 className="text-xs text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300 inline-flex items-center"
               >
                 View all
@@ -317,7 +317,7 @@ const Dashboard = () => {
                         </p>
                         <div className="flex items-center justify-between">
                           <Link
-                            to={`dashboard/transcription/${transcription._id}`}
+                            to={`/dashboard/transcription/${transcription._id}`}
                             className="inline-flex px-4 py-2 bg-primary-50 pt-1 pb-1 text-primary-600 text-2xs rounded-md hover:text-white hover:bg-primary-700 transition-colors w-fit"
                           >
                             View Details

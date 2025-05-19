@@ -19,6 +19,7 @@ import {
   Edit2,
   Trash2,
   Edit,
+  Mail,
 } from "lucide-react";
 import { Table, Thead, Tbody, Tr, Th, Td } from "react-super-responsive-table";
 import "react-super-responsive-table/dist/SuperResponsiveTableStyle.css";
@@ -35,6 +36,7 @@ export default function UserList() {
   const [currentPage, setCurrentPage] = useState(1);
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
   const [isToggling, setIsToggling] = useState(false);
+  const [isSendingVerification, setIsSendingVerification] = useState(false);
 
   // Debounce search term
   useEffect(() => {
@@ -98,6 +100,28 @@ export default function UserList() {
       });
     } finally {
       setIsToggling(false);
+    }
+  };
+
+  const handleSendVerificationEmail = async (userId) => {
+    try {
+      setIsSendingVerification(true);
+      const token = useAuthStore.getState().token;
+      await usersApi.sendVerificationEmail(token, userId);
+
+      addToast({
+        title: "Success",
+        description: "Verification email sent successfully",
+        type: "success",
+      });
+    } catch (error) {
+      addToast({
+        title: "Error",
+        description: error.message || "Failed to send verification email",
+        type: "error",
+      });
+    } finally {
+      setIsSendingVerification(false);
     }
   };
 
@@ -244,6 +268,18 @@ export default function UserList() {
                           icon={<Trash2 className="h-4 w-4" />}
                           tooltip="Delete User"
                         />
+                        {user.verified === 0 && (
+                          <IconButton
+                            variant="success"
+                            size="sm"
+                            icon={<Mail className="h-4 w-4" />}
+                            tooltip="Send Verification Email"
+                            onClick={() =>
+                              handleSendVerificationEmail(user._id)
+                            }
+                            disabled={isSendingVerification}
+                          />
+                        )}
                         <FormControlLabel
                           control={
                             <Switch
