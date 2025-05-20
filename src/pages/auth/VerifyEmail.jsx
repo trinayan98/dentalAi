@@ -58,7 +58,7 @@ export default function VerifyEmail() {
             <div className="mx-auto w-16 h-16 bg-primary-100 dark:bg-primary-900 rounded-full flex items-center justify-center mb-4">
               <Loader2 className="h-8 w-8 text-primary-600 dark:text-primary-400 animate-spin" />
             </div>
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+            <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
               Verifying your email...
             </h2>
             <p className="text-gray-600 dark:text-gray-400">
@@ -73,7 +73,7 @@ export default function VerifyEmail() {
             <div className="mx-auto w-16 h-16 bg-success-100 dark:bg-success-900 rounded-full flex items-center justify-center mb-4">
               <CheckCircle className="h-8 w-8 text-success-600 dark:text-success-400" />
             </div>
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+            <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
               Email Verified Successfully!
             </h2>
             <p className="text-gray-600 dark:text-gray-400 mb-6">
@@ -91,7 +91,7 @@ export default function VerifyEmail() {
             <div className="mx-auto w-16 h-16 bg-error-100 dark:bg-error-900 rounded-full flex items-center justify-center mb-4">
               <XCircle className="h-8 w-8 text-error-600 dark:text-error-400" />
             </div>
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+            <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
               Verification Failed
             </h2>
             <p className="text-gray-600 dark:text-gray-400 mb-6">
