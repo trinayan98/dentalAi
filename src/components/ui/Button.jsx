@@ -32,7 +32,7 @@ export const Button = ({
 
   const sizeStyles = {
     xs: "h-8 px-3 text-xxs sm:h-7  sm:px-4",
-    sm: "h-8 px-3 text-xs sm:h-9 sm:px-2.5  ",
+    sm: "h-8 px-3 md:text-xs sm:h-9 md:px-2.5 px-1.8  text-2xs",
     md: "h-9 px-4 text-sm sm:h-10 sm:px-6 sm:text-sx",
     lg: "h-10 px-5 text-base sm:h-12 sm:px-8 sm:text-lg",
   };

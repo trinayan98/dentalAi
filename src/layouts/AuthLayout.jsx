@@ -15,7 +15,8 @@ import {
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { ThemeToggle } from "../components/ThemeToggle";
-
+import logoDark from "/images/Apisdor-Logo-dark.png";
+import logoLight from "/images/Apisdor-Logo-white.png";
 // Import workspace image
 const workspaceImg = new URL(
   "https://img.freepik.com/free-photo/man-is-using-laptop-books-notebook-top-view_169016-49211.jpg?ga=GA1.1.1194710755.1726822523&semt=ais_hybrid&w=740",
@@ -71,10 +72,18 @@ export default function AuthLayout() {
       {/* Header - Logo and Theme Toggle */}
       <div className="w-full px-4 sm:px-6 py-4 flex justify-between items-center">
         <div className="flex items-center space-x-2">
-          <Pen className="h-5 w-5 text-[#1850F0]" />
-          <span className="text-md font-medium text-gray-900 dark:text-white">
-            logo
-          </span>
+          {/* Light mode logo */}
+          <img
+            src={logoLight}
+            alt="Apisdor Logo"
+            className="h-8 sm:h-10 md:h-12 w-auto block dark:hidden"
+          />
+          {/* Dark mode logo */}
+          <img
+            src={logoDark}
+            alt="Apisdor Logo"
+            className="h-8 sm:h-10 md:h-12 w-auto hidden dark:block"
+          />
         </div>
         <ThemeToggle />
       </div>

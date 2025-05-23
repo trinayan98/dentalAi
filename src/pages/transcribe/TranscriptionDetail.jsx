@@ -240,14 +240,14 @@ export default function TranscriptionDetail() {
           {transcription.title || "Transcription"}
         </span>
       </div>
-      <div className="max-w-4xl mx-auto space-y-6">
+      <div className="max-w-4xl mx-auto space-y-6 ">
         {/* Header */}
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between flex flex-wrap gap-3">
           <div>
             <h1 className="text-md font-semibold text-gray-900 dark:text-white">
               {!isEditing && transcription.title}
             </h1>
-            <div className="flex items-center gap-4 mt-2 text-xs text-gray-500 dark:text-gray-400">
+            <div className="flex items-center gap-4 mt-2 text-xxs text-gray-500 dark:text-gray-400">
               <div className="flex items-center gap-1">
                 <Clock className="h-4 w-4" />
                 {new Date(transcription.createdAt).toLocaleDateString()}

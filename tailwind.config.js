@@ -12,8 +12,8 @@ export default {
         sm: "clamp(0.6rem, 0.8rem + 0.375vw, .8rem)", // 14px - 16px
         base: "clamp(1rem, 0.9rem + 0.5vw, 1.125rem)", // 16px - 18px
         lg: "clamp(1.125rem, 1rem + 0.625vw, 1.25rem)", // 18px - 20px
-        md: "clamp(.9rem, 2rem + 0.625vw, 1rem)", // 18px - 20px
-        xl: "clamp(1.25rem, 1.1rem + 0.75vw, 1.5rem)", // 20px - 24px
+        md: "clamp(.8rem, 1rem + 0.625vw, 1rem)", // 18px - 20px
+        xl: "clamp(1rem, 1.1rem, 1.5rem)", // 20px - 24px
         p1: "clamp(1.25rem, 1.1rem + 0.75vw, 1.5rem)", // 20px - 24px
         "2xl": "clamp(1.5rem, 1.3rem + 1vw, 2rem)", // 24px - 32px
         "3xl": "clamp(1.875rem, 1.5rem + 1.5vw, 2.5rem)", // 30px - 40px

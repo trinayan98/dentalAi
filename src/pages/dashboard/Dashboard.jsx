@@ -186,29 +186,29 @@ const Dashboard = () => {
         <ChevronRight className="h-3 w-3 text-gray-400" />
       </div>
       {/* Greeting */}
-      <div className="">
-        <div className="flex items-center justify-between">
+      <div className="flex flex-col md:flex-row items-start md:items-center justify-between">
+        <div>
+          <h1 className="text-xl font-semibold text-gray-900 dark:text-white">
+            Good {getTimeOfDay()},{" "}
+            {(user?.name && user.name.trim()) || user?.username || "Guest"}!
+          </h1>
+          <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+            {isAdmin
+              ? "Here's an overview of your system and users."
+              : "Here's what's happening with your transcriptions today."}
+          </p>
+        </div>
+        {!isAdmin && (
           <div>
-            <h1 className="text-xl font-semibold text-gray-900 dark:text-white">
-              Good {getTimeOfDay()},{" "}
-              {(user?.name && user.name.trim()) || user?.username || "Guest"}!
-            </h1>
-            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-              {isAdmin
-                ? "Here's an overview of your system and users."
-                : "Here's what's happening with your transcriptions today."}
-            </p>
-          </div>
-          {!isAdmin && (
             <Link
               to={`/dashboard/transcribe/create`}
-              className="inline-flex items-center px-4 py-2 bg-primary-600 text-white text-xxs font-medium rounded-md hover:bg-primary-700 transition-colors gap-2"
+              className="inline-flex items-center px-4 py-2 bg-primary-600 text-white text-xxs font-medium rounded-md hover:bg-primary-700 transition-colors gap-2 w-full md:w-auto mt-4 md:mt-0"
             >
               <PlusCircle className="h-3 w-3" />
               New Transcription
             </Link>
-          )}
-        </div>
+          </div>
+        )}
       </div>
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 ">

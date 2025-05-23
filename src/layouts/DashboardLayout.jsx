@@ -13,11 +13,14 @@ import {
   ChevronDown,
   Users,
   ScrollText,
+  MessageSquare,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { clsx } from "clsx";
 import { ThemeToggle } from "../components/ThemeToggle";
-
+import logoDark from "/images/Apisdor-Logo-dark.png";
+import logoLight from "/images/Apisdor-Logo-white.png";
+import ChatBot from "../components/chatbot/ChatBot";
 const navigation = {
   common: [{ name: "Dashboard", href: "/dashboard", icon: LayoutDashboard }],
   user: [
@@ -39,6 +42,7 @@ const navigation = {
 export default function DashboardLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const [showChatbot, setShowChatbot] = useState(false);
   const { user, logout } = useAuthStore();
   const location = useLocation();
   const navigate = useNavigate();
@@ -78,12 +82,22 @@ export default function DashboardLayout() {
       >
         <div className="h-full flex flex-col">
           {/* Logo */}
-          <div className="flex items-center justify-between h-16 px-4 dark:border-gray-700">
-            <Link to="/dashboard" className="flex items-center">
-              <Pen className="h-5 w-5 text-primary-500" />
-              <span className="ml-2 text-sm font-semibold text-gray-900 dark:text-white">
-                Logo
-              </span>
+          <div className="flex items-center justify-center h-16 px-4 dark:border-gray-700">
+            <Link to="/dashboard" className="flex items-center justify-center">
+              <div className="flex items-center space-x-2">
+                {/* Light mode logo */}
+                <img
+                  src={logoLight}
+                  alt="Apisdor Logo"
+                  className="h-8 md:h-10 w-auto block dark:hidden"
+                />
+                {/* Dark mode logo */}
+                <img
+                  src={logoDark}
+                  alt="Apisdor Logo"
+                  className="h-8 sm:h-10 md:h-12 w-auto hidden dark:block"
+                />
+              </div>
             </Link>
             <button
               className="md:hidden text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
@@ -94,7 +108,7 @@ export default function DashboardLayout() {
           </div>
 
           {/* Navigation */}
-          <nav className="flex-1 px-5 py-0 space-y-1 overflow-y-auto">
+          <nav className="flex-1 px-5 py-0 space-y-3 overflow-y-auto">
             {navItems.map((item) => (
               <Link
                 key={item.name}
@@ -209,6 +223,16 @@ export default function DashboardLayout() {
         <main className="flex-1 py-6 px-4 sm:px-6 bg-transparent dark:bg-gray-900">
           <Outlet />
         </main>
+      </div>
+      <div className="fixed bottom-6 right-6 z-50">
+        <button
+          onClick={() => setShowChatbot(!showChatbot)}
+          className="w-16 h-16 rounded-full bg-gradient-to-r from-primary to-blue-500 text-black flex items-center justify-center shadow-lg animate-bounce hover:scale-110 transition-transform"
+        >
+          <MessageSquare className="h-6 w-6" />
+        </button>
+
+        <ChatBot showChatbot={showChatbot} setShowChatbot={setShowChatbot} />
       </div>
     </div>
   );
