@@ -32,10 +32,10 @@ const ChatBot = ({ showChatbot, setShowChatbot }) => {
 
     try {
       const response = await axios.post(
-        `https://n8n.apisdor.com/webhook/trascript_Chat?userId=${user?.id}`,
+        `https://n8n.apisdor.com/webhook/trascript_Chat?user_id=${user?.id}`,
         {
           action: "sendMessage",
-          cahtinput: input,
+          chatInput: input,
           sessionId,
         },
         {
@@ -73,12 +73,12 @@ const ChatBot = ({ showChatbot, setShowChatbot }) => {
     <div className="absolute bottom-20 right-0 w-80 h-96 bg-dark/90 backdrop-blur-lg border border-primary/20 rounded-lg shadow-2xl p-4 animate-slideInUp flex flex-col">
       <div className="flex justify-between items-center mb-4">
         <div className="flex items-center space-x-2">
-          <Bot className="h-5 w-5 text-primary" />
-          <span className="font-medium">AI Assistant</span>
+          <Bot className="h-5 w-5 text-primary dark:text-white" />
+          <span className="font-medium dark:text-white">AI Assistant</span>
         </div>
         <button
           onClick={() => setShowChatbot(false)}
-          className="text-gray-400 hover:text-white"
+          className="text-gray-400 hover:text-gray-900 dark:text-white dark:hover:text-primary-300"
         >
           &times;
         </button>
