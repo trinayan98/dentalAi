@@ -177,7 +177,7 @@ const Dashboard = () => {
   const recentTranscriptions = transcriptions.slice(0, 3);
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 ">
       {/* Breadcrumbs */}
       <div className="flex items-center gap-2 text-xs">
         <Link to={baseUrl} className="text-gray-900 dark:text-gray-300">

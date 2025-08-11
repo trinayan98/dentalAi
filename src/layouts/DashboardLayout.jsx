@@ -14,6 +14,7 @@ import {
   Users,
   ScrollText,
   MessageSquare,
+  Notebook,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { clsx } from "clsx";
@@ -30,6 +31,12 @@ const navigation = {
       href: "/dashboard/transcribe/create",
       icon: PlusCircle,
     },
+    {
+      name: "New Note",
+      href: "/dashboard/new-transcription",
+      icon: Notebook,
+    },
+    { name: "Templates", href: "/dashboard/templates", icon: Notebook },
     { name: "Profile", href: "/dashboard/profile", icon: Users },
   ],
   admin: [
@@ -82,7 +89,7 @@ export default function DashboardLayout() {
       >
         <div className="h-full flex flex-col">
           {/* Logo */}
-          <div className="flex items-center justify-center h-16 px-4 dark:border-gray-700">
+          <div className="flex items-center justify-center h-20 px-4 dark:border-gray-700 ">
             <Link to="/dashboard" className="flex items-center justify-center">
               <div className="flex items-center space-x-2">
                 {/* Light mode logo */}
@@ -138,8 +145,8 @@ export default function DashboardLayout() {
       {/* Main content */}
       <div className="md:pl-[192px] lg:pl-[210px] xl:pl-[224px] flex-1 flex flex-col min-h-screen">
         {/* Header */}
-        <header className="sticky top-0 z-10 bg-white/100 dark:bg-gray-800 backdrop-blur-sm dark:border-gray-700">
-          <div className="px-4 sm:px-6 h-16 flex items-center justify-between">
+        <header className="sticky top-0 z-10 bg-white/100 dark:bg-gray-800 backdrop-blur-sm dark:border-gray-700 h-20">
+          <div className="px-4 sm:px-6 h-20 flex items-center justify-between">
             {/* Left side */}
             <div className="flex items-center">
               <button
@@ -220,11 +227,11 @@ export default function DashboardLayout() {
         </header>
 
         {/* Page content */}
-        <main className="flex-1 py-6 px-4 sm:px-6 bg-transparent dark:bg-gray-900">
+        <main className="flex-1 py-6 px-4 sm:px-6 bg-gray-50 dark:bg-gray-900">
           <Outlet />
         </main>
       </div>
-      <div className="fixed bottom-6 right-6 z-50">
+      {/* <div className="fixed bottom-6 right-6 z-50">
         <button
           onClick={() => setShowChatbot(!showChatbot)}
           className="w-16 h-16 rounded-full bg-gradient-to-r from-primary to-blue-500 text-black flex items-center justify-center shadow-lg animate-bounce hover:scale-110 transition-transform"
@@ -233,7 +240,7 @@ export default function DashboardLayout() {
         </button>
 
         <ChatBot showChatbot={showChatbot} setShowChatbot={setShowChatbot} />
-      </div>
+      </div> */}
     </div>
   );
 }

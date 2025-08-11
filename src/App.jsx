@@ -12,6 +12,10 @@ import RequireRole from "./components/RequireRole";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import useAuthStore from "./stores/authStore";
 import { authApi } from "./utils/api";
+import NewTranscription from "./pages/newTrans/NewTranscription";
+import Templates from "./pages/templates/Templates";
+import TemplateDetails from "./pages/templates/TemplateDetails";
+import NewTemplate from "./pages/templates/NewTemplate";
 
 // Lazy load components
 const Login = lazy(() => import("./pages/auth/Login"));
@@ -143,6 +147,38 @@ const router = createBrowserRouter([
                 element: (
                   <Suspense fallback={<LoadingPage />}>
                     <CreateTranscription />
+                  </Suspense>
+                ),
+              },
+              {
+                path: "new-transcription",
+                element: (
+                  <Suspense fallback={<LoadingPage />}>
+                    <NewTranscription />
+                  </Suspense>
+                ),
+              },
+              {
+                path: "templates",
+                element: (
+                  <Suspense fallback={<LoadingPage />}>
+                    <Templates />
+                  </Suspense>
+                ),
+              },
+              {
+                path: "template/:id",
+                element: (
+                  <Suspense fallback={<LoadingPage />}>
+                    <TemplateDetails />
+                  </Suspense>
+                ),
+              },
+              {
+                path: "create-template",
+                element: (
+                  <Suspense fallback={<LoadingPage />}>
+                    <NewTemplate />
                   </Suspense>
                 ),
               },
