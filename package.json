@@ -30,9 +30,11 @@
     "react-h5-audio-player": "^3.10.0-rc.1",
     "react-hook-form": "^7.56.1",
     "react-image-crop": "^11.0.10",
+    "react-media-recorder": "^1.7.2",
     "react-quill": "^2.0.0",
     "react-router-dom": "^6.22.3",
     "react-super-responsive-table": "^6.0.2",
+    "react-text-to-speech": "^0.19.3",
     "tailwind-merge": "^3.3.0",
     "uuid": "^11.1.0",
     "zustand": "^4.5.0"

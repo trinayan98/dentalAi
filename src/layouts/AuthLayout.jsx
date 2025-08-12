@@ -70,10 +70,7 @@ export default function AuthLayout() {
   return (
     <div className="min-h-screen flex flex-col bg-white dark:bg-gray-900">
       {/* Header - Logo and Theme Toggle */}
-      <div
-        className="w-full px-4 sm:px-6 py-4 flex justify-between items-center min-h-[60px]"
-        style={{ minHeight: "100px" }}
-      >
+      <div className="w-full px-4 sm:px-6 py-4 flex justify-between items-center min-h-[60px]  ">
         <div className="flex items-center space-x-2">
           {/* Light mode logo */}
           <img

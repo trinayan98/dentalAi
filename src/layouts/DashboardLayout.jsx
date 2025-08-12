@@ -2,42 +2,33 @@ import React, { useState } from "react";
 import { Outlet, Link, useLocation, useNavigate } from "react-router-dom";
 import useAuthStore from "../stores/authStore";
 import {
-  Pen,
   LayoutDashboard,
   Mic,
-  PlusCircle,
   Settings,
-  LogOut,
   Menu,
   X,
   ChevronDown,
   Users,
   ScrollText,
-  MessageSquare,
-  Notebook,
+  UserRound,
+  Layers,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { clsx } from "clsx";
 import { ThemeToggle } from "../components/ThemeToggle";
-import logoDark from "/images/Apisdor-Logo-dark.png";
-import logoLight from "/images/Apisdor-Logo-white.png";
-import ChatBot from "../components/chatbot/ChatBot";
+
 const navigation = {
   common: [{ name: "Dashboard", href: "/dashboard", icon: LayoutDashboard }],
   user: [
-    { name: "Transcriptions", href: "/dashboard/transcriptions", icon: Mic },
+    { name: "Patients", href: "/dashboard/transcriptions", icon: Users },
+
     {
-      name: "New Transcription",
-      href: "/dashboard/transcribe/create",
-      icon: PlusCircle,
-    },
-    {
-      name: "New Note",
+      name: "Transcribe",
       href: "/dashboard/new-transcription",
-      icon: Notebook,
+      icon: Mic,
     },
-    { name: "Templates", href: "/dashboard/templates", icon: Notebook },
-    { name: "Profile", href: "/dashboard/profile", icon: Users },
+    { name: "Templates", href: "/dashboard/templates", icon: Layers },
+    { name: "Profile", href: "/dashboard/profile", icon: UserRound },
   ],
   admin: [
     { name: "Users", href: "/dashboard/users", icon: Users },
@@ -49,7 +40,7 @@ const navigation = {
 export default function DashboardLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
-  const [showChatbot, setShowChatbot] = useState(false);
+
   const { user, logout } = useAuthStore();
   const location = useLocation();
   const navigate = useNavigate();
@@ -83,28 +74,18 @@ export default function DashboardLayout() {
       {/* Sidebar */}
       <aside
         className={clsx(
-          "fixed top-0 left-0 z-30 h-full  lg:w-[210px] xl:w-[224px] bg-white dark:bg-gray-800 transform transition-transform duration-200 ease-in-out md:translate-x-0",
+          "fixed top-0 left-0 z-30 h-full  lg:w-[200px] xl:w-[200px] bg-white dark:bg-gray-800 transform transition-transform duration-200 ease-in-out md:translate-x-0 border-0 border-r-2 border-gray-100",
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
         )}
       >
         <div className="h-full flex flex-col">
           {/* Logo */}
           <div className="flex items-center justify-center h-20 px-4 dark:border-gray-700 ">
-            <Link to="/dashboard" className="flex items-center justify-center">
-              <div className="flex items-center space-x-2">
-                {/* Light mode logo */}
-                <img
-                  src={logoLight}
-                  alt="Apisdor Logo"
-                  className="h-8 md:h-10 w-auto block dark:hidden"
-                />
-                {/* Dark mode logo */}
-                <img
-                  src={logoDark}
-                  alt="Apisdor Logo"
-                  className="h-8 sm:h-10 md:h-12 w-auto hidden dark:block"
-                />
-              </div>
+            <Link
+              to="/dashboard"
+              className="flex items-center justify-center font-bold text-green-600"
+            >
+              AI Dental Scribe
             </Link>
             <button
               className="md:hidden text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
@@ -115,15 +96,15 @@ export default function DashboardLayout() {
           </div>
 
           {/* Navigation */}
-          <nav className="flex-1 px-5 py-0 space-y-3 overflow-y-auto">
+          <nav className="flex-1 px-5 py-0 space-y-3 overflow-y-auto ">
             {navItems.map((item) => (
               <Link
                 key={item.name}
                 to={item.href}
                 className={clsx(
-                  "text-xxs group flex items-center px-4 py-2 pt-3 pb-3 text-sm font-medium rounded-md transition-colors",
+                  "text-s group flex items-center px-4 py-2 pt-3 pb-3   rounded-md transition-colors ",
                   location.pathname === item.href
-                    ? "bg-primary-500 text-white dark:bg-primary-900/30 dark:text-primary-400"
+                    ? "bg-green-100 text-green-600 dark:bg-primary-900/30 dark:text-primary-400 font-semibold"
                     : "text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700/30"
                 )}
               >
@@ -131,7 +112,7 @@ export default function DashboardLayout() {
                   className={clsx(
                     "mr-2 flex-shrink-0 h-4 w-4",
                     location.pathname === item.href
-                      ? "text-white dark:text-primary-400"
+                      ? "text-green-600 dark:text-primary-400"
                       : "text-gray-500 dark:text-gray-400"
                   )}
                 />
@@ -143,9 +124,9 @@ export default function DashboardLayout() {
       </aside>
 
       {/* Main content */}
-      <div className="md:pl-[192px] lg:pl-[210px] xl:pl-[224px] flex-1 flex flex-col min-h-screen">
+      <div className="md:pl-[192px] lg:pl-[200px] xl:pl-[200px] flex-1 flex flex-col min-h-screen">
         {/* Header */}
-        <header className="sticky top-0 z-10 bg-white/100 dark:bg-gray-800 backdrop-blur-sm dark:border-gray-700 h-20">
+        <header className="sticky top-0 z-10 bg-white/100 dark:bg-gray-800 backdrop-blur-sm dark:border-gray-700 h-18 border-0 border-b-2 border-gray-100 ">
           <div className="px-4 sm:px-6 h-20 flex items-center justify-between">
             {/* Left side */}
             <div className="flex items-center">
@@ -157,8 +138,8 @@ export default function DashboardLayout() {
               </button>
             </div>
 
-            {/* Right side - User menu */}
-            <div className="relative flex flex-row">
+            {/*nav bar Right side - User menu */}
+            <div className="relative flex flex-row border-0 border-b-5 border-gray-200 ">
               <ThemeToggle className="mr-10" />
               <button
                 className="ml-5 flex items-center text-sm rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"

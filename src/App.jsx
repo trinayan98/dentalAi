@@ -16,6 +16,7 @@ import NewTranscription from "./pages/newTrans/NewTranscription";
 import Templates from "./pages/templates/Templates";
 import TemplateDetails from "./pages/templates/TemplateDetails";
 import NewTemplate from "./pages/templates/NewTemplate";
+import StreamingDemo from "./pages/newTrans/StreamingDemo";
 
 // Lazy load components
 const Login = lazy(() => import("./pages/auth/Login"));
@@ -24,15 +25,7 @@ const ForgotPassword = lazy(() => import("./pages/auth/ForgotPassword"));
 const ResetPassword = lazy(() => import("./pages/auth/ResetPassword"));
 const VerifyEmail = lazy(() => import("./pages/auth/VerifyEmail"));
 const Dashboard = lazy(() => import("./pages/dashboard/Dashboard"));
-const CreateTranscription = lazy(() =>
-  import("./pages/transcribe/CreateTranscription")
-);
-const TranscriptionList = lazy(() =>
-  import("./pages/transcribe/TranscribeList")
-);
-const TranscriptionDetail = lazy(() =>
-  import("./pages/transcribe/TranscriptionDetail")
-);
+
 const UserProfile = lazy(() => import("./pages/profile/UserProfile"));
 const UserList = lazy(() => import("./pages/admin/UserList"));
 const UserDetails = lazy(() => import("./pages/admin/UserDetails"));
@@ -126,30 +119,30 @@ const router = createBrowserRouter([
           {
             element: <RequireRole allowedRoles={["user"]} />,
             children: [
-              {
-                path: "transcriptions",
-                element: (
-                  <Suspense fallback={<LoadingPage />}>
-                    <TranscriptionList />
-                  </Suspense>
-                ),
-              },
-              {
-                path: "transcription/:id",
-                element: (
-                  <Suspense fallback={<LoadingPage />}>
-                    <TranscriptionDetail />
-                  </Suspense>
-                ),
-              },
-              {
-                path: "transcribe/create",
-                element: (
-                  <Suspense fallback={<LoadingPage />}>
-                    <CreateTranscription />
-                  </Suspense>
-                ),
-              },
+              // {
+              //   path: "transcriptions",
+              //   element: (
+              //     <Suspense fallback={<LoadingPage />}>
+              //       <TranscriptionList />
+              //     </Suspense>
+              //   ),
+              // },
+              // {
+              //   path: "transcription/:id",
+              //   element: (
+              //     <Suspense fallback={<LoadingPage />}>
+              //       <TranscriptionDetail />
+              //     </Suspense>
+              //   ),
+              // },
+              // {
+              //   path: "transcribe/create",
+              //   element: (
+              //     <Suspense fallback={<LoadingPage />}>
+              //       <CreateTranscription />
+              //     </Suspense>
+              //   ),
+              // },
               {
                 path: "new-transcription",
                 element: (
@@ -179,6 +172,14 @@ const router = createBrowserRouter([
                 element: (
                   <Suspense fallback={<LoadingPage />}>
                     <NewTemplate />
+                  </Suspense>
+                ),
+              },
+              {
+                path: "demo",
+                element: (
+                  <Suspense fallback={<LoadingPage />}>
+                    <StreamingDemo />
                   </Suspense>
                 ),
               },
