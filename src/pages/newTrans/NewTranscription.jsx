@@ -32,6 +32,7 @@ import { API_BASE_URL } from "../../config/constants";
 import axios from "axios";
 import { motion } from "framer-motion";
 import { Button } from "../../components/ui/Button";
+import { useToastStore } from "../../stores/toastStore";
 
 const NewTranscription = () => {
   const { token } = useAuthStore();
@@ -61,6 +62,7 @@ const NewTranscription = () => {
   });
   const [patientSaving, setPatientSaving] = useState(false);
   const [patientError, setPatientError] = useState("");
+  const { addToast } = useToastStore();
 
   // Load saved summary from localStorage on component mount
   useEffect(() => {
@@ -557,6 +559,52 @@ const NewTranscription = () => {
     }));
   };
 
+  const handleCopySummary = () => {
+    if (!summaryData || !summaryData.summary) {
+      addToast({
+        type: "error",
+        title: "No summary to copy",
+        description: "Please generate a summary first",
+      });
+      return;
+    }
+
+    try {
+      // Format the summary for copying
+      const summaryToCopy = Object.entries(summaryData.summary)
+        .map(([key, section]) => {
+          return `${section.title}:\n${section.content}`;
+        })
+        .join("\n\n");
+
+      // Copy to clipboard
+      navigator.clipboard
+        .writeText(summaryToCopy)
+        .then(() => {
+          addToast({
+            type: "success",
+            title: "Summary copied",
+            description: "Summary has been copied to clipboard",
+          });
+        })
+        .catch((error) => {
+          console.error("Failed to copy summary:", error);
+          addToast({
+            type: "error",
+            title: "Copy failed",
+            description: "Failed to copy summary to clipboard",
+          });
+        });
+    } catch (error) {
+      console.error("Error formatting summary:", error);
+      addToast({
+        type: "error",
+        title: "Copy failed",
+        description: "Failed to format summary for copying",
+      });
+    }
+  };
+
   return (
     <div className="space-y-3 ">
       {" "}
@@ -570,7 +618,7 @@ const NewTranscription = () => {
           <div className=" border border-1 border-gray-200  rounded-lg bg-white">
             <div className="w-full border-0 border-b-2 border-gray-200 py-4 px-5 flex items-center justify-between">
               <span className="text-gray-700 dark:text-gray-300 font-semibold flex justify-between items-center">
-                <NotebookText size={18} className="mr-3" /> Summary
+                <NotebookText size={14} className="mr-3" /> Summary
               </span>
               <div className="relative">
                 <Select
@@ -777,12 +825,14 @@ const NewTranscription = () => {
                 className="flex items-center text-s gap-2 border-2 border-primary-100 text-primary-500 bg-transparent rounded-full px-6 py-2 font-medium transition hover:bg-primary-50 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
                 type="button"
               >
-                <RefreshCcw size={18} />
+                <RefreshCcw size={14} />
                 Regenerate
               </button> */}
 
               <button
-                className="flex items-center justify-center border-2 border-gray-300 text-gray-400 bg-transparent rounded-full p-2 transition hover:bg-gray-100 focus:outline-none"
+                onClick={handleCopySummary}
+                disabled={!summaryData || summaryLoading}
+                className="flex items-center justify-center border-2 border-gray-300 text-gray-400 bg-transparent rounded-full p-2 transition hover:bg-gray-100 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
                 type="button"
               >
                 <Copy size={16} />
@@ -794,12 +844,15 @@ const NewTranscription = () => {
                     <>
                       <button
                         onClick={handleSaveSummary}
-                        className="flex items-center gap-1 text-xxs text-green-600 hover:text-green-800 font-medium px-2 py-1 bg-gray-100 rounded-sm"
+                        className="flex items-center gap-1 text-xxs text-green-600 hover:text-green-800 font-medium px-4 py-2  rounded-md border-2 border-green-400"
                       >
                         <Save size={14} />
                         Save
                       </button>
-                      <button className="flex items-center gap-1 text-xs text-gray-600 hover:text-gray-800 font-medium px-2 py-1 bg-gray-100 rounded-sm">
+                      <button
+                        onClick={() => setIsEditingSummary(false)}
+                        className="flex items-center gap-1 text-xxs text-red-600 hover:text-red-800 font-medium px-4 py-2  rounded-md border-2 border-red-400"
+                      >
                         <X size={14} />
                         Cancel
                       </button>
@@ -813,13 +866,16 @@ const NewTranscription = () => {
                       >
                         <Edit size={14} />
                       </button>
-                      <button
-                        onClick={handleCancelEditSummary}
-                        className="flex items-center justify-center border-2 border-red-300 text-red-600 bg-red-500/20 rounded-full p-2 transition hover:bg-gray-100 focus:outline-none"
-                        type="button"
-                      >
-                        <X size={14} />
-                      </button>
+                      {setIsEditingSummary && (
+                        <button
+                          onClick={() => setSummaryData(null)}
+                          className="flex items-center text-s gap-2 border-2 border-red-300 text-red-600 bg-transparent rounded-full px-6 py-2 font-medium transition hover:bg-primary-50 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
+                          type="button"
+                        >
+                          <X size={14} />
+                          Clear
+                        </button>
+                      )}
                     </>
                   )}
                 </div>
@@ -833,7 +889,7 @@ const NewTranscription = () => {
                 className="flex items-center text-s gap-2 border-2 border-primary-100 text-primary-500 bg-transparent rounded-full px-6 py-2 font-medium transition hover:bg-primary-50 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
                 type="button"
               >
-                <RefreshCcw size={18} />
+                <RefreshCcw size={14} />
                 Regenerate
               </button>
               <button
@@ -842,7 +898,7 @@ const NewTranscription = () => {
                 className="flex items-center text-s gap-2 border-2 border-green-300 text-green-600 bg-transparent rounded-full px-6 py-2 font-medium transition hover:bg-primary-50 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
                 type="button"
               >
-                <Upload size={18} />
+                <Upload size={14} />
                 Save
               </button>
             </div>
