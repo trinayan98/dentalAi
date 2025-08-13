@@ -91,7 +91,7 @@ export const streamingTranscriptionAPI = {
   // Process audio buffer (pause/stop)
   processAudio: async (token, sessionId, audioData, action) => {
     const response = await axios.post(
-      `${API_BASE_URL}/transcription/process-audio`,
+      `${API_BASE_URL}/transcription/stream/audio`,
       {
         sessionId,
         audioData,

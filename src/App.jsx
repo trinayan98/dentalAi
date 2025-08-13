@@ -19,6 +19,7 @@ import NewTemplate from "./pages/templates/NewTemplate";
 import StreamingDemo from "./pages/newTrans/StreamingDemo";
 import AllPatients from "./pages/patients/AllPatients";
 import PatientDetails from "./pages/patients/PatientDetails";
+import PauseBasedDemo from "./pages/newTrans/PauseBasedDemo";
 
 // Lazy load components
 const Login = lazy(() => import("./pages/auth/Login"));
@@ -190,6 +191,14 @@ const router = createBrowserRouter([
                 element: (
                   <Suspense fallback={<LoadingPage />}>
                     <StreamingDemo />
+                  </Suspense>
+                ),
+              },
+              {
+                path: "pause",
+                element: (
+                  <Suspense fallback={<LoadingPage />}>
+                    <PauseBasedDemo />
                   </Suspense>
                 ),
               },

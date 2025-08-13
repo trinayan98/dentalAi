@@ -8,121 +8,127 @@ import {
   Trash2,
   XCircle,
   Podcast,
-  Mic,
-  Square,
   Upload,
-  Pause,
-  Play,
+  Mic,
 } from "lucide-react";
 import React, { useState, useRef, useEffect } from "react";
-import { useReactMediaRecorder } from "react-media-recorder";
+import { motion } from "framer-motion";
 import useAuthStore from "../../stores/authStore";
 import { useToastStore } from "../../stores/toastStore";
-import {
-  streamingTranscriptionAPI,
-  audioValidation,
-} from "../../api/streamingTranscription";
-import AudioDebugger from "../../components/AudioDebugger";
+import { streamingTranscriptionAPI } from "../../api/streamingTranscription";
+import StreamingRecorder from "./StreamingRecorder";
 
 const LiveTranscript = () => {
-  // Tab state
-  const [activeTab, setActiveTab] = useState("record"); // "record" or "upload"
+  // Tab state - load from localStorage or default to "record"
+  const [activeTab, setActiveTab] = useState(() => {
+    const savedTab = localStorage.getItem("activeTranscriptionTab");
+    return savedTab || "record";
+  });
+  const [showTabSwitchWarning, setShowTabSwitchWarning] = useState(false);
+  const [pendingTabSwitch, setPendingTabSwitch] = useState(null);
 
   // Shared states
   const [utterances, setUtterances] = useState([]);
   const [isEditing, setIsEditing] = useState(false);
   const [editingUtterances, setEditingUtterances] = useState([]);
 
-  // Recording states
-  const [recordingTime, setRecordingTime] = useState(0);
-  const [isPlaying, setIsPlaying] = useState(false);
-
   // Upload states
   const [selectedFile, setSelectedFile] = useState(null);
   const [isUploading, setIsUploading] = useState(false);
   const [isTranscribing, setIsTranscribing] = useState(false);
 
-  // Streaming transcription states
-  const [sessionId, setSessionId] = useState(null);
+  // Streaming states
+  const [streamingSessionId, setStreamingSessionId] = useState(null);
   const [isStreamingActive, setIsStreamingActive] = useState(false);
-  const [isPaused, setIsPaused] = useState(false);
-  const [currentTranscription, setCurrentTranscription] = useState("");
-  const [audioBuffer, setAudioBuffer] = useState([]);
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [sessionTitle, setSessionTitle] = useState("");
-  const [bufferStats, setBufferStats] = useState({
-    totalSamples: 0,
-    lastUpdate: null,
-    updateCount: 0,
-  });
+  const [isStreamingPaused, setIsStreamingPaused] = useState(false);
 
   // Refs
-  const recordingIntervalRef = useRef(null);
-  const audioRef = useRef(null);
   const fileInputRef = useRef(null);
-  const mediaRecorderRef = useRef(null);
-  const audioContextRef = useRef(null);
-  const processorRef = useRef(null);
-  const sourceRef = useRef(null);
 
   const { token } = useAuthStore();
   const { addToast } = useToastStore();
 
-  // Use react-media-recorder hook for legacy recording
-  const { status, startRecording, stopRecording, mediaBlobUrl, clearBlobUrl } =
-    useReactMediaRecorder({
-      audio: true,
-      mediaRecorderOptions: {
-        mimeType: "audio/webm;codecs=opus",
-      },
-      onStop: (blobUrl, blob) => {
-        console.log("Recording completed:", blobUrl);
-        addToast({
-          type: "success",
-          title: "Recording complete",
-          description: "Your audio has been recorded successfully",
-        });
-      },
-    });
+  // Tab switching logic
+  const handleTabSwitch = (newTab) => {
+    if (activeTab === newTab) return; // Already on this tab
 
-  // Timer effect
-  useEffect(() => {
-    if (status === "recording" || isStreamingActive) {
-      // Start timer when recording starts
-      recordingIntervalRef.current = setInterval(() => {
-        setRecordingTime((prev) => {
-          const newTime = prev + 1;
-          console.log("Timer tick:", newTime);
-          return newTime;
-        });
-      }, 1000);
-    } else {
-      // Stop timer when recording stops
-      if (recordingIntervalRef.current) {
-        clearInterval(recordingIntervalRef.current);
-        recordingIntervalRef.current = null;
+    // Check if there's existing transcription data
+    const existingUtterances = localStorage.getItem("transcriptUtterances");
+    if (existingUtterances) {
+      try {
+        const parsedUtterances = JSON.parse(existingUtterances);
+        if (parsedUtterances && parsedUtterances.length > 0) {
+          // Show warning modal
+          setPendingTabSwitch(newTab);
+          setShowTabSwitchWarning(true);
+          return;
+        }
+      } catch (error) {
+        console.error("Error parsing existing utterances:", error);
       }
     }
 
-    // Cleanup on unmount
-    return () => {
-      if (recordingIntervalRef.current) {
-        clearInterval(recordingIntervalRef.current);
-      }
-    };
-  }, [status, isStreamingActive]);
+    // No existing data, switch directly
+    setActiveTab(newTab);
+  };
 
-  // Monitor audioBuffer changes
-  useEffect(() => {
-    console.log("AudioBuffer state changed:", {
-      length: audioBuffer.length,
-      hasData: audioBuffer.length > 0,
-      sampleRange:
-        audioBuffer.length > 0
-          ? `${Math.min(...audioBuffer)} to ${Math.max(...audioBuffer)}`
-          : "N/A",
+  const confirmTabSwitch = () => {
+    // Clear existing data
+    localStorage.removeItem("transcriptUtterances");
+    setUtterances([]);
+    setSelectedFile(null);
+    setStreamingSessionId(null);
+    setIsStreamingActive(false);
+    setIsStreamingPaused(false);
+
+    // Switch to pending tab and save preference
+    setActiveTab(pendingTabSwitch);
+    localStorage.setItem("activeTranscriptionTab", pendingTabSwitch);
+    setShowTabSwitchWarning(false);
+    setPendingTabSwitch(null);
+
+    addToast({
+      type: "info",
+      title: "Tab switched",
+      description: "Previous transcription data has been cleared",
     });
-  }, [audioBuffer]);
+  };
+
+  const cancelTabSwitch = () => {
+    setShowTabSwitchWarning(false);
+    setPendingTabSwitch(null);
+  };
+
+  // Handle streaming session updates
+  const handleStreamingSessionUpdate = (sessionInfo) => {
+    setStreamingSessionId(sessionInfo.sessionId);
+    setIsStreamingActive(sessionInfo.isActive);
+    setIsStreamingPaused(sessionInfo.isPaused);
+  };
+
+  // Handle streaming transcription completion
+  const handleStreamingTranscriptionComplete = (
+    transcription,
+    newUtterances
+  ) => {
+    // Get existing utterances from localStorage
+    const existingUtterances = localStorage.getItem("transcriptUtterances");
+    let allUtterances = [];
+
+    if (existingUtterances) {
+      try {
+        allUtterances = JSON.parse(existingUtterances);
+      } catch (error) {
+        console.error("Error parsing existing utterances:", error);
+      }
+    }
+
+    // Combine existing and new utterances
+    const combinedUtterances = [...allUtterances, ...newUtterances];
+
+    // Update state - this will trigger the useEffect to save to localStorage
+    setUtterances(combinedUtterances);
+  };
 
   // Load utterances from localStorage on component mount
   useEffect(() => {
@@ -143,6 +149,11 @@ const LiveTranscript = () => {
       localStorage.setItem("transcriptUtterances", JSON.stringify(utterances));
     }
   }, [utterances]);
+
+  // Save active tab preference to localStorage
+  useEffect(() => {
+    localStorage.setItem("activeTranscriptionTab", activeTab);
+  }, [activeTab]);
 
   // Convert milliseconds to [MM:SS] format
   const formatTimestamp = (milliseconds) => {
@@ -165,423 +176,22 @@ const LiveTranscript = () => {
     return 0;
   };
 
-  const formatRecordingTime = (seconds) => {
-    const minutes = Math.floor(seconds / 60);
-    const remainingSeconds = seconds % 60;
-    return `${minutes.toString().padStart(2, "0")}:${remainingSeconds
-      .toString()
-      .padStart(2, "0")}`;
+  // Helper function to filter valid utterances
+  const getValidUtterances = () => {
+    return utterances.filter(
+      (utterance) =>
+        utterance.text &&
+        utterance.text.trim() !== "" &&
+        utterance.start !== null &&
+        utterance.end !== null
+    );
   };
 
   // ===== STREAMING TRANSCRIPTION FUNCTIONS =====
-  const startStreamingSession = async () => {
-    try {
-      const response = await streamingTranscriptionAPI.startSession(token, {
-        title: sessionTitle || "Live Transcription Session",
-        language: "en",
-        tags: "live, real-time",
-        notes: "Ongoing transcription session",
-      });
-
-      if (response.success) {
-        setSessionId(response.data.sessionId);
-        setSessionTitle(response.data.title);
-        setIsStreamingActive(true);
-        setIsPaused(false);
-        setCurrentTranscription("");
-        setAudioBuffer([]);
-
-        addToast({
-          type: "success",
-          title: "Session started",
-          description: "Streaming transcription session is now active",
-        });
-
-        // Start audio capture
-        await startAudioCapture();
-      } else {
-        throw new Error(response.error || "Failed to start session");
-      }
-    } catch (error) {
-      console.error("Error starting streaming session:", error);
-      addToast({
-        type: "error",
-        title: "Session failed",
-        description: "Failed to start streaming transcription session",
-      });
-    }
-  };
-
-  const startAudioCapture = async () => {
-    try {
-      // First, check if we can access the microphone
-      const stream = await navigator.mediaDevices.getUserMedia({
-        audio: {
-          echoCancellation: true,
-          noiseSuppression: true,
-          autoGainControl: true,
-          sampleRate: 16000, // 16kHz for better compatibility
-          channelCount: 1, // Mono audio
-        },
-      });
-
-      // Verify we have an active audio track
-      const audioTrack = stream.getAudioTracks()[0];
-      if (!audioTrack || !audioTrack.enabled) {
-        throw new Error("No active audio track available");
-      }
-
-      console.log("Audio track settings:", audioTrack.getSettings());
-      console.log("Audio track enabled:", audioTrack.enabled);
-
-      audioContextRef.current = new (window.AudioContext ||
-        window.webkitAudioContext)();
-      const source = audioContextRef.current.createMediaStreamSource(stream);
-      sourceRef.current = source;
-
-      // Create script processor for audio processing
-      const processor = audioContextRef.current.createScriptProcessor(
-        4096,
-        1,
-        1
-      );
-      processorRef.current = processor;
-
-      let consecutiveSilentChunks = 0;
-      const maxSilentChunks = 10; // Allow some silent chunks before filtering
-
-      processor.onaudioprocess = (event) => {
-        const inputBuffer = event.inputBuffer;
-        const inputData = inputBuffer.getChannelData(0);
-
-        // Calculate RMS (Root Mean Square) for better audio detection
-        let rms = 0;
-        for (let i = 0; i < inputData.length; i++) {
-          rms += inputData[i] * inputData[i];
-        }
-        rms = Math.sqrt(rms / inputData.length);
-
-        // More robust audio detection with multiple checks
-        const hasAudio = rms > 0.005; // Higher threshold for meaningful audio
-
-        // Additional check: ensure we have actual non-zero samples after conversion
-        const int16Array = new Int16Array(inputData.length);
-        for (let i = 0; i < inputData.length; i++) {
-          int16Array[i] = Math.max(
-            -32768,
-            Math.min(32767, inputData[i] * 32768)
-          );
-        }
-
-        // Check if the converted audio has meaningful values
-        const hasMeaningfulSamples = int16Array.some(
-          (sample) => Math.abs(sample) > 50
-        );
-
-        if (hasAudio && hasMeaningfulSamples) {
-          consecutiveSilentChunks = 0;
-
-          // Add to buffer
-          setAudioBuffer((prev) => {
-            const newBuffer = [...prev, ...Array.from(int16Array)];
-
-            // Limit buffer size to prevent memory issues (max 10 seconds at 16kHz)
-            const maxSamples = 16000 * 10; // 10 seconds max
-            if (newBuffer.length > maxSamples) {
-              return newBuffer.slice(-maxSamples);
-            }
-
-            // Debug logging with actual new buffer size
-            console.log(
-              "Audio captured - RMS:",
-              rms,
-              "Buffer size:",
-              newBuffer.length,
-              "Added samples:",
-              int16Array.length,
-              "Sample range:",
-              `${Math.min(...int16Array)} to ${Math.max(...int16Array)}`
-            );
-
-            // Update buffer stats
-            setBufferStats((prev) => ({
-              totalSamples: newBuffer.length,
-              lastUpdate: new Date().toISOString(),
-              updateCount: prev.updateCount + 1,
-            }));
-
-            return newBuffer;
-          });
-        } else {
-          consecutiveSilentChunks++;
-          console.log(
-            "Silent/quiet audio detected - RMS:",
-            rms,
-            "Has meaningful samples:",
-            hasMeaningfulSamples,
-            "Skipping chunk"
-          );
-
-          // Don't add silent chunks to buffer - this was the problem!
-          // We were adding zeros to the buffer, which accumulated into 65,536 zeros
-        }
-      };
-
-      source.connect(processor);
-      processor.connect(audioContextRef.current.destination);
-
-      console.log("Audio capture started successfully");
-      addToast({
-        type: "success",
-        title: "Audio capture active",
-        description: "Microphone is now recording audio",
-      });
-    } catch (error) {
-      console.error("Error starting audio capture:", error);
-      addToast({
-        type: "error",
-        title: "Audio capture failed",
-        description:
-          error.message || "Please allow microphone access to start streaming",
-      });
-    }
-  };
-
-  const processAudioBuffer = async (action = "pause") => {
-    if (!sessionId) return;
-
-    // Validate audio buffer before processing
-    const validation = audioValidation.validateAudioBuffer(audioBuffer, 1, 60);
-
-    if (!validation.valid) {
-      addToast({
-        type: "warning",
-        title: "Audio validation failed",
-        description: validation.error,
-      });
-
-      // Clear buffer if it's silent
-      if (validation.error === "Audio appears to be silent") {
-        setAudioBuffer([]);
-      }
-      return;
-    }
-
-    setIsProcessing(true);
-    try {
-      const response = await streamingTranscriptionAPI.processAudio(
-        token,
-        sessionId,
-        audioBuffer,
-        action
-      );
-
-      if (response.success) {
-        const { transcription, newText, turns } = response.data;
-        setCurrentTranscription(transcription);
-
-        // Convert turns to utterances format
-        if (turns && turns.length > 0) {
-          const newUtterances = turns.map((turn) => ({
-            speaker: turn.speaker || "A",
-            text: turn.transcript,
-            confidence: turn.confidence || 0.9,
-            start: new Date(turn.timestamp).getTime(),
-            end: new Date(turn.timestamp).getTime() + 1000,
-          }));
-
-          setUtterances((prev) => [...prev, ...newUtterances]);
-        }
-
-        // Clear buffer after processing
-        setAudioBuffer([]);
-
-        addToast({
-          type: "success",
-          title: action === "pause" ? "Audio paused" : "Audio processed",
-          description: newText
-            ? `New text: "${newText}"`
-            : "Audio processed successfully",
-        });
-      } else {
-        throw new Error(response.error || "Failed to process audio");
-      }
-    } catch (error) {
-      console.error("Error processing audio:", error);
-      addToast({
-        type: "error",
-        title: "Processing failed",
-        description: "Failed to process audio buffer",
-      });
-    } finally {
-      setIsProcessing(false);
-    }
-  };
-
-  const pauseStreaming = async () => {
-    if (!isStreamingActive || isPaused) return;
-
-    await processAudioBuffer("pause");
-    setIsPaused(true);
-
-    // Stop audio capture
-    if (processorRef.current) {
-      processorRef.current.disconnect();
-      processorRef.current = null;
-    }
-    if (sourceRef.current) {
-      sourceRef.current.disconnect();
-      sourceRef.current = null;
-    }
-  };
-
-  const resumeStreaming = async () => {
-    if (!isStreamingActive || !isPaused) return;
-
-    try {
-      const response = await streamingTranscriptionAPI.resumeSession(
-        token,
-        sessionId
-      );
-
-      if (response.success) {
-        setIsPaused(false);
-        await startAudioCapture();
-
-        addToast({
-          type: "success",
-          title: "Session resumed",
-          description: "Streaming transcription has resumed",
-        });
-      } else {
-        throw new Error(response.error || "Failed to resume session");
-      }
-    } catch (error) {
-      console.error("Error resuming streaming:", error);
-      addToast({
-        type: "error",
-        title: "Resume failed",
-        description: "Failed to resume streaming session",
-      });
-    }
-  };
-
-  const stopStreaming = async () => {
-    if (!isStreamingActive) return;
-
-    // Process final audio buffer
-    await processAudioBuffer("stop");
-
-    // Stop audio capture
-    if (processorRef.current) {
-      processorRef.current.disconnect();
-      processorRef.current = null;
-    }
-    if (sourceRef.current) {
-      sourceRef.current.disconnect();
-      sourceRef.current = null;
-    }
-    if (audioContextRef.current) {
-      audioContextRef.current.close();
-      audioContextRef.current = null;
-    }
-
-    setIsStreamingActive(false);
-    setIsPaused(false);
-    setSessionId(null);
-    setRecordingTime(0);
-
-    addToast({
-      type: "success",
-      title: "Session stopped",
-      description: "Streaming transcription session has ended",
-    });
-  };
-
-  const saveStreamingTranscription = async () => {
-    if (!sessionId || !currentTranscription) {
-      addToast({
-        type: "error",
-        title: "Nothing to save",
-        description: "No transcription data available to save",
-      });
-      return;
-    }
-
-    try {
-      const response = await streamingTranscriptionAPI.saveTranscription(
-        token,
-        sessionId,
-        {
-          title: sessionTitle || "Live Transcription",
-          transcription: currentTranscription,
-          language: "en",
-          tags: ["live", "real-time"],
-          notes: "Streaming transcription session",
-        }
-      );
-
-      if (response.success) {
-        addToast({
-          type: "success",
-          title: "Transcription saved",
-          description:
-            "Your streaming transcription has been saved successfully",
-        });
-
-        // Clear session
-        setSessionId(null);
-        setCurrentTranscription("");
-        setSessionTitle("");
-      } else {
-        throw new Error(response.error || "Failed to save transcription");
-      }
-    } catch (error) {
-      console.error("Error saving transcription:", error);
-      addToast({
-        type: "error",
-        title: "Save failed",
-        description: "Failed to save transcription",
-      });
-    }
-  };
+  // These functions are now handled by the StreamingRecorder component
 
   // ===== RECORDING FUNCTIONS =====
-  const handleStartRecording = () => {
-    try {
-      startRecording();
-      setRecordingTime(0);
-      console.log("Recording started with react-media-recorder");
-      addToast({
-        type: "success",
-        title: "Recording started",
-        description: "Your microphone is now active",
-      });
-    } catch (error) {
-      console.error("Error starting recording:", error);
-      addToast({
-        type: "error",
-        title: "Recording failed",
-        description: "Please allow microphone access to record audio",
-      });
-    }
-  };
-
-  const handleStopRecording = () => {
-    stopRecording();
-    console.log("Recording stopped");
-  };
-
-  const handleClearRecording = () => {
-    clearBlobUrl();
-    setRecordingTime(0);
-    setIsPlaying(false);
-    console.log("Recording cleared");
-  };
-
-  const handleAudioEnded = () => {
-    setIsPlaying(false);
-  };
+  // These functions are now handled by the StreamingRecorder component
 
   // ===== UPLOAD FUNCTIONS =====
   const handleFileSelect = (event) => {
@@ -739,12 +349,9 @@ const LiveTranscript = () => {
   const clearTranscript = () => {
     setSelectedFile(null);
     setUtterances([]);
-    setCurrentTranscription("");
-    setSessionId(null);
+    setStreamingSessionId(null);
     setIsStreamingActive(false);
-    setIsPaused(false);
-    setAudioBuffer([]);
-    handleClearRecording();
+    setIsStreamingPaused(false);
     localStorage.removeItem("transcriptUtterances");
     addToast({
       type: "success",
@@ -754,6 +361,9 @@ const LiveTranscript = () => {
   };
 
   const renderUtterances = () => {
+    // Filter out empty utterances
+    const validUtterances = getValidUtterances();
+
     if (isEditing) {
       return editingUtterances.map((utterance, index) => (
         <div key={index} className="mb-2  rounded">
@@ -784,7 +394,7 @@ const LiveTranscript = () => {
         </div>
       ));
     } else {
-      return utterances.map((utterance, index) => (
+      return validUtterances.map((utterance, index) => (
         <div
           key={index}
           className="flex w-full mb-3 border border-gray-100 bg-green-100/30 rounded-lg shadow-sm relative"
@@ -831,7 +441,7 @@ const LiveTranscript = () => {
                 // }}
               >
                 <button
-                  onClick={() => setActiveTab("record")}
+                  onClick={() => handleTabSwitch("record")}
                   className={`text-xxs flex items-center gap-2 px-4 py-1 rounded-md font-medium transition-all duration-200 ${
                     activeTab === "record"
                       ? "bg-white text-green-600 shadow-sm"
@@ -842,7 +452,7 @@ const LiveTranscript = () => {
                   Record Audio
                 </button>
                 <button
-                  onClick={() => setActiveTab("upload")}
+                  onClick={() => handleTabSwitch("upload")}
                   className={`text-xxs flex items-center gap-2 px-4 py-1 rounded-md font-medium transition-all duration-200 ${
                     activeTab === "upload"
                       ? "bg-white text-blue-600 shadow-sm"
@@ -855,57 +465,44 @@ const LiveTranscript = () => {
               </div>
             </div>
             <div className="font-bold text-sm flex items-center gap-2">
-              {(utterances.length > 0 ||
-                mediaBlobUrl ||
-                currentTranscription) &&
-                !isTranscribing && (
-                  <div className="flex items-center gap-2">
-                    {isEditing ? (
-                      <>
-                        <button
-                          onClick={handleSaveEdit}
-                          className="rounded-full bg-primary-100 p-2"
-                        >
-                          <Save size={16} color="blue" />
-                        </button>
-                        <button
-                          onClick={handleCancelEdit}
-                          variant="outline"
-                          className="rounded-full bg-red-100 p-2"
-                        >
-                          <X size={16} color="red" />
-                        </button>
-                      </>
-                    ) : (
+              {getValidUtterances().length > 0 && !isTranscribing && (
+                <div className="flex items-center gap-2">
+                  {isEditing ? (
+                    <>
                       <button
-                        onClick={handleEditClick}
-                        size="sm"
-                        className="rounded-full bg-green-100 p-2"
+                        onClick={handleSaveEdit}
+                        className="rounded-full bg-primary-100 p-2"
                       >
-                        <Edit size={14} color="green" />
+                        <Save size={16} color="blue" />
                       </button>
-                    )}
-                    {isEditing && (
                       <button
-                        onClick={handleAddUtterance}
-                        size="sm"
-                        className="rounded-full bg-gray-100 p-2"
+                        onClick={handleCancelEdit}
+                        variant="outline"
+                        className="rounded-full bg-red-100 p-2"
                       >
-                        <Plus size={16} />
+                        <X size={16} color="red" />
                       </button>
-                    )}
-                    {sessionId && (
-                      <button
-                        onClick={saveStreamingTranscription}
-                        size="sm"
-                        className="rounded-full bg-blue-100 p-2"
-                        disabled={isProcessing}
-                      >
-                        <Save size={14} color="blue" />
-                      </button>
-                    )}
-                  </div>
-                )}
+                    </>
+                  ) : (
+                    <button
+                      onClick={handleEditClick}
+                      size="sm"
+                      className="rounded-full bg-green-100 p-2"
+                    >
+                      <Edit size={14} color="green" />
+                    </button>
+                  )}
+                  {isEditing && (
+                    <button
+                      onClick={handleAddUtterance}
+                      size="sm"
+                      className="rounded-full bg-gray-100 p-2"
+                    >
+                      <Plus size={16} />
+                    </button>
+                  )}
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -913,139 +510,21 @@ const LiveTranscript = () => {
         {/* Content Area */}
         <div>
           <div className="h-[63vh] rounded-md bg-white p-4 overflow-y-auto shadow-sm">
-            {isTranscribing || isProcessing ? (
+            {isTranscribing ? (
               <div className="flex items-center justify-center h-full">
                 <div className="flex items-center gap-3">
                   <Loader2 className="h-6 w-6 animate-spin text-gray-600" />
-                  <span className="text-gray-600">
-                    {isProcessing
-                      ? "Processing audio..."
-                      : "Transcribing audio..."}
-                  </span>
+                  <span className="text-gray-600">Transcribing audio...</span>
                 </div>
               </div>
-            ) : utterances.length > 0 ||
-              mediaBlobUrl ||
-              currentTranscription ? (
+            ) : getValidUtterances().length > 0 ? (
               <div className="text-gray-800 leading-relaxed">
-                {/* Streaming transcription display */}
-                {currentTranscription && (
-                  <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                    <h3 className="text-lg font-semibold text-blue-800 mb-3">
-                      Live Transcription
-                    </h3>
-                    <div className="text-gray-800 text-sm leading-relaxed">
-                      {currentTranscription}
-                    </div>
-                    {sessionId && (
-                      <div className="mt-3 flex items-center gap-2 text-xs text-gray-600">
-                        <span>Session: {sessionId}</span>
-                        <span>•</span>
-                        <span>Status: {isPaused ? "Paused" : "Active"}</span>
-                        <span>•</span>
-                        <span>Buffer: {audioBuffer.length} samples</span>
-                        <span>•</span>
-                        <span
-                          className={`flex items-center gap-1 ${
-                            audioBuffer.length > 0 &&
-                            audioBuffer.some((sample) => Math.abs(sample) > 100)
-                              ? "text-green-600"
-                              : "text-yellow-600"
-                          }`}
-                        >
-                          <div
-                            className={`w-2 h-2 rounded-full ${
-                              audioValidation.hasMeaningfulAudio(audioBuffer)
-                                ? "bg-green-500 animate-pulse"
-                                : "bg-yellow-500"
-                            }`}
-                          ></div>
-                          {audioValidation.hasMeaningfulAudio(audioBuffer)
-                            ? "Audio detected"
-                            : "Waiting for speech"}
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {mediaBlobUrl && (
-                  <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                    <h3 className="text-lg font-semibold text-blue-800 mb-3">
-                      Recorded Audio
-                    </h3>
-                    <audio
-                      ref={audioRef}
-                      src={mediaBlobUrl}
-                      onEnded={handleAudioEnded}
-                      className="w-full"
-                      controls
-                    />
-                    <div className="mt-3 flex items-center gap-2">
-                      <span className="text-sm text-gray-600">
-                        Duration: {formatRecordingTime(recordingTime)}
-                      </span>
-                      <span className="text-sm text-gray-600">
-                        Status: {status}
-                      </span>
-                    </div>
-                  </div>
-                )}
                 {renderUtterances()}
               </div>
             ) : (
               <div className="flex items-center justify-center h-full text-gray-500">
                 <div className="text-center">
                   {/* Record Tab Content */}
-                  {activeTab === "record" && (
-                    <>
-                      <div className="flex items-center justify-center mb-4">
-                        {!isStreamingActive &&
-                          status !== "recording" &&
-                          !mediaBlobUrl && (
-                            <button
-                              onClick={startStreamingSession}
-                              className="w-16 h-16 bg-green-600 rounded-full p-1 flex items-center justify-center hover:bg-green-700 transition-colors shadow-lg"
-                            >
-                              <Mic color="white" size={24} />
-                            </button>
-                          )}
-                        {isStreamingActive && !isPaused && (
-                          <button
-                            onClick={pauseStreaming}
-                            className="w-16 h-16 bg-yellow-600 rounded-full p-1 flex items-center justify-center hover:bg-yellow-700 transition-colors shadow-lg"
-                          >
-                            <Pause color="white" size={24} />
-                          </button>
-                        )}
-                        {isStreamingActive && isPaused && (
-                          <button
-                            onClick={resumeStreaming}
-                            className="w-16 h-16 bg-green-600 rounded-full p-1 flex items-center justify-center hover:bg-green-700 transition-colors shadow-lg"
-                          >
-                            <Play color="white" size={24} />
-                          </button>
-                        )}
-                        {(utterances.length > 0 ||
-                          mediaBlobUrl ||
-                          currentTranscription) && (
-                          <button
-                            onClick={clearTranscript}
-                            className="w-12 h-12 bg-red-100 rounded-full p-1 flex items-center justify-center hover:bg-red-200 transition-colors ml-4"
-                          >
-                            <XCircle size={18} color="red" />
-                          </button>
-                        )}
-                      </div>
-                      <p className="text-sm text-gray-500">
-                        {isStreamingActive
-                          ? isPaused
-                            ? "Click play to resume streaming transcription"
-                            : "Click pause to process current audio"
-                          : "Click the microphone to start streaming transcription"}
-                      </p>
-                    </>
-                  )}
 
                   {/* Upload Tab Content */}
                   {activeTab === "upload" && (
@@ -1099,6 +578,14 @@ const LiveTranscript = () => {
         </div>
       </div>
 
+      {activeTab === "record" && (
+        <div className="w-full ">
+          <StreamingRecorder
+            onTranscriptionComplete={handleStreamingTranscriptionComplete}
+            onSessionUpdate={handleStreamingSessionUpdate}
+          />
+        </div>
+      )}
       {/* Bottom Controls */}
       <div className="flex items-center mt-5">
         <input
@@ -1111,113 +598,18 @@ const LiveTranscript = () => {
 
         {/* Record Tab Controls */}
         {activeTab === "record" && (
-          <>
-            {isStreamingActive ? (
-              // Streaming control bar
-              <div
-                className="flex items-center bg-green-500 p-1 w-full max-w-md border-4 border-green-200/60 pe-5"
-                style={{ borderRadius: "40px" }}
+          <div className="flex items-center gap-3">
+            {getValidUtterances().length > 0 && (
+              <Button
+                onClick={clearTranscript}
+                variant="outline"
+                className="border-red-300 text-red-600 hover:bg-red-50"
               >
-                <div className="flex items-center gap-3 px-4 py-2 flex-1">
-                  <div className="bg-green-300 rounded-full p-3">
-                    <Mic className="h-5 w-5 text-green-600" />
-                  </div>
-                  <div className="flex flex-col">
-                    <span className="text-white font-medium text-sm">
-                      {isPaused ? "Paused" : "Streaming..."}
-                    </span>
-                    <span className="text-white text-xs opacity-90">
-                      {isPaused
-                        ? "Click resume to continue"
-                        : "Click pause to process"}
-                    </span>
-                  </div>
-                  <span className="text-white font-mono text-sm ml-auto">
-                    {formatRecordingTime(recordingTime)} ({recordingTime}s)
-                  </span>
-                </div>
-                {isPaused ? (
-                  <button
-                    onClick={resumeStreaming}
-                    className="bg-green-500 text-white font-semibold px-2 py-2 rounded-full ml-2 transition hover:bg-green-600 focus:outline-none"
-                  >
-                    <Play size={16} color="white" />
-                  </button>
-                ) : (
-                  <button
-                    onClick={pauseStreaming}
-                    className="bg-yellow-500 text-white font-semibold px-2 py-2 rounded-full ml-2 transition hover:bg-yellow-600 focus:outline-none"
-                  >
-                    <Pause size={16} color="white" />
-                  </button>
-                )}
-              </div>
-            ) : status === "recording" ? (
-              // Legacy recording control bar
-              <div
-                className="flex items-center bg-green-500 p-1 w-full max-w-md border-4 border-green-200/60 pe-5"
-                style={{ borderRadius: "40px" }}
-              >
-                <div className="flex items-center gap-3 px-4 py-2 flex-1">
-                  <div className="bg-green-300 rounded-full p-3">
-                    <Mic className="h-5 w-5 text-green-600" />
-                  </div>
-                  <div className="flex flex-col">
-                    <span className="text-white font-medium text-sm">
-                      Recording...
-                    </span>
-                    <span className="text-white text-xs opacity-90">
-                      Click stop when done
-                    </span>
-                  </div>
-                  <span className="text-white font-mono text-sm ml-auto">
-                    {formatRecordingTime(recordingTime)} ({recordingTime}s)
-                  </span>
-                </div>
-                <button
-                  onClick={handleStopRecording}
-                  className="bg-red-500 text-white font-semibold px-2 py-2 rounded-full ml-2 transition hover:bg-red-600 focus:outline-none"
-                >
-                  <Square size={16} color="white" />
-                </button>
-              </div>
-            ) : (
-              // Normal recording controls
-              <div className="flex items-center gap-3">
-                {!mediaBlobUrl && !isStreamingActive && (
-                  <Button
-                    onClick={handleStartRecording}
-                    className="bg-green-600 hover:bg-green-700 text-white"
-                  >
-                    <Mic size={16} className="mr-2" />
-                    Record
-                  </Button>
-                )}
-                {(utterances.length > 0 ||
-                  mediaBlobUrl ||
-                  currentTranscription) && (
-                  <Button
-                    onClick={clearTranscript}
-                    variant="outline"
-                    className="border-red-300 text-red-600 hover:bg-red-50"
-                  >
-                    <XCircle size={16} className="mr-2" />
-                    Clear
-                  </Button>
-                )}
-                {isStreamingActive && (
-                  <Button
-                    onClick={stopStreaming}
-                    variant="outline"
-                    className="border-red-300 text-red-600 hover:bg-red-50"
-                  >
-                    <Square size={16} className="mr-2" />
-                    Stop Session
-                  </Button>
-                )}
-              </div>
+                <XCircle size={16} className="mr-2" />
+                Clear
+              </Button>
             )}
-          </>
+          </div>
         )}
 
         {/* Upload Tab Controls */}
@@ -1255,7 +647,7 @@ const LiveTranscript = () => {
                 </button>
               </>
             )}
-            {utterances.length > 0 && (
+            {getValidUtterances().length > 0 && (
               <Button
                 onClick={clearTranscript}
                 variant="outline"
@@ -1269,8 +661,38 @@ const LiveTranscript = () => {
         )}
       </div>
 
-      {/* Audio Debugger */}
-      <AudioDebugger audioBuffer={audioBuffer} isActive={isStreamingActive} />
+      {/* Tab Switch Warning Modal */}
+      {showTabSwitchWarning && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.9 }}
+            className="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-md w-full mx-4"
+          >
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+              Switch Tab Warning
+            </h3>
+            <p className="text-gray-600 dark:text-gray-400 mb-6">
+              You have existing transcription data. Switching tabs will clear
+              your current progress. Are you sure you want to continue?
+            </p>
+            <div className="flex items-center justify-end gap-3">
+              <Button variant="outline" size="sm" onClick={cancelTabSwitch}>
+                Cancel
+              </Button>
+              <Button
+                variant="primary"
+                size="sm"
+                onClick={confirmTabSwitch}
+                className="bg-red-600 hover:bg-red-700"
+              >
+                Switch & Clear Data
+              </Button>
+            </div>
+          </motion.div>
+        </div>
+      )}
     </div>
   );
 };

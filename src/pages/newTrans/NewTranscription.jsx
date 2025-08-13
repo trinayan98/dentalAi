@@ -313,7 +313,7 @@ const NewTranscription = () => {
     setSummaryLoading(true);
     try {
       const response = await axios.post(
-        `${API_BASE_URL}/transcription/summary/generate`,
+        `${API_BASE_URL}/summary/generate`,
         {
           transcription: transcription,
           templateId: selectedTemplate._id,
@@ -417,7 +417,10 @@ const NewTranscription = () => {
         text: utterance.text,
         confidence: 0.9, // Default confidence
         start: utterance.start,
-        end: utterance.start + utterance.text.length * 100, // Rough estimate
+        end:
+          utterance.start == null || utterance.text == null
+            ? 0
+            : utterance.start + utterance.text.length * 100, // Rough estimate, 0 if start or text is null
       }));
 
       // Get speakers from utterances
@@ -561,7 +564,7 @@ const NewTranscription = () => {
         <span className="text-gray-500 dark:text-gray-300">Create Note</span>{" "}
         <ChevronRight className="h-3 w-3 text-gray-400" />
       </div>
-      <div className="grid grid-cols-8 gap-6 ">
+      <div className="grid grid-cols-1 2xl:grid-cols-8 gap-6 ">
         <LiveTranscript />
         <div className="col-span-4">
           <div className=" border border-1 border-gray-200  rounded-lg bg-white">

@@ -21,13 +21,13 @@ const navigation = {
   common: [{ name: "Dashboard", href: "/dashboard", icon: LayoutDashboard }],
   user: [
     { name: "Patients", href: "/dashboard/patients", icon: Users },
-
     {
       name: "Transcribe",
       href: "/dashboard/new-transcription",
       icon: Mic,
     },
     { name: "Templates", href: "/dashboard/templates", icon: Layers },
+    { name: "Pause Demo", href: "/dashboard/pause", icon: Mic },
     { name: "Profile", href: "/dashboard/profile", icon: UserRound },
   ],
   admin: [
