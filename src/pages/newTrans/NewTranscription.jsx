@@ -868,7 +868,10 @@ const NewTranscription = () => {
                       </button>
                       {setIsEditingSummary && (
                         <button
-                          onClick={() => setSummaryData(null)}
+                          onClick={() => {
+                            localStorage.removeItem("savedSummaryData");
+                            setSummaryData(null);
+                          }}
                           className="flex items-center text-s gap-2 border-2 border-red-300 text-red-600 bg-transparent rounded-full px-6 py-2 font-medium transition hover:bg-primary-50 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
                           type="button"
                         >

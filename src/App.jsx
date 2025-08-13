@@ -20,6 +20,7 @@ import StreamingDemo from "./pages/newTrans/StreamingDemo";
 import AllPatients from "./pages/patients/AllPatients";
 import PatientDetails from "./pages/patients/PatientDetails";
 import PauseBasedDemo from "./pages/newTrans/PauseBasedDemo";
+import Home from "./pages/home/Home";
 
 // Lazy load components
 const Login = lazy(() => import("./pages/auth/Login"));
@@ -55,11 +56,15 @@ const queryClient = new QueryClient({
 const router = createBrowserRouter([
   {
     path: "/",
+    element: <Home />,
+  },
+  {
+    path: "/auth",
     element: <AuthLayout />,
     children: [
       {
         path: "",
-        element: <Navigate to="/login" replace />,
+        element: <Navigate to="/auth/login" replace />,
       },
       {
         path: "login",
