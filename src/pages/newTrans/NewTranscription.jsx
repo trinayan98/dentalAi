@@ -22,6 +22,7 @@ import {
   NotebookText,
   User2,
   UserCircle,
+  Upload,
 } from "lucide-react";
 import React, { useState, useEffect } from "react";
 import { Form } from "react-hook-form";
@@ -45,6 +46,21 @@ const NewTranscription = () => {
   const [editingSummary, setEditingSummary] = useState({});
   const [isEditingSummary, setIsEditingSummary] = useState(false);
   const [showClearConfirmation, setShowClearConfirmation] = useState(false);
+  const [showPatientModal, setShowPatientModal] = useState(false);
+  const [patientForm, setPatientForm] = useState({
+    firstName: "",
+    lastName: "",
+    dateOfBirth: "",
+    gender: "",
+    email: "",
+    phone: "",
+    department: "",
+    sessionType: "",
+    visitType: "",
+    visitDuration: 45,
+  });
+  const [patientSaving, setPatientSaving] = useState(false);
+  const [patientError, setPatientError] = useState("");
 
   // Load saved summary from localStorage on component mount
   useEffect(() => {
@@ -297,7 +313,7 @@ const NewTranscription = () => {
     setSummaryLoading(true);
     try {
       const response = await axios.post(
-        "http://localhost:5001/api/summary/generate",
+        `${API_BASE_URL}/transcription/summary/generate`,
         {
           transcription: transcription,
           templateId: selectedTemplate._id,
@@ -336,6 +352,172 @@ const NewTranscription = () => {
   // Regenerate summary function
   const regenerateSummary = () => {
     generateSummary();
+  };
+
+  const openPatientModal = () => {
+    setPatientError("");
+    setShowPatientModal(true);
+  };
+
+  const closePatientModal = () => {
+    setShowPatientModal(false);
+  };
+
+  const handlePatientInputChange = (field, value) => {
+    setPatientForm((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const handleSubmitPatient = async (e) => {
+    e.preventDefault();
+    setPatientError("");
+
+    // Validate required fields
+    const requiredFields = {
+      firstName: patientForm.firstName,
+      lastName: patientForm.lastName,
+      dateOfBirth: patientForm.dateOfBirth,
+      gender: patientForm.gender,
+    };
+
+    const missingFields = Object.entries(requiredFields)
+      .filter(([key, value]) => !value || value.trim() === "")
+      .map(([key]) => key);
+
+    if (missingFields.length > 0) {
+      setPatientError(
+        `Please fill in all required fields: ${missingFields.join(", ")}`
+      );
+      return;
+    }
+
+    // Validate gender value
+    const validGenders = ["male", "female", "other", "prefer_not_to_say"];
+    if (!validGenders.includes(patientForm.gender)) {
+      setPatientError("Please select a valid gender");
+      return;
+    }
+
+    // Validate date format
+    const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+    if (!dateRegex.test(patientForm.dateOfBirth)) {
+      setPatientError("Please enter a valid date in YYYY-MM-DD format");
+      return;
+    }
+
+    setPatientSaving(true);
+
+    try {
+      // Get transcription data from localStorage
+      const savedUtterances = localStorage.getItem("transcriptUtterances");
+      const utterances = savedUtterances ? JSON.parse(savedUtterances) : [];
+
+      // Format utterances for the API
+      const formattedUtterances = utterances.map((utterance, index) => ({
+        speaker: index % 2 === 0 ? "A" : "B", // Simple speaker alternation
+        text: utterance.text,
+        confidence: 0.9, // Default confidence
+        start: utterance.start,
+        end: utterance.start + utterance.text.length * 100, // Rough estimate
+      }));
+
+      // Get speakers from utterances
+      const speakers = [...new Set(formattedUtterances.map((u) => u.speaker))];
+
+      // Prepare the payload
+      const payload = {
+        firstName: patientForm.firstName,
+        lastName: patientForm.lastName,
+        dateOfBirth: patientForm.dateOfBirth,
+        gender: patientForm.gender,
+        email: patientForm.email,
+        phone: patientForm.phone,
+        address: {
+          street: "",
+          city: "",
+          state: "",
+          zipCode: "",
+          country: "USA",
+        },
+        department: patientForm.department || "general",
+        sessionType: patientForm.sessionType || "consultation",
+        visitType: patientForm.visitType || "initial",
+        visitDuration: patientForm.visitDuration,
+        participants: [
+          {
+            role: "doctor",
+            name: "Dr. Johnson",
+            title: "Physician",
+            department: patientForm.department || "General",
+          },
+          {
+            role: "patient",
+            name: `${patientForm.firstName} ${patientForm.lastName}`,
+            title: "Patient",
+          },
+        ],
+        title: `Transcription ${Date.now()}`,
+        language: "en",
+        audioFileName: "session_audio.wav",
+        audioFileSize: 3072000,
+        transcriptId: `transcript_${Date.now()}`,
+        confidence: 0.92,
+        utterances: formattedUtterances,
+        speakers: speakers,
+        summary: summaryData
+          ? {
+              template: {
+                id: selectedTemplate?._id || "template_001",
+                name: selectedTemplate?.name || "Default Template",
+                description:
+                  selectedTemplate?.description ||
+                  "Default template description",
+              },
+              structuredSummary: summaryData.summary,
+              rawResponse: Object.values(summaryData.summary)
+                .map((section) => `${section.title}: ${section.content}`)
+                .join("\n"),
+              transcriptionLength: formatTranscriptionForAPI().length,
+              processingTime: new Date().toISOString(),
+            }
+          : null,
+      };
+
+      const response = await axios.post(
+        "http://localhost:5001/api/patients/quick",
+        payload,
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (response?.data) {
+        setShowPatientModal(false);
+        setPatientForm({
+          firstName: "",
+          lastName: "",
+          dateOfBirth: "",
+          gender: "",
+          email: "",
+          phone: "",
+          department: "",
+          sessionType: "",
+          visitType: "",
+          visitDuration: 45,
+        });
+        alert("Patient saved successfully");
+      }
+    } catch (error) {
+      console.error("Failed to save patient", error);
+      setPatientError(
+        error?.response?.data?.message ||
+          "Failed to save patient. Please try again."
+      );
+    } finally {
+      setPatientSaving(false);
+    }
   };
 
   // Edit summary functions
@@ -421,7 +603,7 @@ const NewTranscription = () => {
                   <div className="space-y-4">
                     {/* Summary metadata */}
 
-                    <div className="text-xs text-gray-500 mb-3 p-2 bg-green-400/10 rounded">
+                    {/* <div className="text-xs text-gray-500 mb-3 p-2 bg-green-400/10 rounded">
                       <div className="flex items-center justify-between">
                         <div className="px-4 py-2">
                           <h4 className="text-md font-medium flex items-center gap-2">
@@ -451,7 +633,7 @@ const NewTranscription = () => {
                           </span>
                         </span>
                       </div>
-                    </div>
+                    </div> */}
                     {Object.entries(
                       isEditingSummary ? editingSummary : summaryData.summary
                     ).map(([key, section]) => (
@@ -640,7 +822,7 @@ const NewTranscription = () => {
                 </div>
               )}
             </div>
-            <div>
+            <div className="flex items-center gap-4">
               {" "}
               <button
                 onClick={regenerateSummary}
@@ -651,10 +833,200 @@ const NewTranscription = () => {
                 <RefreshCcw size={18} />
                 Regenerate
               </button>
+              <button
+                onClick={openPatientModal}
+                disabled={summaryLoading || !summaryData || !selectedTemplate}
+                className="flex items-center text-s gap-2 border-2 border-green-300 text-green-600 bg-transparent rounded-full px-6 py-2 font-medium transition hover:bg-primary-50 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
+                type="button"
+              >
+                <Upload size={18} />
+                Save
+              </button>
             </div>
           </div>
         </div>
       </div>
+      {/* Patient Modal */}
+      {showPatientModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            className="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-2xl w-full mx-4 "
+          >
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                Save Patient
+              </h3>
+              <button
+                onClick={closePatientModal}
+                className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors"
+              >
+                <X className="w-5 h-5 text-gray-500" />
+              </button>
+            </div>
+            {patientError && (
+              <div className="mb-3 text-sm text-red-600 bg-red-50 border border-red-200 rounded px-3 py-2">
+                {patientError}
+              </div>
+            )}
+            <form onSubmit={handleSubmitPatient} className="">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4 flex-1">
+                <Input
+                  label="First Name *"
+                  type="text"
+                  placeholder="Enter first name"
+                  name="firstName"
+                  value={patientForm.firstName}
+                  onChange={(e) =>
+                    handlePatientInputChange("firstName", e.target.value)
+                  }
+                  required
+                />
+                <Input
+                  label="Last Name *"
+                  type="text"
+                  placeholder="Enter last name"
+                  name="lastName"
+                  value={patientForm.lastName}
+                  onChange={(e) =>
+                    handlePatientInputChange("lastName", e.target.value)
+                  }
+                  required
+                />
+                <Input
+                  label="Date of Birth *"
+                  type="date"
+                  name="dateOfBirth"
+                  value={patientForm.dateOfBirth}
+                  onChange={(e) =>
+                    handlePatientInputChange("dateOfBirth", e.target.value)
+                  }
+                  required
+                />
+                <Select
+                  label="Gender *"
+                  name="gender"
+                  placeholder="Select gender"
+                  value={patientForm.gender}
+                  onValueChange={(val) =>
+                    handlePatientInputChange("gender", val)
+                  }
+                  required
+                >
+                  <option value="male">Male</option>
+                  <option value="female">Female</option>
+                  <option value="other">Other</option>
+                  <option value="prefer_not_to_say">Prefer not to say</option>
+                </Select>
+                <Input
+                  label="Email"
+                  type="email"
+                  placeholder="Enter email address"
+                  name="email"
+                  value={patientForm.email}
+                  onChange={(e) =>
+                    handlePatientInputChange("email", e.target.value)
+                  }
+                />
+                <Input
+                  label="Phone"
+                  type="tel"
+                  placeholder="Enter phone number"
+                  name="phone"
+                  value={patientForm.phone}
+                  onChange={(e) =>
+                    handlePatientInputChange("phone", e.target.value)
+                  }
+                />
+                <Select
+                  label="Department"
+                  name="department"
+                  placeholder="Select department"
+                  value={patientForm.department}
+                  onValueChange={(val) =>
+                    handlePatientInputChange("department", val)
+                  }
+                >
+                  <option value="cardiology">Cardiology</option>
+                  <option value="neurology">Neurology</option>
+                  <option value="orthopedics">Orthopedics</option>
+                  <option value="pediatrics">Pediatrics</option>
+                  <option value="general">General Medicine</option>
+                  <option value="emergency">Emergency</option>
+                </Select>
+                <Select
+                  label="Session Type"
+                  name="sessionType"
+                  placeholder="Select session type"
+                  value={patientForm.sessionType}
+                  onValueChange={(val) =>
+                    handlePatientInputChange("sessionType", val)
+                  }
+                >
+                  <option value="consultation">Consultation</option>
+                  <option value="follow-up">Follow-up</option>
+                  <option value="emergency">Emergency</option>
+                  <option value="routine">Routine Check</option>
+                </Select>
+                <Select
+                  label="Visit Type"
+                  name="visitType"
+                  placeholder="Select visit type"
+                  value={patientForm.visitType}
+                  onValueChange={(val) =>
+                    handlePatientInputChange("visitType", val)
+                  }
+                >
+                  <option value="initial">Initial</option>
+                  <option value="follow-up">Follow-up</option>
+                  <option value="emergency">Emergency</option>
+                  <option value="routine">Routine</option>
+                </Select>
+                <Input
+                  label="Visit Duration (minutes)"
+                  type="number"
+                  placeholder="45"
+                  name="visitDuration"
+                  min="15"
+                  max="180"
+                  value={patientForm.visitDuration}
+                  onChange={(e) =>
+                    handlePatientInputChange("visitDuration", e.target.value)
+                  }
+                />
+              </div>
+
+              <div className="flex items-center justify-end gap-3">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={closePatientModal}
+                  disabled={patientSaving}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="submit"
+                  variant="primary"
+                  size="sm"
+                  disabled={patientSaving}
+                >
+                  {patientSaving ? (
+                    <span className="flex items-center gap-2">
+                      <Loader2 className="h-4 w-4 animate-spin" /> Saving...
+                    </span>
+                  ) : (
+                    "Save"
+                  )}
+                </Button>
+              </div>
+            </form>
+          </motion.div>
+        </div>
+      )}
       {/* Clear Confirmation Dialog */}
       {showClearConfirmation && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">

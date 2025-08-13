@@ -17,6 +17,8 @@ import Templates from "./pages/templates/Templates";
 import TemplateDetails from "./pages/templates/TemplateDetails";
 import NewTemplate from "./pages/templates/NewTemplate";
 import StreamingDemo from "./pages/newTrans/StreamingDemo";
+import AllPatients from "./pages/patients/AllPatients";
+import PatientDetails from "./pages/patients/PatientDetails";
 
 // Lazy load components
 const Login = lazy(() => import("./pages/auth/Login"));
@@ -119,14 +121,22 @@ const router = createBrowserRouter([
           {
             element: <RequireRole allowedRoles={["user"]} />,
             children: [
-              // {
-              //   path: "transcriptions",
-              //   element: (
-              //     <Suspense fallback={<LoadingPage />}>
-              //       <TranscriptionList />
-              //     </Suspense>
-              //   ),
-              // },
+              {
+                path: "patients",
+                element: (
+                  <Suspense fallback={<LoadingPage />}>
+                    <AllPatients />
+                  </Suspense>
+                ),
+              },
+              {
+                path: "patients/:id",
+                element: (
+                  <Suspense fallback={<LoadingPage />}>
+                    <PatientDetails />
+                  </Suspense>
+                ),
+              },
               // {
               //   path: "transcription/:id",
               //   element: (

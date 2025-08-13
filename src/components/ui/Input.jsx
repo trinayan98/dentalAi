@@ -28,7 +28,7 @@ export const Input = forwardRef(
             id={id}
             type={type}
             className={clsx(
-              "w-full text-sm px-2 pt-2 pb-2 py-1.5 rounded-md border",
+              "w-full text-s px-2 pt-2 pb-2 py-1.5 rounded-md border-2",
               "bg-white dark:bg-gray-800 text-[#6B7280] dark:text-gray-300",
               "focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500",
               leftIcon && "pl-10",

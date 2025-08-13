@@ -8,6 +8,7 @@ import {
   Save,
   Loader2,
   FileText,
+  Volume2,
 } from "lucide-react";
 import useAuthStore from "../../stores/authStore";
 import { useToastStore } from "../../stores/toastStore";
@@ -32,9 +33,15 @@ const StreamingDemo = () => {
   const mediaRecorderRef = useRef(null);
   const audioChunksRef = useRef([]);
   const sessionIdRef = useRef(null); // Ref to store current sessionId
+  const isRecordingRef = useRef(false); // Ref to track current recording state
+  const isPausedRef = useRef(false); // Ref to track current paused state
   const [isRecording, setIsRecording] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
   const [audioChunks, setAudioChunks] = useState(0);
+
+  // Audio playback state
+  const [audioUrl, setAudioUrl] = useState(null);
+  const [hasAudio, setHasAudio] = useState(false);
 
   const { token } = useAuthStore();
   const { addToast } = useToastStore();
@@ -44,6 +51,17 @@ const StreamingDemo = () => {
     sessionIdRef.current = sessionId;
     console.log("🔄 SessionId ref updated:", sessionId);
   }, [sessionId]);
+
+  // Update recording and paused refs whenever state changes
+  useEffect(() => {
+    isRecordingRef.current = isRecording;
+    console.log("🔄 Recording ref updated:", isRecording);
+  }, [isRecording]);
+
+  useEffect(() => {
+    isPausedRef.current = isPaused;
+    console.log("🔄 Paused ref updated:", isPaused);
+  }, [isPaused]);
 
   // Helper: Save session state to localStorage
   const saveSessionState = (newSessionId, newIsActive) => {
@@ -79,29 +97,48 @@ const StreamingDemo = () => {
     return () => clearInterval(interval);
   }, [isRecording, isPaused]);
 
-  // Helper: Convert blob to base64 for direct transmission
-  const blobToBase64 = async (blob) => {
-    return new Promise((resolve) => {
-      const reader = new FileReader();
-      reader.onload = () => {
-        const base64 = reader.result.split(",")[1];
-        resolve(base64);
+  // Helper: Convert WebM blob to array for backend processing
+  const convertBlobToArray = async (blob) => {
+    return new Promise((resolve, reject) => {
+      const fileReader = new FileReader();
+
+      fileReader.onload = (event) => {
+        try {
+          const arrayBuffer = event.target.result;
+          const uint8Array = new Uint8Array(arrayBuffer);
+          const array = Array.from(uint8Array);
+
+          console.log("🎵 WebM blob converted to array:", {
+            originalSize: blob.size,
+            arrayLength: array.length,
+            type: blob.type,
+          });
+
+          resolve(array);
+        } catch (error) {
+          reject(error);
+        }
       };
-      reader.readAsDataURL(blob);
+
+      fileReader.onerror = reject;
+      fileReader.readAsArrayBuffer(blob);
     });
   };
 
-  // Helper: Convert blob to ArrayBuffer for backend processing
-  const blobToArrayBuffer = async (blob) => {
-    return new Promise((resolve) => {
-      const reader = new FileReader();
-      reader.onload = () => {
-        const arrayBuffer = reader.result;
-        const uint8Array = new Uint8Array(arrayBuffer);
-        resolve(Array.from(uint8Array));
-      };
-      reader.readAsArrayBuffer(blob);
-    });
+  // Helper: Convert blob to array for backend processing
+  const blobToArray = async (blob) => {
+    try {
+      const arrayData = await convertBlobToArray(blob);
+      console.log("🎵 WebM converted to array:", {
+        originalSize: blob.size,
+        arrayLength: arrayData.length,
+        type: blob.type,
+      });
+      return arrayData;
+    } catch (error) {
+      console.error("❌ Error converting WebM to array:", error);
+      throw error;
+    }
   };
 
   const startSession = async () => {
@@ -140,6 +177,13 @@ const StreamingDemo = () => {
         setAudioChunks(0);
         setSessionStats(result.data);
 
+        // Clear any existing audio
+        if (audioUrl) {
+          URL.revokeObjectURL(audioUrl);
+          setAudioUrl(null);
+          setHasAudio(false);
+        }
+
         // Save session state to localStorage
         saveSessionState(newSessionId, true);
 
@@ -169,12 +213,21 @@ const StreamingDemo = () => {
 
   const startRecording = async () => {
     try {
+      console.log("🎵 Starting recording process...");
+
       // Stop existing recorder if any
       if (mediaRecorderRef.current) {
+        console.log("🛑 Stopping existing recorder...");
         mediaRecorderRef.current.stop();
         mediaRecorderRef.current = null;
       }
 
+      // Check if MediaRecorder is supported
+      if (!window.MediaRecorder) {
+        throw new Error("MediaRecorder is not supported in this browser");
+      }
+
+      console.log("🎙️ Requesting microphone access...");
       const stream = await navigator.mediaDevices.getUserMedia({
         audio: {
           sampleRate: 16000,
@@ -191,6 +244,18 @@ const StreamingDemo = () => {
         trackReadyState: stream.getAudioTracks()[0]?.readyState,
       });
 
+      // Check if the stream has audio tracks
+      if (!stream.getAudioTracks().length) {
+        throw new Error("No audio tracks available in the stream");
+      }
+
+      // Check if the audio track is enabled
+      const audioTrack = stream.getAudioTracks()[0];
+      if (!audioTrack.enabled) {
+        throw new Error("Audio track is not enabled");
+      }
+
+      console.log("🎤 Creating MediaRecorder...");
       mediaRecorderRef.current = new MediaRecorder(stream, {
         mimeType: "audio/webm;codecs=opus",
       });
@@ -201,12 +266,19 @@ const StreamingDemo = () => {
         audioBitsPerSecond: mediaRecorderRef.current.audioBitsPerSecond,
       });
 
+      // Check if the MediaRecorder state is valid
+      if (mediaRecorderRef.current.state !== "inactive") {
+        throw new Error(
+          `MediaRecorder is in invalid state: ${mediaRecorderRef.current.state}`
+        );
+      }
+
       mediaRecorderRef.current.ondataavailable = async (event) => {
         console.log("📦 Audio chunk received:", {
           size: event.data.size,
           type: event.data.type,
-          isRecording,
-          isPaused,
+          isRecording: isRecordingRef.current,
+          isPaused: isPausedRef.current,
           timestamp: new Date().toISOString(),
         });
 
@@ -214,9 +286,9 @@ const StreamingDemo = () => {
           audioChunksRef.current.push(event.data);
 
           // Process the audio chunk - send as array buffer
-          if (!isPaused) {
+          if (!isPausedRef.current) {
             console.log("🔄 Processing audio chunk...");
-            const audioArray = await blobToArrayBuffer(event.data);
+            const audioArray = await blobToArray(event.data);
             console.log("📊 Audio array created:", {
               length: audioArray.length,
               firstFewValues: audioArray.slice(0, 5),
@@ -239,29 +311,62 @@ const StreamingDemo = () => {
       };
 
       mediaRecorderRef.current.onstart = () => {
-        console.log("🎵 MediaRecorder started");
+        console.log("🎵 MediaRecorder started successfully");
+        setIsRecording(true);
       };
 
       mediaRecorderRef.current.onstop = () => {
         console.log("🛑 MediaRecorder stopped");
+        setIsRecording(false);
       };
 
       mediaRecorderRef.current.onerror = (event) => {
         console.error("❌ MediaRecorder error:", event.error);
+        addToast({
+          type: "error",
+          title: "Recording Error",
+          description: `MediaRecorder error: ${
+            event.error.message || event.error
+          }`,
+        });
       };
 
-      // Start recording with 1-second chunks
+      console.log("🎵 Starting MediaRecorder with 1-second chunks...");
       mediaRecorderRef.current.start(1000);
-      setIsRecording(true);
 
       console.log("🎵 Recording started with session:", sessionIdRef.current);
+
+      // Verify the recorder started
+      setTimeout(() => {
+        if (
+          mediaRecorderRef.current &&
+          mediaRecorderRef.current.state === "recording"
+        ) {
+          console.log("✅ MediaRecorder is recording successfully");
+        } else {
+          console.error("❌ MediaRecorder failed to start recording");
+          console.log("MediaRecorder state:", mediaRecorderRef.current?.state);
+        }
+      }, 100);
     } catch (error) {
-      console.error("Error starting recording:", error);
+      console.error("❌ Error starting recording:", error);
+      console.error("Error details:", {
+        name: error.name,
+        message: error.message,
+        stack: error.stack,
+      });
+
       addToast({
         type: "error",
         title: "Recording Failed",
-        description: "Failed to access microphone",
+        description: `Failed to start recording: ${error.message}`,
       });
+
+      // Reset recording state
+      setIsRecording(false);
+      if (mediaRecorderRef.current) {
+        mediaRecorderRef.current = null;
+      }
     }
   };
 
@@ -280,8 +385,8 @@ const StreamingDemo = () => {
       sessionId: currentSessionId,
       chunkSize,
       audioArrayLength: audioArray.length,
-      isPaused,
-      isRecording,
+      isPaused: isPausedRef.current,
+      isRecording: isRecordingRef.current,
       timestamp: new Date().toISOString(),
     });
 
@@ -289,7 +394,7 @@ const StreamingDemo = () => {
       const requestBody = {
         sessionId: currentSessionId,
         audioData: audioArray,
-        audioFormat: "webm-opus",
+        audioFormat: "webm-opus", // Back to WebM format since we're sending WebM data
         chunkSize,
         action: "stream",
       };
@@ -300,6 +405,7 @@ const StreamingDemo = () => {
         bodySize: JSON.stringify(requestBody).length,
         audioDataSize: audioArray.length,
         sessionId: currentSessionId,
+        audioFormat: "webm-opus",
       });
 
       const response = await fetch(
@@ -359,6 +465,40 @@ const StreamingDemo = () => {
     }
     setIsRecording(false);
     console.log("🛑 Recording stopped");
+
+    // Create audio blob from collected chunks
+    if (audioChunksRef.current.length > 0) {
+      createAudioBlob();
+    }
+  };
+
+  // Create audio blob from collected chunks
+  const createAudioBlob = () => {
+    try {
+      const audioBlob = new Blob(audioChunksRef.current, {
+        type: "audio/webm;codecs=opus",
+      });
+      const url = URL.createObjectURL(audioBlob);
+      setAudioUrl(url);
+      setHasAudio(true);
+      console.log("🎵 Audio blob created:", {
+        size: audioBlob.size,
+        type: audioBlob.type,
+        url: url,
+      });
+      addToast({
+        type: "success",
+        title: "Audio Ready",
+        description: "You can now play back your recording",
+      });
+    } catch (error) {
+      console.error("Error creating audio blob:", error);
+      addToast({
+        type: "error",
+        title: "Audio Error",
+        description: "Failed to create audio playback",
+      });
+    }
   };
 
   const formatTime = (seconds) => {
@@ -642,8 +782,12 @@ const StreamingDemo = () => {
       if (isRecording) {
         stopRecording();
       }
+      // Cleanup audio URL to prevent memory leaks
+      if (audioUrl) {
+        URL.revokeObjectURL(audioUrl);
+      }
     };
-  }, []);
+  }, [audioUrl]);
 
   // Check for existing session on component mount
   useEffect(() => {
@@ -884,21 +1028,30 @@ const StreamingDemo = () => {
           </div>
         )}
 
+        {/* Audio Playback */}
+        {hasAudio && audioUrl && (
+          <div className="mb-6">
+            <h3 className="text-lg font-semibold text-gray-800 mb-3 flex items-center gap-2">
+              <Volume2 size={20} className="text-green-600" />
+              Recorded Audio
+            </h3>
+            <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
+              <audio
+                src={audioUrl}
+                controls
+                className="w-full"
+                preload="metadata"
+              />
+              <div className="mt-3 text-sm text-gray-600">
+                <span>Duration: {formatTime(recordingTime)}</span>
+                <span className="mx-2">•</span>
+                <span>Chunks: {audioChunks}</span>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Instructions */}
-        <div className="text-sm text-gray-600">
-          <h4 className="font-semibold mb-2">Streaming Features:</h4>
-          <ul className="list-disc list-inside space-y-1">
-            <li>✅ Real-time audio streaming with MediaRecorder API</li>
-            <li>✅ Audio chunk processing and Int16Array conversion</li>
-            <li>✅ File-based session management with persistent storage</li>
-            <li>✅ True pause/resume functionality with no data loss</li>
-            <li>✅ Live session statistics and audio metrics</li>
-            <li>✅ Flexible transcription (during or after recording)</li>
-            <li>✅ AssemblyAI integration for high-quality transcription</li>
-            <li>✅ Speaker detection and confidence scoring</li>
-            <li>✅ Session state management with proper cleanup</li>
-          </ul>
-        </div>
       </div>
     </div>
   );

@@ -20,7 +20,7 @@ import { ThemeToggle } from "../components/ThemeToggle";
 const navigation = {
   common: [{ name: "Dashboard", href: "/dashboard", icon: LayoutDashboard }],
   user: [
-    { name: "Patients", href: "/dashboard/transcriptions", icon: Users },
+    { name: "Patients", href: "/dashboard/patients", icon: Users },
 
     {
       name: "Transcribe",
@@ -105,7 +105,7 @@ export default function DashboardLayout() {
                   "text-s group flex items-center px-4 py-2 pt-3 pb-3   rounded-md transition-colors ",
                   location.pathname === item.href
                     ? "bg-green-100 text-green-600 dark:bg-primary-900/30 dark:text-primary-400 font-semibold"
-                    : "text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700/30"
+                    : "text-gray-800 font-medium hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700/30"
                 )}
               >
                 <item.icon
