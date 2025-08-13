@@ -13,10 +13,6 @@ import {
 } from "lucide-react";
 import useAuthStore from "../../stores/authStore";
 import { useToastStore } from "../../stores/toastStore";
-import {
-  streamingTranscriptionAPI,
-  audioValidation,
-} from "../../api/streamingTranscription";
 
 const StreamingRecorder = ({ onTranscriptionComplete, onSessionUpdate }) => {
   const [sessionId, setSessionId] = useState(() => {
@@ -32,15 +28,19 @@ const StreamingRecorder = ({ onTranscriptionComplete, onSessionUpdate }) => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [sessionStats, setSessionStats] = useState(null);
 
-  // Audio recording state
-  const mediaRecorderRef = useRef(null);
-  const audioChunksRef = useRef([]);
+  // Audio recording state - Updated for raw PCM capture
+  const audioContextRef = useRef(null);
+  const sourceNodeRef = useRef(null);
+  const processorNodeRef = useRef(null);
+  const mediaStreamRef = useRef(null);
+  const audioWorkletNodeRef = useRef(null);
   const sessionIdRef = useRef(null);
   const isRecordingRef = useRef(false);
   const isPausedRef = useRef(false);
   const [isRecording, setIsRecording] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
   const [audioChunks, setAudioChunks] = useState(0);
+  const audioBufferRef = useRef([]);
 
   // Audio playback state
   const [audioUrl, setAudioUrl] = useState(null);
@@ -100,62 +100,79 @@ const StreamingRecorder = ({ onTranscriptionComplete, onSessionUpdate }) => {
     console.log("🗑️ Session state cleared from localStorage");
   };
 
-  // Helper: Convert WebM blob to array for backend processing
-  const convertBlobToArray = async (blob) => {
-    return new Promise((resolve, reject) => {
-      const fileReader = new FileReader();
+  // Audio Worklet processor code as a string
+  const audioWorkletCode = `
+    class AudioProcessor extends AudioWorkletProcessor {
+      constructor() {
+        super();
+        this.bufferSize = 4096;
+        this.buffer = new Float32Array(this.bufferSize);
+        this.bufferIndex = 0;
+      }
 
-      fileReader.onload = (event) => {
-        try {
-          const arrayBuffer = event.target.result;
-          const uint8Array = new Uint8Array(arrayBuffer);
-          const array = Array.from(uint8Array);
+      process(inputs, outputs, parameters) {
+        const input = inputs[0];
+        const inputChannel = input[0];
 
-          console.log("🎵 WebM blob converted to array:", {
-            originalSize: blob.size,
-            arrayLength: array.length,
-            type: blob.type,
-          });
+        if (inputChannel) {
+          for (let i = 0; i < inputChannel.length; i++) {
+            this.buffer[this.bufferIndex] = inputChannel[i];
+            this.bufferIndex++;
 
-          resolve(array);
-        } catch (error) {
-          reject(error);
+            if (this.bufferIndex >= this.bufferSize) {
+              // Send buffer to main thread
+              this.port.postMessage({
+                type: 'audioData',
+                data: new Float32Array(this.buffer)
+              });
+
+              this.bufferIndex = 0;
+            }
+          }
         }
-      };
 
-      fileReader.onerror = reject;
-      fileReader.readAsArrayBuffer(blob);
-    });
-  };
-
-  // Helper: Convert blob to array for backend processing
-  const blobToArray = async (blob) => {
-    try {
-      const arrayData = await convertBlobToArray(blob);
-      console.log("🎵 WebM converted to array:", {
-        originalSize: blob.size,
-        arrayLength: arrayData.length,
-        type: blob.type,
-      });
-      return arrayData;
-    } catch (error) {
-      console.error("❌ Error converting WebM to array:", error);
-      throw error;
+        return true;
+      }
     }
+
+    registerProcessor('audio-processor', AudioProcessor);
+  `;
+
+  // Convert Float32Array to Int16Array for backend
+  const convertFloat32ToInt16 = (float32Array) => {
+    const int16Array = new Int16Array(float32Array.length);
+    for (let i = 0; i < float32Array.length; i++) {
+      // Clamp to [-1, 1] and convert to 16-bit signed integer
+      const clamped = Math.max(-1, Math.min(1, float32Array[i]));
+      int16Array[i] = Math.round(clamped * 32767);
+    }
+    return Array.from(int16Array);
   };
 
   const startSession = async () => {
     try {
       setIsProcessing(true);
-      const response = await streamingTranscriptionAPI.startSession(token, {
-        title: "Streaming Transcription Session",
-        language: "en",
-        tags: "streaming, real-time",
-        notes: "Real-time streaming transcription session",
-      });
+      const response = await fetch(
+        "http://localhost:5001/api/transcription/stream/start",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            title: "Streaming Transcription Session",
+            language: "en",
+            tags: "streaming, real-time",
+            notes: "Real-time streaming transcription session",
+          }),
+        }
+      );
 
-      if (response.success) {
-        const newSessionId = response.data.sessionId;
+      const result = await response.json();
+
+      if (result.success) {
+        const newSessionId = result.data.sessionId;
         console.log("🎯 Session created with ID:", newSessionId);
 
         // Update both state and ref immediately
@@ -166,7 +183,7 @@ const StreamingRecorder = ({ onTranscriptionComplete, onSessionUpdate }) => {
         setTranscription("");
         setRecordingTime(0);
         setAudioChunks(0);
-        setSessionStats(response.data);
+        setSessionStats(result.data);
 
         // Clear any existing audio
         if (audioUrl) {
@@ -197,7 +214,7 @@ const StreamingRecorder = ({ onTranscriptionComplete, onSessionUpdate }) => {
         console.log("🎵 Starting recording for session:", newSessionId);
         await startRecording();
       } else {
-        throw new Error(response.error || "Failed to start session");
+        throw new Error(result.error || "Failed to start session");
       }
     } catch (error) {
       console.error("Error starting session:", error);
@@ -213,19 +230,10 @@ const StreamingRecorder = ({ onTranscriptionComplete, onSessionUpdate }) => {
 
   const startRecording = async () => {
     try {
-      console.log("🎵 Starting recording process...");
+      console.log("🎵 Starting raw PCM recording process...");
 
-      // Stop existing recorder if any
-      if (mediaRecorderRef.current) {
-        console.log("🛑 Stopping existing recorder...");
-        mediaRecorderRef.current.stop();
-        mediaRecorderRef.current = null;
-      }
-
-      // Check if MediaRecorder is supported
-      if (!window.MediaRecorder) {
-        throw new Error("MediaRecorder is not supported in this browser");
-      }
+      // Stop existing recording if any
+      await stopRecording();
 
       console.log("🎙️ Requesting microphone access...");
       const stream = await navigator.mediaDevices.getUserMedia({
@@ -234,8 +242,11 @@ const StreamingRecorder = ({ onTranscriptionComplete, onSessionUpdate }) => {
           channelCount: 1,
           echoCancellation: true,
           noiseSuppression: true,
+          autoGainControl: true,
         },
       });
+
+      mediaStreamRef.current = stream;
 
       console.log("🎙️ Audio stream obtained:", {
         sampleRate: stream.getAudioTracks()[0]?.getSettings()?.sampleRate,
@@ -244,133 +255,124 @@ const StreamingRecorder = ({ onTranscriptionComplete, onSessionUpdate }) => {
         trackReadyState: stream.getAudioTracks()[0]?.readyState,
       });
 
-      // Check if the stream has audio tracks
-      if (!stream.getAudioTracks().length) {
-        throw new Error("No audio tracks available in the stream");
-      }
-
-      // Check if the audio track is enabled
-      const audioTrack = stream.getAudioTracks()[0];
-      if (!audioTrack.enabled) {
-        throw new Error("Audio track is not enabled");
-      }
-
-      console.log("🎤 Creating MediaRecorder...");
-      mediaRecorderRef.current = new MediaRecorder(stream, {
-        mimeType: "audio/webm;codecs=opus",
+      // Create AudioContext
+      audioContextRef.current = new (window.AudioContext ||
+        window.webkitAudioContext)({
+        sampleRate: 16000,
       });
 
-      console.log("🎤 MediaRecorder created:", {
-        state: mediaRecorderRef.current.state,
-        mimeType: mediaRecorderRef.current.mimeType,
-        audioBitsPerSecond: mediaRecorderRef.current.audioBitsPerSecond,
+      console.log("🎤 AudioContext created:", {
+        sampleRate: audioContextRef.current.sampleRate,
+        state: audioContextRef.current.state,
       });
 
-      // Check if the MediaRecorder state is valid
-      if (mediaRecorderRef.current.state !== "inactive") {
-        throw new Error(
-          `MediaRecorder is in invalid state: ${mediaRecorderRef.current.state}`
-        );
-      }
+      // Create source node
+      sourceNodeRef.current =
+        audioContextRef.current.createMediaStreamSource(stream);
 
-      mediaRecorderRef.current.ondataavailable = async (event) => {
-        console.log("📦 Audio chunk received:", {
-          size: event.data.size,
-          type: event.data.type,
-          isRecording: isRecordingRef.current,
-          isPaused: isPausedRef.current,
-          timestamp: new Date().toISOString(),
+      // Try using AudioWorklet if available, fallback to ScriptProcessorNode
+      try {
+        // Create AudioWorklet
+        const blob = new Blob([audioWorkletCode], {
+          type: "application/javascript",
         });
+        const workletUrl = URL.createObjectURL(blob);
 
-        if (event.data.size > 0) {
-          audioChunksRef.current.push(event.data);
+        await audioContextRef.current.audioWorklet.addModule(workletUrl);
 
-          // Process the audio chunk - send as array buffer
-          if (!isPausedRef.current) {
-            console.log("🔄 Processing audio chunk...");
-            const audioArray = await blobToArray(event.data);
-            console.log("📊 Audio array created:", {
-              length: audioArray.length,
-              firstFewValues: audioArray.slice(0, 5),
-              maxValue: Math.max(...audioArray),
-              minValue: Math.min(...audioArray),
+        audioWorkletNodeRef.current = new AudioWorkletNode(
+          audioContextRef.current,
+          "audio-processor"
+        );
+
+        audioWorkletNodeRef.current.port.onmessage = (event) => {
+          if (event.data.type === "audioData" && !isPausedRef.current) {
+            const float32Data = event.data.data;
+            const int16Data = convertFloat32ToInt16(float32Data);
+
+            console.log("🎵 AudioWorklet data received:", {
+              float32Length: float32Data.length,
+              int16Length: int16Data.length,
+              maxValue: Math.max(...int16Data),
+              minValue: Math.min(...int16Data),
             });
 
-            if (audioArray.length > 0) {
-              await streamAudioData(audioArray, event.data.size);
-              setAudioChunks((prev) => prev + 1);
-            } else {
-              console.warn("⚠️ Failed to convert audio to array buffer");
-            }
-          } else {
-            console.log("⏸️ Audio chunk skipped (paused)");
+            // Store in buffer for playback
+            audioBufferRef.current.push(...int16Data);
+
+            // Stream to backend
+            streamAudioData(int16Data);
+            setAudioChunks((prev) => prev + 1);
           }
-        } else {
-          console.warn("⚠️ Empty audio chunk received");
-        }
-      };
+        };
 
-      mediaRecorderRef.current.onstart = () => {
-        console.log("🎵 MediaRecorder started successfully");
-        setIsRecording(true);
-      };
+        // Connect nodes
+        sourceNodeRef.current.connect(audioWorkletNodeRef.current);
 
-      mediaRecorderRef.current.onstop = () => {
-        console.log("🛑 MediaRecorder stopped");
-        setIsRecording(false);
-      };
+        console.log("✅ AudioWorklet setup complete");
+        URL.revokeObjectURL(workletUrl);
+      } catch (workletError) {
+        console.warn(
+          "⚠️ AudioWorklet failed, falling back to ScriptProcessorNode:",
+          workletError
+        );
 
-      mediaRecorderRef.current.onerror = (event) => {
-        console.error("❌ MediaRecorder error:", event.error);
-        addToast({
-          type: "error",
-          title: "Recording Error",
-          description: `MediaRecorder error: ${
-            event.error.message || event.error
-          }`,
-        });
-      };
+        // Fallback to ScriptProcessorNode
+        processorNodeRef.current =
+          audioContextRef.current.createScriptProcessor(4096, 1, 1);
 
-      console.log("🎵 Starting MediaRecorder with 1-second chunks...");
-      mediaRecorderRef.current.start(1000);
+        processorNodeRef.current.onaudioprocess = (event) => {
+          if (isPausedRef.current) return;
 
-      console.log("🎵 Recording started with session:", sessionIdRef.current);
+          const inputBuffer = event.inputBuffer;
+          const inputData = inputBuffer.getChannelData(0); // Float32Array
 
-      // Verify the recorder started
-      setTimeout(() => {
-        if (
-          mediaRecorderRef.current &&
-          mediaRecorderRef.current.state === "recording"
-        ) {
-          console.log("✅ MediaRecorder is recording successfully");
-        } else {
-          console.error("❌ MediaRecorder failed to start recording");
-          console.log("MediaRecorder state:", mediaRecorderRef.current?.state);
-        }
-      }, 100);
+          // Convert to 16-bit integers for backend
+          const int16Data = convertFloat32ToInt16(inputData);
+
+          console.log("🎵 ScriptProcessor data received:", {
+            float32Length: inputData.length,
+            int16Length: int16Data.length,
+            maxValue: Math.max(...int16Data),
+            minValue: Math.min(...int16Data),
+          });
+
+          // Store in buffer for playback
+          audioBufferRef.current.push(...int16Data);
+
+          // Stream to backend
+          streamAudioData(int16Data);
+          setAudioChunks((prev) => prev + 1);
+        };
+
+        // Connect nodes
+        sourceNodeRef.current.connect(processorNodeRef.current);
+        processorNodeRef.current.connect(audioContextRef.current.destination);
+
+        console.log("✅ ScriptProcessorNode setup complete");
+      }
+
+      // Resume AudioContext if needed
+      if (audioContextRef.current.state === "suspended") {
+        await audioContextRef.current.resume();
+      }
+
+      setIsRecording(true);
+      console.log("✅ Raw PCM recording started successfully");
     } catch (error) {
       console.error("❌ Error starting recording:", error);
-      console.error("Error details:", {
-        name: error.name,
-        message: error.message,
-        stack: error.stack,
-      });
-
       addToast({
         type: "error",
         title: "Recording Failed",
         description: `Failed to start recording: ${error.message}`,
       });
 
-      // Reset recording state
-      setIsRecording(false);
-      if (mediaRecorderRef.current) {
-        mediaRecorderRef.current = null;
-      }
+      // Cleanup on error
+      await stopRecording();
     }
   };
 
-  const streamAudioData = async (audioArray, chunkSize) => {
+  const streamAudioData = async (audioArray) => {
     // Get current sessionId from ref (always up-to-date)
     const currentSessionId = sessionIdRef.current;
 
@@ -381,10 +383,12 @@ const StreamingRecorder = ({ onTranscriptionComplete, onSessionUpdate }) => {
       return;
     }
 
-    console.log("🎵 Streaming audio chunk:", {
+    console.log("🎵 Streaming raw PCM audio chunk:", {
       sessionId: currentSessionId,
-      chunkSize,
       audioArrayLength: audioArray.length,
+      maxValue: Math.max(...audioArray),
+      minValue: Math.min(...audioArray),
+      avgValue: audioArray.reduce((a, b) => a + b, 0) / audioArray.length,
       isPaused: isPausedRef.current,
       isRecording: isRecordingRef.current,
       timestamp: new Date().toISOString(),
@@ -393,19 +397,16 @@ const StreamingRecorder = ({ onTranscriptionComplete, onSessionUpdate }) => {
     try {
       const requestBody = {
         sessionId: currentSessionId,
-        audioData: audioArray,
-        audioFormat: "webm-opus", // Back to WebM format since we're sending WebM data
-        chunkSize,
-        action: "stream",
+        audioData: audioArray, // Raw PCM Int16 data as array
       };
 
-      console.log("📤 Sending request to backend:", {
+      console.log("📤 Sending PCM request to backend:", {
         url: "http://localhost:5001/api/transcription/stream/audio",
         method: "POST",
         bodySize: JSON.stringify(requestBody).length,
         audioDataSize: audioArray.length,
         sessionId: currentSessionId,
-        audioFormat: "webm-opus",
+        dataType: "raw-pcm-int16",
       });
 
       const response = await fetch(
@@ -429,17 +430,13 @@ const StreamingRecorder = ({ onTranscriptionComplete, onSessionUpdate }) => {
       const result = await response.json();
 
       if (result.success && result.data) {
-        console.log("✅ Audio chunk streamed successfully:", {
+        console.log("✅ PCM audio chunk streamed successfully:", {
           sessionId: result.data.sessionId,
-          transcription: result.data.transcription,
-          newText: result.data.newText,
+          totalAudioSamples: result.data.totalAudioSamples,
+          audioFileSize: result.data.audioFileSize,
+          isRecording: result.data.isRecording,
+          isPaused: result.data.isPaused,
         });
-
-        // Update transcription if new text is available
-        if (result.data.transcription) {
-          setTranscription(result.data.transcription);
-        }
-
         setSessionStats(result.data);
       } else {
         console.error("❌ Audio streaming failed:", {
@@ -461,35 +458,115 @@ const StreamingRecorder = ({ onTranscriptionComplete, onSessionUpdate }) => {
     }
   };
 
-  const stopRecording = () => {
-    if (mediaRecorderRef.current) {
-      mediaRecorderRef.current.stop();
-      mediaRecorderRef.current = null;
-    }
-    setIsRecording(false);
-    console.log("🛑 Recording stopped");
+  const stopRecording = async () => {
+    console.log("🛑 Stopping recording...");
 
-    // Create audio blob from collected chunks
-    if (audioChunksRef.current.length > 0) {
-      createAudioBlob();
+    try {
+      // Stop AudioWorklet
+      if (audioWorkletNodeRef.current) {
+        audioWorkletNodeRef.current.disconnect();
+        audioWorkletNodeRef.current = null;
+      }
+
+      // Stop ScriptProcessor
+      if (processorNodeRef.current) {
+        processorNodeRef.current.disconnect();
+        processorNodeRef.current = null;
+      }
+
+      // Stop source node
+      if (sourceNodeRef.current) {
+        sourceNodeRef.current.disconnect();
+        sourceNodeRef.current = null;
+      }
+
+      // Close AudioContext
+      if (audioContextRef.current) {
+        await audioContextRef.current.close();
+        audioContextRef.current = null;
+      }
+
+      // Stop media stream
+      if (mediaStreamRef.current) {
+        mediaStreamRef.current.getTracks().forEach((track) => track.stop());
+        mediaStreamRef.current = null;
+      }
+
+      setIsRecording(false);
+      console.log("🛑 Recording stopped successfully");
+
+      // Create audio blob from collected chunks for playback
+      if (audioBufferRef.current.length > 0) {
+        createAudioBlob();
+      }
+    } catch (error) {
+      console.error("❌ Error stopping recording:", error);
+      setIsRecording(false);
     }
   };
 
-  // Create audio blob from collected chunks
+  // Create audio blob from collected PCM chunks for playback
   const createAudioBlob = () => {
     try {
-      const audioBlob = new Blob(audioChunksRef.current, {
-        type: "audio/webm;codecs=opus",
-      });
+      if (audioBufferRef.current.length === 0) {
+        console.warn("⚠️ No audio data to create blob");
+        return;
+      }
+
+      // Convert Int16 array to WAV blob for playback
+      const sampleRate = 16000;
+      const numChannels = 1;
+      const bitsPerSample = 16;
+      const byteRate = (sampleRate * numChannels * bitsPerSample) / 8;
+      const blockAlign = (numChannels * bitsPerSample) / 8;
+      const dataSize = audioBufferRef.current.length * 2; // 2 bytes per sample
+      const fileSize = 44 + dataSize;
+
+      const buffer = new ArrayBuffer(fileSize);
+      const view = new DataView(buffer);
+
+      // WAV header
+      const writeString = (offset, string) => {
+        for (let i = 0; i < string.length; i++) {
+          view.setUint8(offset + i, string.charCodeAt(i));
+        }
+      };
+
+      writeString(0, "RIFF");
+      view.setUint32(4, fileSize - 8, true);
+      writeString(8, "WAVE");
+      writeString(12, "fmt ");
+      view.setUint32(16, 16, true);
+      view.setUint16(20, 1, true);
+      view.setUint16(22, numChannels, true);
+      view.setUint32(24, sampleRate, true);
+      view.setUint32(28, byteRate, true);
+      view.setUint16(32, blockAlign, true);
+      view.setUint16(34, bitsPerSample, true);
+      writeString(36, "data");
+      view.setUint32(40, dataSize, true);
+
+      // PCM data
+      let offset = 44;
+      for (let i = 0; i < audioBufferRef.current.length; i++) {
+        view.setInt16(offset, audioBufferRef.current[i], true);
+        offset += 2;
+      }
+
+      const audioBlob = new Blob([buffer], { type: "audio/wav" });
       const url = URL.createObjectURL(audioBlob);
       setAudioUrl(url);
       setAudioBlob(audioBlob);
       setHasAudio(true);
-      console.log("🎵 Audio blob created:", {
+
+      console.log("🎵 WAV audio blob created from PCM data:", {
         size: audioBlob.size,
         type: audioBlob.type,
+        sampleCount: audioBufferRef.current.length,
+        durationSeconds: audioBufferRef.current.length / sampleRate,
         url: url,
       });
+
       addToast({
         type: "success",
         title: "Audio Ready",
@@ -518,7 +595,17 @@ const StreamingRecorder = ({ onTranscriptionComplete, onSessionUpdate }) => {
       // End session on backend if active
       if (isActive && sessionId) {
         try {
-          await streamingTranscriptionAPI.endSession(token, sessionId);
+          const response = await fetch(
+            "http://localhost:5001/api/transcription/stream/end",
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${token}`,
+              },
+              body: JSON.stringify({ sessionId }),
+            }
+          );
           console.log("🗑️ Session ended on backend");
         } catch (error) {
           console.warn("Could not end session on backend:", error);
@@ -543,8 +630,8 @@ const StreamingRecorder = ({ onTranscriptionComplete, onSessionUpdate }) => {
       localStorage.removeItem("transcriptUtterances");
       localStorage.removeItem("savedSummaryData");
 
-      // Clear audio chunks
-      audioChunksRef.current = [];
+      // Clear audio buffer (PCM data)
+      audioBufferRef.current = [];
 
       // Cleanup audio URL
       if (audioUrl) {
@@ -603,7 +690,7 @@ const StreamingRecorder = ({ onTranscriptionComplete, onSessionUpdate }) => {
       a.download = `recording_${new Date()
         .toISOString()
         .slice(0, 19)
-        .replace(/:/g, "-")}.webm`;
+        .replace(/:/g, "-")}.wav`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -629,16 +716,25 @@ const StreamingRecorder = ({ onTranscriptionComplete, onSessionUpdate }) => {
 
     try {
       setIsProcessing(true);
-      const response = await streamingTranscriptionAPI.processAudio(
-        token,
-        sessionId,
-        [], // Empty audio data for pause
-        "pause"
+      const response = await fetch(
+        "http://localhost:5001/api/transcription/stream/pause",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            sessionId: sessionId,
+          }),
+        }
       );
 
-      if (response.success) {
+      const result = await response.json();
+
+      if (result.success) {
         setIsPaused(true);
-        setSessionStats(response.data);
+        setSessionStats(result.data);
         console.log("⏸️ Session paused");
 
         // Notify parent component
@@ -656,7 +752,7 @@ const StreamingRecorder = ({ onTranscriptionComplete, onSessionUpdate }) => {
           description: "Session has been paused",
         });
       } else {
-        throw new Error(response.error || "Failed to pause session");
+        throw new Error(result.error || "Failed to pause session");
       }
     } catch (error) {
       console.error("Error pausing session:", error);
@@ -675,25 +771,29 @@ const StreamingRecorder = ({ onTranscriptionComplete, onSessionUpdate }) => {
 
     try {
       setIsProcessing(true);
-      const response = await streamingTranscriptionAPI.resumeSession(
-        token,
-        sessionId
+      const response = await fetch(
+        "http://localhost:5001/api/transcription/stream/resume",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            sessionId: sessionId,
+          }),
+        }
       );
 
-      if (response.success) {
-        setIsPaused(false);
-        setSessionStats(response.data);
+      const result = await response.json();
 
-        // Don't create new MediaRecorder, just resume existing one
-        if (
-          mediaRecorderRef.current &&
-          mediaRecorderRef.current.state === "paused"
-        ) {
-          mediaRecorderRef.current.resume();
-        } else if (!mediaRecorderRef.current) {
-          // If no recorder exists, start a new one
-          await startRecording();
-        }
+      if (result.success) {
+        setIsPaused(false);
+        setSessionStats(result.data);
+
+        // ✅ CORRECT: Web Audio API continues automatically when isPaused becomes false
+        // No need to manually resume anything - the audio processing handlers
+        // check isPausedRef.current and will start processing again
 
         // Notify parent component
         if (onSessionUpdate) {
@@ -704,14 +804,14 @@ const StreamingRecorder = ({ onTranscriptionComplete, onSessionUpdate }) => {
           });
         }
 
-        console.log("▶️ Session resumed");
+        console.log("▶️ Session resumed - audio processing will continue");
         addToast({
           type: "success",
           title: "Resumed",
           description: "Session has resumed",
         });
       } else {
-        throw new Error(response.error || "Failed to resume session");
+        throw new Error(result.error || "Failed to resume session");
       }
     } catch (error) {
       console.error("Error resuming session:", error);
@@ -762,9 +862,9 @@ const StreamingRecorder = ({ onTranscriptionComplete, onSessionUpdate }) => {
         // Prepare utterances for parent component
         let newUtterances = [];
 
-        if (result.data.utterances && result.data.utterances.length > 0) {
+        if (result.data.turns && result.data.turns.length > 0) {
           // Use the utterances directly from the API response
-          newUtterances = result.data.utterances;
+          newUtterances = result.data.turns;
         } else if (result.data.turns && result.data.turns.length > 0) {
           // Fallback: convert turns to utterances format
           newUtterances = result.data.turns.map((turn) => ({
@@ -829,7 +929,7 @@ const StreamingRecorder = ({ onTranscriptionComplete, onSessionUpdate }) => {
         URL.revokeObjectURL(audioUrl);
       }
     };
-  }, [audioUrl]);
+  }, [audioUrl, isRecording]);
 
   // Check for existing session on component mount
   useEffect(() => {
