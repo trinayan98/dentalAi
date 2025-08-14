@@ -356,7 +356,7 @@ const Signup = () => {
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.5, delay: 0.4 }}
-                className=" bg-gray-100/50 dark:bg-gray-800/50 rounded-lg px-10 py-8 backdrop-blur-sm"
+                className=" bg-gray-100/30 dark:bg-gray-800/50 rounded-lg p-10 backdrop-blur-sm shadow-md"
               >
                 <div className="text-center lg:text-left ">
                   <h2 className="text-xl font-bold text-teal-800 dark:text-white mb-3">

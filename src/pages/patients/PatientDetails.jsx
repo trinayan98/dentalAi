@@ -176,8 +176,8 @@ const PatientDetails = () => {
   }
 
   return (
-    <div className="space-y-3 ">
-      <div className="mb-8">
+    <div className="space-y-4 ">
+      <div>
         <button
           onClick={() => navigate("/dashboard/patients")}
           className="flex items-center text-sm font-medium text-gray-600 hover:text-gray-900"
@@ -192,7 +192,7 @@ const PatientDetails = () => {
           {/* Patient Info Card */}
           <div className="bg-white rounded-xl shadow-sm p-6">
             <div className="flex items-center mb-6">
-              <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center mr-4">
+              <div className="w-12 h-12 rounded-full bg-teal-100 text-teal-600 flex items-center justify-center mr-4">
                 <User />
               </div>
               <div>
@@ -212,7 +212,7 @@ const PatientDetails = () => {
               <div className="flex items-center text-gray-600">
                 <Cake
                   size={16}
-                  className="mr-2 text-gray-500"
+                  className="mr-4 text-gray-800"
                   strokeWidth={2.2}
                 />
                 <span>
@@ -223,7 +223,7 @@ const PatientDetails = () => {
               <div className="flex items-center text-gray-600">
                 <Mail
                   size={16}
-                  className="mr-2 text-gray-600"
+                  className="mr-4 text-gray-800"
                   strokeWidth={2.2}
                 />
                 <span>{patient.email}</span>
@@ -232,7 +232,7 @@ const PatientDetails = () => {
                 <Phone
                   size={16}
                   strokeWidth={2.2}
-                  className="mr-2 text-gray-500"
+                  className="mr-4 text-gray-800"
                 />
                 <span>{patient.phone}</span>
               </div>
@@ -240,9 +240,9 @@ const PatientDetails = () => {
                 <Building2
                   size={16}
                   strokeWidth={2.2}
-                  className="mr-2 text-gray-500"
+                  className="mr-4 text-gray-800"
                 />
-                <span>Department: {patient.department}</span>
+                <span>Department : {patient.department}</span>
               </div>
               <div>
                 <span
@@ -283,10 +283,10 @@ const PatientDetails = () => {
         </aside>
 
         {/* Main Content */}
-        <main className="flex-1 p-8 pt-0 overflow-y-auto">
+        <main className="flex-1  pt-0 overflow-y-auto">
           {/* Transcriptions */}
           <div className="bg-white p-6 rounded-xl shadow-sm mb-8">
-            <h2 className="text-md font-semibold text-gray-900 mb-6">
+            <h2 className="text-md font-semibold text-gray-900 mb-4">
               Transcriptions ({patient.transcriptions?.length || 0})
             </h2>
 
@@ -305,21 +305,18 @@ const PatientDetails = () => {
             ) : (
               <div className="overflow-hidden">
                 {/* Header Row */}
-                <div className="bg-gray-50 px-6 py-4 border-b border-gray-200">
-                  <div className="grid grid-cols-5 gap-4">
-                    <div className="font-semibold text-sm text-gray-700">
-                      Session ID
-                    </div>
-                    <div className="font-semibold text-sm text-gray-700">
+                <div className="px-4 py-4 border-b border-gray-200">
+                  <div className="grid grid-cols-7 gap-4 text-gray-500">
+                    <div className="font-semibold text-sm col-span-2 ps-3">
                       Date & Time
                     </div>
-                    <div className="font-semibold text-sm text-gray-700">
+                    <div className="font-semibold text-sm col-span-2 text-center">
                       Session Type
                     </div>
-                    <div className="font-semibold text-sm text-gray-700">
+                    <div className="font-semibold text-sm col-span-2">
                       Visit Type
                     </div>
-                    <div className="font-semibold text-sm text-gray-700">
+                    <div className="font-semibold text-sm col-span-1">
                       Actions
                     </div>
                   </div>
@@ -330,27 +327,25 @@ const PatientDetails = () => {
                   {patient.transcriptions?.map((transcription, index) => (
                     <div
                       key={transcription.sessionId}
-                      className={`px-6 py-4 transition-colors hover:bg-gray-50 ${
-                        selectedTranscription?.sessionId ===
-                        transcription.sessionId
-                          ? "bg-blue-50 border-l-4 border-l-blue-500"
-                          : ""
-                      }`}
+                      className={`px-6 py-4 transition-colors hover:bg-gray-50`}
                     >
-                      <div className="grid grid-cols-5 gap-4 items-center">
-                        <div className="text-sm font-medium text-gray-900 truncate">
+                      <div className="grid grid-cols-7 gap-4 items-center">
+                        {/* <div className="text-s font-medium text-gray-900 truncate">
                           {transcription.sessionId}
-                        </div>
-                        <div className="text-sm text-gray-600">
+                        </div> */}
+                        <div className="text-s text-gray-600 col-span-2">
+                          <span className="text-gray-500 mr-2 text-s font-semibold">
+                            {index + 1} .
+                          </span>{" "}
                           {formatDate(transcription.sessionDate)}
                         </div>
-                        <div className="text-sm text-gray-900 capitalize">
+                        <div className="text-sm text-gray-900 capitalize col-span-2 text-center">
                           {transcription.sessionType}
                         </div>
-                        <div className="text-sm text-gray-900 capitalize">
+                        <div className="text-sm text-gray-900 capitalize col-span-2">
                           {transcription.visitType}
                         </div>
-                        <div className="flex items-center">
+                        <div className="flex items-center col-span-1 ">
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
@@ -358,7 +353,7 @@ const PatientDetails = () => {
                                 `/dashboard/patients/${id}/transcription/${transcription.sessionId}`
                               );
                             }}
-                            className="inline-flex items-center px-3 py-1.5 bg-blue-600 text-white text-xs font-medium rounded-md hover:bg-blue-700 transition-colors"
+                            className="inline-flex items-center px-3 py-1.5 bg-teal-600 text-white text-xs font-medium rounded-md hover:bg-teal-800 transition-colors"
                           >
                             View
                           </button>

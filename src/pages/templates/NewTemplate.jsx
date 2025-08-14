@@ -185,20 +185,20 @@ const NewTemplate = () => {
         </div>
 
         <Button
-          variant="primary"
+          variant="teal"
           size="sm"
           leftIcon={<Save className="h-4 w-4" />}
           onClick={handleSubmit}
           disabled={isSubmitting}
         >
-          {isSubmitting ? "Creating..." : "Create Template"}
+          {isSubmitting ? "Saving..." : "Save Template"}
         </Button>
       </div>
 
       {/* Template Information */}
-      <Card>
+      <Card className="px-4 py-3">
         <CardHeader>
-          <h1 className="text-lg font-bold text-gray-900 dark:text-white mb-4">
+          <h1 className="text-lg font-bold text-teal-900 dark:text-white mb-4">
             Template Information
           </h1>
           <div className="space-y-4">
@@ -231,7 +231,7 @@ const NewTemplate = () => {
             Template Fields
           </h2>
           <Button
-            variant="primary"
+            variant="teal"
             size="sm"
             leftIcon={<Plus className="h-4 w-4" />}
             onClick={handleAddField}
@@ -252,7 +252,7 @@ const NewTemplate = () => {
                     exit={{ opacity: 0, y: 10 }}
                     transition={{ duration: 0.2 }}
                   >
-                    <Card className="bg-gray-100 dark:bg-blue-900/20 border-blue-200 dark:border-blue-700 shadow-md">
+                    <Card className="bg-gray-100 dark:bg-blue-900/20 border-blue-200 dark:border-blue-700 shadow-md px-3">
                       <CardContent className="p-4">
                         <div className="space-y-4">
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -267,22 +267,6 @@ const NewTemplate = () => {
                               }
                               className="bg-white dark:bg-gray-800"
                             />
-                            <div className="flex items-center gap-2">
-                              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                                Required Field
-                              </label>
-                              <input
-                                type="checkbox"
-                                checked={editFormData.required || false}
-                                onChange={(e) =>
-                                  setEditFormData({
-                                    ...editFormData,
-                                    required: e.target.checked,
-                                  })
-                                }
-                                className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                              />
-                            </div>
                           </div>
 
                           <Textarea
@@ -299,16 +283,26 @@ const NewTemplate = () => {
                           />
 
                           <div className="flex items-center justify-between">
-                            <div className="text-xs text-gray-500 dark:text-gray-400">
-                              Field Key:{" "}
-                              <code className="bg-gray-100 dark:bg-gray-700 px-1 rounded">
-                                {field.key}
-                              </code>
+                            <div className="flex items-center gap-2">
+                              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                                Required Field
+                              </label>
+                              <input
+                                type="checkbox"
+                                checked={editFormData.required || false}
+                                onChange={(e) =>
+                                  setEditFormData({
+                                    ...editFormData,
+                                    required: e.target.checked,
+                                  })
+                                }
+                                className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                              />
                             </div>
 
                             <div className="flex items-center gap-2">
                               <Button
-                                variant="ghost"
+                                variant="outline"
                                 size="sm"
                                 leftIcon={<X className="h-4 w-4" />}
                                 onClick={handleCancelEdit}
@@ -316,12 +310,12 @@ const NewTemplate = () => {
                                 Cancel
                               </Button>
                               <Button
-                                variant="primary"
+                                variant="teal"
                                 size="sm"
                                 leftIcon={<Save className="h-4 w-4" />}
                                 onClick={() => handleSaveField(field.key)}
                               >
-                                Save
+                                Done
                               </Button>
                             </div>
                           </div>
@@ -337,7 +331,7 @@ const NewTemplate = () => {
                     exit={{ opacity: 0, y: -10 }}
                     transition={{ duration: 0.2 }}
                   >
-                    <Card className="hover:shadow-md transition-shadow duration-200">
+                    <Card className="hover:shadow-md transition-shadow duration-200 px-3 py-2">
                       <CardContent className="p-4">
                         <div className="flex items-start justify-between">
                           <div className="flex-1">
@@ -371,7 +365,9 @@ const NewTemplate = () => {
                             <Button
                               variant="ghost"
                               size="sm"
-                              leftIcon={<Trash2 className="h-4 w-4" />}
+                              leftIcon={
+                                <Trash2 className="h-4 w-4 text-red-600" />
+                              }
                               onClick={() => handleDeleteField(field.key)}
                             >
                               Delete
@@ -386,7 +382,7 @@ const NewTemplate = () => {
             ))}
           </div>
         ) : (
-          <Card>
+          <Card className="py-3">
             <CardContent className="p-8 text-center">
               <div className="text-gray-500 dark:text-gray-400 mb-4">
                 No fields added yet
@@ -429,12 +425,12 @@ const NewTemplate = () => {
                 Cancel
               </Button>
               <Button
-                variant="primary"
+                variant="teal"
                 size="sm"
                 onClick={handleConfirmedSubmit}
                 disabled={isSubmitting}
               >
-                {isSubmitting ? "Creating..." : "Create Template"}
+                {isSubmitting ? "Saving..." : "Save Template"}
               </Button>
             </div>
           </motion.div>

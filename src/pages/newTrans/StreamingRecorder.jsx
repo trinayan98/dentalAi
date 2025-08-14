@@ -947,10 +947,10 @@ const StreamingRecorder = ({ onTranscriptionComplete, onSessionUpdate }) => {
   return (
     <div>
       <div
-        className={`w-full p-8 mt-3 rounded-2xl transition-all duration-500 backdrop-blur-sm ${
+        className={`w-full p-6 py-4 mt-3 rounded-full transition-all duration-500 backdrop-blur-sm ${
           isRecording
             ? "bg-gradient-to-br from-red-500/10 via-red-400/5 to-red-600/10 shadow-2xl border border-red-400/30"
-            : "bg-white/80 shadow-lg border border-gray-200/50"
+            : "bg-white/80 shadow-sm border border-gray-200/50"
         }`}
       >
         {/* Status Display */}
@@ -960,15 +960,15 @@ const StreamingRecorder = ({ onTranscriptionComplete, onSessionUpdate }) => {
           <div className="flex items-center gap-4">
             {!isActive ? (
               <>
-                <Button
+                <button
                   size="md"
                   onClick={startSession}
-                  className="bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white font-medium px-6 py-3 rounded-xl shadow-lg hover:shadow-xl transition-all duration-200"
+                  className="flex text-xs items-center bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white font-medium px-4 py-2 rounded-full shadow-lg hover:shadow-xl transition-all duration-200"
                   disabled={isProcessing}
                 >
-                  <Mic size={20} className="mr-2" />
+                  <Mic size={18} className="mr-2" />
                   Start
-                </Button>
+                </button>
                 {(sessionId || localStorage.getItem("streamingSessionId")) && (
                   <Button
                     size="md"
@@ -984,35 +984,35 @@ const StreamingRecorder = ({ onTranscriptionComplete, onSessionUpdate }) => {
             ) : (
               <>
                 {!isPaused ? (
-                  <Button
+                  <button
                     size="xs"
                     onClick={pauseSession}
-                    className="bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white font-medium px-6 py-3 rounded-xl shadow-lg hover:shadow-xl transition-all duration-200"
+                    className="flex text-xs items-center bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white font-medium px-4 py-2 rounded-full shadow-lg hover:shadow-xl transition-all duration-200"
                     disabled={isProcessing}
                   >
                     <Pause size={14} className="mr-2" />
                     Pause
-                  </Button>
+                  </button>
                 ) : (
-                  <Button
+                  <button
                     size="xs"
                     onClick={resumeSession}
-                    className="bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white font-medium px-6 py-3 rounded-xl shadow-lg hover:shadow-xl transition-all duration-200"
+                    className="flex text-xs items-center bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white font-medium px-4 py-2 rounded-full shadow-lg hover:shadow-xl transition-all duration-200"
                     disabled={isProcessing}
                   >
                     <Play size={14} className="mr-2" />
-                    <span className="hidden md-block">Resume</span>
-                  </Button>
+                    Resume
+                  </button>
                 )}
-                <Button
+                <button
                   size="xs"
                   onClick={stopSession}
-                  className="bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white font-medium px-6 py-3 rounded-xl shadow-lg hover:shadow-xl transition-all duration-200"
+                  className="flex text-xs items-center bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white font-medium px-4 py-2 rounded-full shadow-lg hover:shadow-xl transition-all duration-200"
                   disabled={isProcessing}
                 >
                   <Square size={14} className="mr-2" />
                   Stop
-                </Button>
+                </button>
                 <button
                   size="xs"
                   onClick={cancelSession}
@@ -1037,11 +1037,11 @@ const StreamingRecorder = ({ onTranscriptionComplete, onSessionUpdate }) => {
             <div className="flex items-center gap-1">
               {/* Status Indicator */}
               <div
-                className="flex items-center gap-3 bg-white/60 backdrop-blur-sm px-2  rounded-xl "
-                // style={{
-                //   boxShadow:
-                //     "rgba(50, 50, 93, 0.07) 0px 30px 60px -12px inset, rgba(0, 0, 0, 0.3) 0px 18px 36px -18px inset",
-                // }}
+                className="flex items-center gap-3 bg-white/60 backdrop-blur-sm px-3 py-2  rounded-full "
+                style={{
+                  boxShadow:
+                    "rgba(50, 50, 93, 0.07) 0px 30px 60px -12px inset, rgba(0, 0, 0, 0.3) 0px 18px 36px -18px inset",
+                }}
               >
                 <div className="flex items-center gap-2">
                   <span
@@ -1053,7 +1053,7 @@ const StreamingRecorder = ({ onTranscriptionComplete, onSessionUpdate }) => {
                         : "bg-gray-400"
                     } ${isRecording ? "animate-ping" : ""}`}
                   ></span>
-                  <span className="text-s font-medium text-gray-700">
+                  <span className="text-xs font-medium text-gray-700">
                     {isActive ? (isPaused ? "Paused" : "Active") : "Inactive"}
                   </span>
                 </div>
@@ -1061,7 +1061,7 @@ const StreamingRecorder = ({ onTranscriptionComplete, onSessionUpdate }) => {
 
               {/* Recording Status */}
               <div
-                className="flex items-center gap-3 bg-white/60 backdrop-blur-sm px-4  rounded-xl "
+                className="flex items-center gap-3 bg-transparent  px-4  rounded-xl "
                 // style={{
                 //   boxShadow:
                 //     "rgba(50, 50, 93, 0.07) 0px 30px 60px -12px inset, rgba(0, 0, 0, 0.3) 0px 18px 36px -18px inset",
@@ -1073,11 +1073,11 @@ const StreamingRecorder = ({ onTranscriptionComplete, onSessionUpdate }) => {
                       isRecording ? "bg-red-500" : "bg-gray-400"
                     } ${isRecording ? "animate-pulse" : ""}`}
                   ></span>
-                  <span className="text-sm font-medium text-gray-700 hidden md-block">
+                  <span className="text-xxs font-medium text-gray-700 hidden md-block">
                     Recording
                   </span>
                   <span
-                    className={`text-sm font-semibold ${
+                    className={`text-xs font-semibold ${
                       isRecording ? "text-red-600" : "text-gray-500"
                     }`}
                   >

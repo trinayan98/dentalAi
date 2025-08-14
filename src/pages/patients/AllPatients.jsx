@@ -206,7 +206,7 @@ const AllPatients = () => {
           </h1>
         </div>
         <Button
-          variant="primary"
+          variant="teal"
           size="sm"
           className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg shadow-sm"
         >
@@ -297,11 +297,7 @@ const AllPatients = () => {
             <option value="inactive">Inactive</option>
             <option value="archived">Archived</option>
           </Select>
-          <Button
-            onClick={handleSearch}
-            size="md"
-            className="bg-green-600 hover:bg-green-700 text-white dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 h-10 "
-          >
+          <Button onClick={handleSearch} size="md" variant="teal">
             <Search className="h-4 w-4 mr-2" />
             Search
           </Button>
@@ -344,8 +340,8 @@ const AllPatients = () => {
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
                         <div className="flex-shrink-0 h-8 w-8">
-                          <div className="h-8 w-8 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center">
-                            <User className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                          <div className="h-8 w-8 rounded-full bg-teal-100 dark:bg-teal-900 flex items-center justify-center">
+                            <User className="h-4 w-4 text-teal-600 dark:text-teal-400" />
                           </div>
                         </div>
                         <div className="ml-3">
@@ -372,13 +368,13 @@ const AllPatients = () => {
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
+                      <span className="inline-flex px-4 py-1 text-xs font-semibold rounded-md bg-teal-100 text-teal-800 dark:bg-blue-900 dark:text-blue-200">
                         {patient.department}
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span
-                        className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                        className={`inline-flex px-4 py-1 text-xs font-semibold rounded-md ${
                           patient.status === "active"
                             ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
                             : patient.status === "inactive"
@@ -407,7 +403,7 @@ const AllPatients = () => {
                           <Eye className="h-4 w-4" />
                         </button>
                         <button
-                          className="text-green-600 hover:text-green-900 rounded-full p-2 bg-gray-100 dark:text-green-400 dark:hover:text-green-300 transition-colors"
+                          className="text-teal-600 hover:text-green-900 rounded-full p-2 bg-gray-100 dark:text-green-400 dark:hover:text-green-300 transition-colors"
                           title="Edit patient"
                         >
                           <Edit className="h-4 w-4" />

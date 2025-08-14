@@ -89,11 +89,11 @@ const Home = () => {
             <div className="absolute bottom-1/4 right-1/3 w-40 h-40 bg-gradient-to-r from-blue-400/20 to-purple-400/20 dark:from-blue-600/10 dark:to-purple-600/10 rounded-full blur-xl animate-pulse-medium"></div>
 
             {/* Moving lines */}
-            <div className="absolute top-0 left-0 w-full h-full">
+            {/* <div className="absolute top-0 left-0 w-full h-full">
               <div className="absolute top-1/4 left-0 w-full h-px bg-gradient-to-r from-transparent via-teal-300/30 dark:via-teal-600/20 to-transparent animate-slide-right"></div>
               <div className="absolute top-3/4 left-0 w-full h-px bg-gradient-to-r from-transparent via-emerald-300/30 dark:via-emerald-600/20 to-transparent animate-slide-left"></div>
               <div className="absolute top-1/2 left-0 w-full h-px bg-gradient-to-r from-transparent via-blue-300/30 dark:via-blue-600/20 to-transparent animate-slide-right-slow"></div>
-            </div>
+            </div> */}
 
             {/* Grid pattern */}
             <div className="absolute inset-0 opacity-5 dark:opacity-10">

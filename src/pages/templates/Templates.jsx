@@ -1,4 +1,11 @@
-import { ChevronRight, Search, Plus, Filter, MoreVertical } from "lucide-react";
+import {
+  ChevronRight,
+  Search,
+  Plus,
+  Filter,
+  MoreVertical,
+  Text,
+} from "lucide-react";
 import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
@@ -149,7 +156,7 @@ const Templates = () => {
           </Button> */}
 
           <Button
-            variant="primary"
+            variant="teal"
             size="md"
             leftIcon={<Plus className="h-4 w-4" />}
             onClick={() => navigate("/dashboard/create-template")}
@@ -162,16 +169,16 @@ const Templates = () => {
       {/* Templates Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {filteredTemplates.map((template) => (
-          <Card key={template._id} className="relative pointer">
+          <Card key={template._id} className="relative pointer p-3">
             <CardHeader>
               <div className="flex items-start justify-between">
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-2">
-                    <h3 className="text-md font-bold text-gray-900 dark:text-white">
+                    <h3 className="text-sm font-bold text-teal-900 dark:text-white">
                       {template.name}
                     </h3>
                     {template.isDefault && (
-                      <span className="px-2 py-1 text-xxs font-medium bg-blue-100 text-blue-800 rounded-full flex items-center ">
+                      <span className="px-4 py-1 text-xxs font-medium bg-blue-100 text-blue-800 rounded-md flex items-center ">
                         Default
                       </span>
                     )}
@@ -182,10 +189,12 @@ const Templates = () => {
                   </p>
 
                   <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
-                    <span className="text-primary-400">
+                    <span className="text-red-600">
                       {getFieldCount(template.fields)} fields
                     </span>
-                    <span>Last updated: {formatDate(template.updatedAt)}</span>
+                    <span className="text-teal-600 font-medium">
+                      Last updated : {formatDate(template.updatedAt)}
+                    </span>
                   </div>
                 </div>
 
@@ -196,7 +205,7 @@ const Templates = () => {
                     console.log(template._id);
                   }}
                 >
-                  <MoreVertical className="h-4 w-4 text-gray-400" />
+                  <Text className="h-4 w-4 text-gray-400" />
                 </button>
               </div>
             </CardHeader>

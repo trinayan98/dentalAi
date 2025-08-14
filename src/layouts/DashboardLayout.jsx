@@ -83,7 +83,7 @@ export default function DashboardLayout() {
           <div className="flex items-center justify-center h-20 px-4 dark:border-gray-700 ">
             <Link
               to="/dashboard"
-              className="flex items-center justify-center font-bold text-green-600"
+              className="flex items-center justify-center font-bold text-teal-600"
             >
               AI Dental Scribe
             </Link>
@@ -104,7 +104,7 @@ export default function DashboardLayout() {
                 className={clsx(
                   "text-s group flex items-center px-4 py-2 pt-3 pb-3   rounded-md transition-colors ",
                   location.pathname === item.href
-                    ? "bg-green-100 text-green-600 dark:bg-primary-900/30 dark:text-primary-400 font-semibold"
+                    ? "bg-teal-100 text-teal-600 dark:bg-primary-900/30 dark:text-primary-400 font-semibold"
                     : "text-gray-800 font-medium hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700/30"
                 )}
               >
@@ -112,7 +112,7 @@ export default function DashboardLayout() {
                   className={clsx(
                     "mr-2 flex-shrink-0 h-4 w-4",
                     location.pathname === item.href
-                      ? "text-green-600 dark:text-primary-400"
+                      ? "text-teal-600 dark:text-primary-400"
                       : "text-gray-500 dark:text-gray-400"
                   )}
                 />

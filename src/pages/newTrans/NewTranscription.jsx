@@ -606,7 +606,7 @@ const NewTranscription = () => {
   };
 
   return (
-    <div className="space-y-3 ">
+    <div className="space-y-6 ">
       {" "}
       <div className="flex items-center gap-2 text-xs">
         <span className="text-gray-500 dark:text-gray-300">Create Note</span>{" "}
@@ -635,7 +635,7 @@ const NewTranscription = () => {
                 </Select>
               </div>
             </div>
-            <div className="grid grid-cols-6 gap-0  h-[63vh]   bg-white p-0 overflow-y-auto">
+            <div className="grid grid-cols-6 gap-0  h-[63vh]   bg-white p-0 overflow-y-auto relative">
               <div
                 className={` p-5 ${
                   isTemplateMinimized ? "col-span-6" : "col-span-4"
@@ -654,7 +654,7 @@ const NewTranscription = () => {
                   <div className="space-y-4">
                     {/* Summary metadata */}
 
-                    {/* <div className="text-xs text-gray-500 mb-3 p-2 bg-green-400/10 rounded">
+                    {/* <div className="text-xs text-gray-500 mb-3 p-2 bg-teal-400/10 rounded">
                       <div className="flex items-center justify-between">
                         <div className="px-4 py-2">
                           <h4 className="text-md font-medium flex items-center gap-2">
@@ -748,7 +748,7 @@ const NewTranscription = () => {
               </div>
 
               {!isTemplateMinimized && (
-                <div className=" p-3  col-span-2 border-l-2 border-gray-300 relative">
+                <div className=" p-3  col-span-2 border-l-2 border-gray-300 z-10">
                   {selectedTemplate ? (
                     <div className="space-y-2">
                       <div className="flex items-center justify-between">
@@ -788,37 +788,40 @@ const NewTranscription = () => {
               {isTemplateMinimized ? (
                 <button
                   onClick={() => setIsTemplateMinimized(false)}
-                  className="absolute right-2 top-1/2 transform -translate-y-1/2 flex items-center justify-center w-8 h-8 rounded-full bg-gray-200 hover:bg-gray-300 transition-colors z-10"
+                  className="absolute right-[-20px] top-1/2 transform -translate-y-1/2 flex items-center justify-center w-8 h-8 rounded-full bg-teal-200 hover:bg-gray-300 transition-colors z-100"
                   title="Expand template"
                 >
-                  <ChevronLeft className="h-4 w-4 text-gray-600" />
+                  <ChevronLeft className="h-4 w-4 text-teal-600" />
                 </button>
               ) : (
                 <button
                   onClick={() => setIsTemplateMinimized(true)}
-                  className="absolute right-2 top-1/2 transform -translate-y-1/2 flex items-center justify-center w-8 h-8 rounded-full bg-gray-200 hover:bg-gray-300 transition-colors z-10"
+                  className="absolute right-2 top-1/2 transform -translate-y-1/2 flex items-center justify-center w-8 h-8 rounded-full bg-teal-200 hover:bg-teal-300 transition-colors z-10"
                   title="Expand template"
                 >
-                  <ChevronRight className="h-4 w-4 text-gray-600" />
+                  <ChevronRight className="h-4 w-4 text-teal-600" />
                 </button>
               )}
             </div>
           </div>
-          <div className="w-full flex items-center justify-between mt-6">
-            <div className="buttons flex items-center gap-4 ">
-              <button
-                onClick={generateSummary}
-                disabled={summaryLoading || !selectedTemplate}
-                className="flex items-center text-s gap-2 border-2 border-gray-400 text-gray-500 bg-transparent rounded-full px-6 py-2 font-medium transition hover:bg-primary-50 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
-                type="button"
-              >
-                {summaryLoading ? (
-                  <Loader2 size={16} className="animate-spin" />
-                ) : (
-                  <RefreshCcw size={16} />
-                )}
-                {summaryLoading ? "Generating..." : "Generate"}
-              </button>
+          <div className="w-full flex items-center justify-between mt-8">
+            <div className="buttons flex items-center gap-4 justify-between w-full ">
+              {!isEditingSummary && (
+                <button
+                  onClick={generateSummary}
+                  disabled={summaryLoading || !selectedTemplate}
+                  className="flex items-center text-s gap-2 border-2 border-gray-400 text-gray-500 bg-transparent rounded-full px-4 py-2 font-medium transition hover:bg-primary-50 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
+                  type="button"
+                >
+                  {summaryLoading ? (
+                    <Loader2 size={16} className="animate-spin" />
+                  ) : (
+                    <RefreshCcw size={16} />
+                  )}
+                  {summaryLoading ? "Generating..." : "Generate"}
+                </button>
+              )}
+
               {/* <button
                 onClick={regenerateSummary}
                 disabled={summaryLoading || !summaryData || !selectedTemplate}
@@ -829,29 +832,31 @@ const NewTranscription = () => {
                 Regenerate
               </button> */}
 
-              <button
-                onClick={handleCopySummary}
-                disabled={!summaryData || summaryLoading}
-                className="flex items-center justify-center border-2 border-gray-300 text-gray-400 bg-transparent rounded-full p-2 transition hover:bg-gray-100 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
-                type="button"
-              >
-                <Copy size={16} />
-              </button>
-
               {summaryData && !summaryLoading && (
-                <div className="flex items-center gap-2  w-full pe-1">
+                <div className="flex items-center justify-end gap-2  w-full pe-1">
+                  {!isEditingSummary && (
+                    <button
+                      onClick={handleCopySummary}
+                      disabled={!summaryData || summaryLoading}
+                      className="flex items-center justify-center border-2 border-gray-300 text-gray-400 bg-transparent rounded-full p-2.5 transition hover:bg-gray-100 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
+                      type="button"
+                    >
+                      <Copy size={16} />
+                    </button>
+                  )}
+
                   {isEditingSummary ? (
                     <>
                       <button
                         onClick={handleSaveSummary}
-                        className="flex items-center gap-1 text-xxs text-green-600 hover:text-green-800 font-medium px-4 py-2  rounded-md border-2 border-green-400"
+                        className="flex items-center text-s gap-2 border-2 border-teal-600 bg-teal-600 text-white bg-teal rounded-full px-4 py-2 font-medium transition hover:bg-teal-900 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         <Save size={14} />
-                        Save
+                        Done
                       </button>
                       <button
                         onClick={() => setIsEditingSummary(false)}
-                        className="flex items-center gap-1 text-xxs text-red-600 hover:text-red-800 font-medium px-4 py-2  rounded-md border-2 border-red-400"
+                        className="flex items-center text-s gap-2 border-2 border-red-600 bg-red-600 text-white bg-red rounded-full px-4 py-2 font-medium transition hover:bg-red-900 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         <X size={14} />
                         Cancel
@@ -861,7 +866,7 @@ const NewTranscription = () => {
                     <>
                       <button
                         onClick={handleEditSummary}
-                        className="flex items-center justify-center border-2 border-gray-300 text-gray-400 bg-transparent rounded-full p-2 transition hover:bg-gray-100 focus:outline-none"
+                        className="flex items-center justify-center border-2 border-gray-300 text-gray-400 bg-transparent rounded-full p-2.5 transition hover:bg-gray-100 focus:outline-none"
                         type="button"
                       >
                         <Edit size={14} />
@@ -872,38 +877,44 @@ const NewTranscription = () => {
                             localStorage.removeItem("savedSummaryData");
                             setSummaryData(null);
                           }}
-                          className="flex items-center text-s gap-2 border-2 border-red-300 text-red-600 bg-transparent rounded-full px-6 py-2 font-medium transition hover:bg-primary-50 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
+                          className="flex items-center text-s gap-2 border-2 border-red-500 text-white bg-red-500 rounded-full px-4 py-2 font-medium transition hover:bg-red-700 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
                           type="button"
                         >
                           <X size={14} />
-                          Clear
+                          Clear Summary
                         </button>
                       )}
                     </>
                   )}
+                  {!isEditingSummary && (
+                    <>
+                      {" "}
+                      <button
+                        onClick={regenerateSummary}
+                        disabled={
+                          summaryLoading || !summaryData || !selectedTemplate
+                        }
+                        className="flex items-center text-s gap-2 border-2 border-primary-500 text-white bg-primary-500 rounded-full px-4 py-2 font-medium transition hover:bg-primary-800 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
+                        type="button"
+                      >
+                        <RefreshCcw size={14} />
+                        Regenerate
+                      </button>
+                      <button
+                        onClick={openPatientModal}
+                        disabled={
+                          summaryLoading || !summaryData || !selectedTemplate
+                        }
+                        className="flex items-center text-s gap-2 border-2 border-teal-600 bg-teal-600 text-white bg-teal rounded-full px-4 py-2 font-medium transition hover:bg-teal-900 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
+                        type="button"
+                      >
+                        <Save size={14} className="text-white" />
+                        Save
+                      </button>
+                    </>
+                  )}
                 </div>
               )}
-            </div>
-            <div className="flex items-center gap-4">
-              {" "}
-              <button
-                onClick={regenerateSummary}
-                disabled={summaryLoading || !summaryData || !selectedTemplate}
-                className="flex items-center text-s gap-2 border-2 border-primary-100 text-primary-500 bg-transparent rounded-full px-6 py-2 font-medium transition hover:bg-primary-50 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
-                type="button"
-              >
-                <RefreshCcw size={14} />
-                Regenerate
-              </button>
-              <button
-                onClick={openPatientModal}
-                disabled={summaryLoading || !summaryData || !selectedTemplate}
-                className="flex items-center text-s gap-2 border-2 border-green-300 text-green-600 bg-transparent rounded-full px-6 py-2 font-medium transition hover:bg-primary-50 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
-                type="button"
-              >
-                <Upload size={14} />
-                Save
-              </button>
             </div>
           </div>
         </div>

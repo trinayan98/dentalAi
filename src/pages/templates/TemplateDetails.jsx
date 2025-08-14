@@ -401,6 +401,7 @@ const TemplateDetails = () => {
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -10 }}
                   transition={{ duration: 0.2 }}
+                  className="px-3 py-2"
                 >
                   <div className="flex items-center gap-2 mb-4 justify-between">
                     <div className="flex items-center gap-2">
@@ -428,7 +429,7 @@ const TemplateDetails = () => {
                       <Button
                         variant="outline"
                         size="sm"
-                        leftIcon={<Edit className="h-4 w-4" />}
+                        leftIcon={<Edit className="h-4 w-4 text-teal-600" />}
                         onClick={handleEditTemplate}
                         disabled={isEditingTemplate}
                       >
@@ -437,7 +438,7 @@ const TemplateDetails = () => {
                       <Button
                         variant="outline"
                         size="sm"
-                        leftIcon={<Trash2 className="h-4 w-4" />}
+                        leftIcon={<Trash2 className="h-4 w-4 text-red-600" />}
                         onClick={handleDeleteTemplate}
                       >
                         Delete
@@ -451,15 +452,15 @@ const TemplateDetails = () => {
 
                   <div className="flex items-center gap-6 text-s text-gray-500 dark:text-gray-400">
                     <div>
-                      <span className="font-bold text-gray-600">Created:</span>{" "}
+                      <span className="font-bold text-teal-600">Created:</span>{" "}
                       {formatDate(template.createdAt)}
                     </div>
                     <div>
-                      <span className="font-bold text-gray-600">Updated:</span>{" "}
+                      <span className="font-bold text-teal-600">Updated:</span>{" "}
                       {formatDate(template.updatedAt)}
                     </div>
                     <div>
-                      <span className="font-bold text-gray-600">Fields:</span>{" "}
+                      <span className="font-bold text-teal-600">Fields:</span>{" "}
                       {template.fields?.length || 0}
                     </div>
                   </div>
@@ -477,7 +478,7 @@ const TemplateDetails = () => {
             Template Fields
           </h2>
           <Button
-            variant="primary"
+            variant="teal"
             size="sm"
             leftIcon={<Edit className="h-4 w-4" />}
           >
@@ -497,22 +498,20 @@ const TemplateDetails = () => {
                     exit={{ opacity: 0, y: 10 }}
                     transition={{ duration: 0.2 }}
                   >
-                    <Card className="bg-gray-100 dark:bg-blue-900/20 border-blue-200 dark:border-blue-700 shadow-md">
+                    <Card className="bg-gray-100 dark:bg-blue-900/20 border-blue-200 dark:border-blue-700 shadow-md px-3 py-2">
                       <CardContent className="p-4">
                         <div className="space-y-4">
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <Input
-                              label="Field Title"
-                              value={editFormData.title || ""}
-                              onChange={(e) =>
-                                setEditFormData({
-                                  ...editFormData,
-                                  title: e.target.value,
-                                })
-                              }
-                              className="bg-white dark:bg-gray-800"
-                            />
-                          </div>
+                          <Input
+                            label="Field Title"
+                            value={editFormData.title || ""}
+                            onChange={(e) =>
+                              setEditFormData({
+                                ...editFormData,
+                                title: e.target.value,
+                              })
+                            }
+                            className="bg-white dark:bg-gray-800"
+                          />
 
                           <Textarea
                             label="Field Instruction"
@@ -554,9 +553,9 @@ const TemplateDetails = () => {
                                 Cancel
                               </Button>
                               <Button
-                                variant="primary"
+                                variant="teal"
                                 size="sm"
-                                leftIcon={<Save className="h-4 w-4" />}
+                                leftIcon={<Save className="h-4 w-4 " />}
                                 onClick={() => handleSaveField(field.key)}
                               >
                                 Save
@@ -575,12 +574,12 @@ const TemplateDetails = () => {
                     exit={{ opacity: 0, y: -10 }}
                     transition={{ duration: 0.2 }}
                   >
-                    <Card className="hover:shadow-md transition-shadow duration-200">
+                    <Card className="hover:shadow-md transition-shadow duration-200 px-3 py-2">
                       <CardContent className="p-4">
                         <div className="flex items-start justify-between">
                           <div className="flex-1">
                             <div className="flex items-center gap-2 mb-2">
-                              <h3 className="text-md font-semibold text-gray-900 dark:text-white">
+                              <h3 className="text-md font-semibold text-teal-900 dark:text-white">
                                 {field.title}
                               </h3>
                             </div>
@@ -601,17 +600,19 @@ const TemplateDetails = () => {
                             <Button
                               variant="ghost"
                               size="sm"
-                              leftIcon={<Edit className="h-4 w-4" />}
+                              className="text-primary-500 bg-primary-100/60"
                               onClick={() => handleEditField(field)}
                             >
-                              Edit
+                              {" "}
+                              <Edit className="h-4 w-4 text-primary-500" />
                             </Button>
                             <Button
                               variant="ghost"
                               size="sm"
-                              leftIcon={<Trash2 className="h-4 w-4" />}
+                              className="bg-red-100/60 text-red-700"
                             >
-                              Delete
+                              {" "}
+                              <Trash2 className="h-4 w-4 text-red-600" />
                             </Button>
                           </div>
                         </div>

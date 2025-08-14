@@ -9,7 +9,7 @@ const Textarea = forwardRef(
         {label && (
           <label
             htmlFor={id}
-            className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2"
+            className="block text-s font-bold text-gray-700 dark:text-gray-300 mb-2"
           >
             {label}
           </label>
@@ -17,7 +17,7 @@ const Textarea = forwardRef(
 
         <textarea
           className={clsx(
-            "flex min-h-[80px] w-full text-sm px-2 pt-2 pb-2 py-1.5 rounded-md border",
+            "flex min-h-[80px] w-full text-sm px-2 pt-2 pb-2 py-1.5 rounded-md border-2 border-gray-300",
             "bg-white dark:bg-gray-800 text-[#6B7280] dark:text-gray-300",
             "focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500"
           )}

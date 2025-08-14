@@ -24,12 +24,13 @@ export const Button = ({
     outline:
       "border border-gray-300 bg-transparent hover:bg-gray-100 dark:border-gray-100 dark:text-gray-100 dark:hover:bg-gray-800 focus-visible:ring-gray-500",
     ghost:
-      "bg-transparent hover:bg-gray-100 dark:hover:bg-gray-800 focus-visible:ring-gray-500",
+      " hover:bg-gray-100 dark:hover:bg-gray-800 focus-visible:ring-gray-500",
     link: "bg-transparent underline-offset-4 hover:underline text-primary-500 hover:text-primary-600 focus-visible:ring-primary-500 p-0 height-auto",
     danger:
       "bg-error-500 text-white hover:bg-error-200 focus-visible:ring-error-500 ",
     green:
       "bg-green-500 text-white hover:bg-green-600 focus-visible:ring-green-500",
+    teal: "bg-teal-600 text-white hover:bg-teal-800 focus-visible:ring-teal-500",
   };
 
   const sizeStyles = {

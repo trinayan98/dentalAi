@@ -26,6 +26,7 @@ const LiveTranscript = () => {
   });
   const [showTabSwitchWarning, setShowTabSwitchWarning] = useState(false);
   const [pendingTabSwitch, setPendingTabSwitch] = useState(null);
+  const [showClearWarning, setShowClearWarning] = useState(false);
 
   // Shared states
   const [utterances, setUtterances] = useState([]);
@@ -360,6 +361,19 @@ const LiveTranscript = () => {
     });
   };
 
+  const handleClearTranscript = () => {
+    setShowClearWarning(true);
+  };
+
+  const confirmClearTranscript = () => {
+    clearTranscript();
+    setShowClearWarning(false);
+  };
+
+  const cancelClearTranscript = () => {
+    setShowClearWarning(false);
+  };
+
   const renderUtterances = () => {
     // Filter out empty utterances
     const validUtterances = getValidUtterances();
@@ -444,7 +458,7 @@ const LiveTranscript = () => {
                   onClick={() => handleTabSwitch("record")}
                   className={`text-xxs flex items-center gap-2 px-4 py-1 rounded-md font-medium transition-all duration-200 ${
                     activeTab === "record"
-                      ? "bg-white text-green-600 shadow-sm"
+                      ? "bg-white text-teal-600 shadow-sm"
                       : "text-gray-600 hover:text-gray-800"
                   }`}
                 >
@@ -559,7 +573,7 @@ const LiveTranscript = () => {
                         )}
                         {utterances.length > 0 && (
                           <button
-                            onClick={clearTranscript}
+                            onClick={handleClearTranscript}
                             className="w-12 h-12 bg-red-100 rounded-full p-1 flex items-center justify-center hover:bg-red-200 transition-colors"
                           >
                             <XCircle size={18} color="red" />
@@ -601,7 +615,7 @@ const LiveTranscript = () => {
           <div className="flex items-center gap-3">
             {getValidUtterances().length > 0 && (
               <Button
-                onClick={clearTranscript}
+                onClick={handleClearTranscript}
                 variant="outline"
                 className="border-red-300 text-red-600 hover:bg-red-50"
               >
@@ -615,7 +629,7 @@ const LiveTranscript = () => {
         {/* Upload Tab Controls */}
         {activeTab === "upload" && (
           <div className="flex items-center gap-3">
-            {!selectedFile && utterances.length === 0 && (
+            {/* {!selectedFile && utterances.length === 0 && (
               <Button
                 onClick={triggerFileInput}
                 variant="outline"
@@ -624,12 +638,12 @@ const LiveTranscript = () => {
                 <Upload size={16} className="mr-2" />
                 Upload Audio
               </Button>
-            )}
-            {selectedFile && utterances.length === 0 && (
+            )} */}
+            {selectedFile && !isTranscribing && utterances.length === 0 && (
               <>
                 <button
                   onClick={handleUpload}
-                  className="flex items-center text-s gap-2 border-2 border-gray-400 text-gray-500 bg-transparent rounded-full px-6 py-2 font-medium transition hover:bg-primary-50 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex items-center text-s gap-2 border-2 border-primary-400 text-primary-500 bg-transparent rounded-full px-6 py-2 font-medium transition hover:bg-primary-50 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
                   type="button"
                 >
                   Upload
@@ -640,22 +654,22 @@ const LiveTranscript = () => {
                     setSelectedFile(null);
                     fileInputRef.current.value = "";
                   }}
-                  className="flex items-center justify-center border-2 border-red-300 text-red-600 bg-red-500/20 rounded-full p-2.5 transition hover:bg-gray-100 focus:outline-none"
+                  className="flex items-center text-s justify-center border-2 border-red-300 text-red-600 bg-red-500/20 rounded-full px-3 py-2 transition hover:bg-gray-100 focus:outline-none"
                   type="button"
                 >
-                  <X size={14} />
+                  <X size={14} className="me-1" /> Clear file
                 </button>
               </>
             )}
             {getValidUtterances().length > 0 && (
-              <Button
-                onClick={clearTranscript}
-                variant="outline"
-                className="border-red-300 text-red-600 hover:bg-red-50"
+              <button
+                onClick={handleClearTranscript}
+                className="flex items-center text-s gap-2 border-2 border-red-500 text-white bg-red-500 rounded-full px-4 py-2 font-medium transition hover:bg-red-700 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
+                type="button"
               >
-                <XCircle size={16} className="mr-2" />
-                Clear
-              </Button>
+                <X size={14} />
+                Clear Transcript
+              </button>
             )}
           </div>
         )}
@@ -688,6 +702,43 @@ const LiveTranscript = () => {
                 className="bg-red-600 hover:bg-red-700"
               >
                 Switch & Clear Data
+              </Button>
+            </div>
+          </motion.div>
+        </div>
+      )}
+
+      {/* Clear Transcript Warning Modal */}
+      {showClearWarning && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.9 }}
+            className="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-md w-full mx-4"
+          >
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+              Clear Transcript Warning
+            </h3>
+            <p className="text-gray-600 dark:text-gray-400 mb-6">
+              Are you sure you want to clear the transcript? This action cannot
+              be undone.
+            </p>
+            <div className="flex items-center justify-end gap-3">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={cancelClearTranscript}
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="primary"
+                size="sm"
+                onClick={confirmClearTranscript}
+                className="bg-red-600 hover:bg-red-700"
+              >
+                Yes, Clear
               </Button>
             </div>
           </motion.div>
