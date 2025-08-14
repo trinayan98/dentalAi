@@ -126,6 +126,29 @@ export default {
       },
       animation: {
         "pulse-slow": "pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite",
+        "pulse-medium": "pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite",
+        "float-slow": "float 6s ease-in-out infinite",
+        "float-medium": "float 8s ease-in-out infinite",
+        "float-fast": "float 4s ease-in-out infinite",
+        "slide-right": "slideRight 8s linear infinite",
+        "slide-left": "slideLeft 10s linear infinite",
+        "slide-right-slow": "slideRight 12s linear infinite",
+      },
+      keyframes: {
+        float: {
+          "0%, 100%": { transform: "translateY(0px) translateX(0px)" },
+          "25%": { transform: "translateY(-20px) translateX(10px)" },
+          "50%": { transform: "translateY(-10px) translateX(-5px)" },
+          "75%": { transform: "translateY(-30px) translateX(15px)" },
+        },
+        slideRight: {
+          "0%": { transform: "translateX(-100%)" },
+          "100%": { transform: "translateX(100%)" },
+        },
+        slideLeft: {
+          "0%": { transform: "translateX(100%)" },
+          "100%": { transform: "translateX(-100%)" },
+        },
       },
     },
   },

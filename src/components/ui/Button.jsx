@@ -28,6 +28,8 @@ export const Button = ({
     link: "bg-transparent underline-offset-4 hover:underline text-primary-500 hover:text-primary-600 focus-visible:ring-primary-500 p-0 height-auto",
     danger:
       "bg-error-500 text-white hover:bg-error-200 focus-visible:ring-error-500 ",
+    green:
+      "bg-green-500 text-white hover:bg-green-600 focus-visible:ring-green-500",
   };
 
   const sizeStyles = {

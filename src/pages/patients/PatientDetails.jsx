@@ -119,7 +119,7 @@ const PatientDetails = () => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
+      <div className="flex items-center justify-center min-h-[100%]">
         <div className="flex items-center gap-3">
           <span className="material-icons animate-spin text-blue-600 text-2xl">
             refresh
@@ -202,7 +202,12 @@ const PatientDetails = () => {
                 <p className="text-s text-gray-500">{patient.patientId}</p>
               </div>
             </div>
-
+            {/* <header className="flex justify-between items-center mb-8">
+          <button className="bg-blue-600 text-white px-4 py-2 rounded-lg font-semibold flex items-center hover:bg-blue-700 transition">
+            <span className="material-icons mr-2">edit</span>
+            Edit Patient
+          </button>
+        </header> */}
             <div className="space-y-4 text-s px-4">
               <div className="flex items-center text-gray-600">
                 <Cake
@@ -279,13 +284,6 @@ const PatientDetails = () => {
 
         {/* Main Content */}
         <main className="flex-1 p-8 pt-0 overflow-y-auto">
-          {/* <header className="flex justify-between items-center mb-8">
-          <button className="bg-blue-600 text-white px-4 py-2 rounded-lg font-semibold flex items-center hover:bg-blue-700 transition">
-            <span className="material-icons mr-2">edit</span>
-            Edit Patient
-          </button>
-        </header> */}
-
           {/* Transcriptions */}
           <div className="bg-white p-6 rounded-xl shadow-sm mb-8">
             <h2 className="text-md font-semibold text-gray-900 mb-6">
@@ -305,140 +303,78 @@ const PatientDetails = () => {
                 </p>
               </div>
             ) : (
-              <div className="space-y-4">
-                {patient.transcriptions?.map((transcription, index) => (
-                  <div
-                    key={transcription.sessionId}
-                    className={`border rounded-lg p-6 cursor-pointer transition-colors ${
-                      selectedTranscription?.sessionId ===
-                      transcription.sessionId
-                        ? "bg-blue-50 border-blue-200"
-                        : "border-gray-200 hover:bg-gray-50"
-                    }`}
-                    onClick={() => setSelectedTranscription(transcription)}
-                  >
-                    <div className="flex justify-between items-start">
-                      <div className="flex items-center">
-                        <div className="w-10 h-10 bg-blue-200 rounded-lg flex items-center justify-center mr-4">
-                          <span className="material-icons text-blue-600">
-                            description
-                          </span>
-                        </div>
-                        <div>
-                          <p className="font-semibold text-s text-gray-900">
-                            {transcription.title}
-                          </p>
-                          <p className="text-xs text-gray-500">
-                            {formatDate(transcription.sessionDate)}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="flex items-center space-x-4">
-                        <span
-                          className={`${getTranscriptionStatusColor(
-                            transcription.status
-                          )} text-xs font-medium px-3 py-1 rounded-full`}
-                        >
-                          {transcription.status}
-                        </span>
-                        <span className="text-sm text-gray-500">
-                          {transcription.visitDuration} min
-                        </span>
-                      </div>
+              <div className="overflow-hidden">
+                {/* Header Row */}
+                <div className="bg-gray-50 px-6 py-4 border-b border-gray-200">
+                  <div className="grid grid-cols-5 gap-4">
+                    <div className="font-semibold text-sm text-gray-700">
+                      Session ID
                     </div>
-
-                    <div className="grid grid-cols-4 gap-6 mt-6 pt-4 border-t border-gray-200">
-                      <div>
-                        <p className="text-xs text-gray-500 mb-1">Type:</p>
-                        <p className="font-medium text-s text-gray-900">
-                          {transcription.sessionType}
-                        </p>
-                      </div>
-                      <div>
-                        <p className="text-xs text-gray-500 mb-1">Visit:</p>
-                        <p className="font-medium text-s text-gray-900">
-                          {transcription.visitType}
-                        </p>
-                      </div>
-                      <div>
-                        <p className="text-xs text-gray-500 mb-1">
-                          Confidence:
-                        </p>
-                        <p className="font-medium text-s text-gray-900">
-                          {(transcription.confidence * 100).toFixed(1)}%
-                        </p>
-                      </div>
-                      <div>
-                        <p className="text-xs text-gray-500 mb-1">Speakers:</p>
-                        <p className="font-medium text-s text-gray-900">
-                          {transcription.speakers?.length || 0}
-                        </p>
-                      </div>
+                    <div className="font-semibold text-sm text-gray-700">
+                      Date & Time
                     </div>
-
-                    {/* Quality Metrics */}
-                    {transcription.qualityMetrics && (
-                      <div className="mt-4 border-t border-gray-200 pt-4">
-                        <p className="text-xs font-medium text-gray-500 mb-4">
-                          Quality Metrics :
-                        </p>
-                        <div className="grid grid-cols-4 gap-6 text-center">
-                          <div>
-                            <p className="text-lg font-bold text-blue-600">
-                              {(
-                                transcription.qualityMetrics
-                                  .transcriptionAccuracy * 100
-                              ).toFixed(1)}
-                              %
-                            </p>
-                            <p className="text-xs text-gray-500">Accuracy</p>
-                          </div>
-                          <div>
-                            <p className="text-lg font-bold text-blue-600">
-                              {(
-                                transcription.qualityMetrics
-                                  .medicalTermAccuracy * 100
-                              ).toFixed(1)}
-                              %
-                            </p>
-                            <p className="text-xs text-gray-500">
-                              Medical Terms
-                            </p>
-                          </div>
-                          <div>
-                            <p className="text-lg font-bold text-blue-600">
-                              {(
-                                transcription.qualityMetrics
-                                  .speakerIdentificationAccuracy * 100
-                              ).toFixed(1)}
-                              %
-                            </p>
-                            <p className="text-xs text-gray-500">Speaker ID</p>
-                          </div>
-                          <div>
-                            <p className="text-lg font-bold text-blue-600">
-                              {(
-                                transcription.qualityMetrics.completeness * 100
-                              ).toFixed(1)}
-                              %
-                            </p>
-                            <p className="text-xs text-gray-500">
-                              Completeness
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-                    )}
+                    <div className="font-semibold text-sm text-gray-700">
+                      Session Type
+                    </div>
+                    <div className="font-semibold text-sm text-gray-700">
+                      Visit Type
+                    </div>
+                    <div className="font-semibold text-sm text-gray-700">
+                      Actions
+                    </div>
                   </div>
-                ))}
+                </div>
+
+                {/* Data Rows */}
+                <div className="divide-y divide-gray-200">
+                  {patient.transcriptions?.map((transcription, index) => (
+                    <div
+                      key={transcription.sessionId}
+                      className={`px-6 py-4 transition-colors hover:bg-gray-50 ${
+                        selectedTranscription?.sessionId ===
+                        transcription.sessionId
+                          ? "bg-blue-50 border-l-4 border-l-blue-500"
+                          : ""
+                      }`}
+                    >
+                      <div className="grid grid-cols-5 gap-4 items-center">
+                        <div className="text-sm font-medium text-gray-900 truncate">
+                          {transcription.sessionId}
+                        </div>
+                        <div className="text-sm text-gray-600">
+                          {formatDate(transcription.sessionDate)}
+                        </div>
+                        <div className="text-sm text-gray-900 capitalize">
+                          {transcription.sessionType}
+                        </div>
+                        <div className="text-sm text-gray-900 capitalize">
+                          {transcription.visitType}
+                        </div>
+                        <div className="flex items-center">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              navigate(
+                                `/dashboard/patients/${id}/transcription/${transcription.sessionId}`
+                              );
+                            }}
+                            className="inline-flex items-center px-3 py-1.5 bg-blue-600 text-white text-xs font-medium rounded-md hover:bg-blue-700 transition-colors"
+                          >
+                            View
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
           </div>
 
           {/* Selected Transcription Details */}
-          {selectedTranscription && (
+          {/* {selectedTranscription && (
             <div className="bg-white p-6 rounded-xl shadow-sm">
-              {/* Summary */}
+
               {selectedTranscription.summary && (
                 <div className="space-y-6 text-gray-600 leading-relaxed">
                   <div className="flex justify-between items-center mb-2 border-b pb-4">
@@ -459,7 +395,7 @@ const PatientDetails = () => {
                 </div>
               )}
 
-              {/* Utterances */}
+
               {selectedTranscription.utterances && (
                 <div className="mt-8">
                   <h3 className="font-semibold text-gray-900 mb-4 border-b-2 pb-4">
@@ -494,7 +430,7 @@ const PatientDetails = () => {
                 </div>
               )}
             </div>
-          )}
+          )} */}
         </main>
       </div>
     </div>

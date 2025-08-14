@@ -21,6 +21,8 @@ import AllPatients from "./pages/patients/AllPatients";
 import PatientDetails from "./pages/patients/PatientDetails";
 import PauseBasedDemo from "./pages/newTrans/PauseBasedDemo";
 import Home from "./pages/home/Home";
+import Signup from "./pages/home/Signup";
+import TranscriptionDetails from "./pages/patients/TranscriptionDetails";
 
 // Lazy load components
 const Login = lazy(() => import("./pages/auth/Login"));
@@ -57,6 +59,10 @@ const router = createBrowserRouter([
   {
     path: "/",
     element: <Home />,
+  },
+  {
+    path: "/signup",
+    element: <Signup />,
   },
   {
     path: "/auth",
@@ -140,6 +146,14 @@ const router = createBrowserRouter([
                 element: (
                   <Suspense fallback={<LoadingPage />}>
                     <PatientDetails />
+                  </Suspense>
+                ),
+              },
+              {
+                path: "patients/:id/transcription/:id",
+                element: (
+                  <Suspense fallback={<LoadingPage />}>
+                    <TranscriptionDetails />
                   </Suspense>
                 ),
               },

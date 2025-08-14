@@ -10,7 +10,7 @@ export const Input = forwardRef(
         {label && (
           <label
             htmlFor={id}
-            className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2"
+            className="block text-s font-bold text-gray-700 dark:text-gray-300 mb-1"
           >
             {label}
           </label>
