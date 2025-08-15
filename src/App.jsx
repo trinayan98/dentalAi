@@ -150,7 +150,7 @@ const router = createBrowserRouter([
                 ),
               },
               {
-                path: "patients/:id/transcription/:id",
+                path: "patients/:patientId/transcription/:transcriptionId",
                 element: (
                   <Suspense fallback={<LoadingPage />}>
                     <TranscriptionDetails />

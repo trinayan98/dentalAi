@@ -62,6 +62,7 @@ const NewTranscription = () => {
   });
   const [patientSaving, setPatientSaving] = useState(false);
   const [patientError, setPatientError] = useState("");
+  const [fieldErrors, setFieldErrors] = useState({});
   const { addToast } = useToastStore();
 
   // Load saved summary from localStorage on component mount
@@ -358,15 +359,53 @@ const NewTranscription = () => {
 
   const openPatientModal = () => {
     setPatientError("");
+    setFieldErrors({});
     setShowPatientModal(true);
   };
 
   const closePatientModal = () => {
     setShowPatientModal(false);
+    setFieldErrors({});
+  };
+
+  // Calculate age from date of birth
+  const calculateAge = (dateOfBirth) => {
+    if (!dateOfBirth) return null;
+    const today = new Date();
+    const birthDate = new Date(dateOfBirth);
+    let age = today.getFullYear() - birthDate.getFullYear();
+    const monthDiff = today.getMonth() - birthDate.getMonth();
+
+    if (
+      monthDiff < 0 ||
+      (monthDiff === 0 && today.getDate() < birthDate.getDate())
+    ) {
+      age--;
+    }
+
+    return age;
   };
 
   const handlePatientInputChange = (field, value) => {
     setPatientForm((prev) => ({ ...prev, [field]: value }));
+
+    // Clear field error when user starts typing
+    if (fieldErrors[field]) {
+      setFieldErrors((prev) => ({ ...prev, [field]: "" }));
+    }
+
+    // Real-time validation for date of birth
+    if (field === "dateOfBirth" && value) {
+      const age = calculateAge(value);
+      if (age !== null && (age < 3 || age > 100)) {
+        setFieldErrors((prev) => ({
+          ...prev,
+          dateOfBirth: "Age must be between 3 and 100 years",
+        }));
+      } else if (age !== null) {
+        setFieldErrors((prev) => ({ ...prev, dateOfBirth: "" }));
+      }
+    }
   };
 
   const handleSubmitPatient = async (e) => {
@@ -403,6 +442,18 @@ const NewTranscription = () => {
     const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
     if (!dateRegex.test(patientForm.dateOfBirth)) {
       setPatientError("Please enter a valid date in YYYY-MM-DD format");
+      return;
+    }
+
+    // Validate age (between 3 and 100 years)
+    const age = calculateAge(patientForm.dateOfBirth);
+    if (age === null) {
+      setPatientError("Please enter a valid date of birth");
+      return;
+    }
+
+    if (age < 3 || age > 100) {
+      setPatientError("Age must be between 3 and 100 years");
       return;
     }
 
@@ -488,7 +539,7 @@ const NewTranscription = () => {
       };
 
       const response = await axios.post(
-        "http://localhost:5001/api/patients/quick",
+        `${API_BASE_URL}/patients/quick`,
         payload,
         {
           headers: {
@@ -512,6 +563,7 @@ const NewTranscription = () => {
           visitType: "",
           visitDuration: 45,
         });
+        setFieldErrors({});
         alert("Patient saved successfully");
       }
     } catch (error) {
@@ -635,7 +687,7 @@ const NewTranscription = () => {
                 </Select>
               </div>
             </div>
-            <div className="grid grid-cols-6 gap-0  h-[63vh]   bg-white p-0 overflow-y-auto relative">
+            <div className="grid grid-cols-6 gap-0  h-[63vh]   bg-white p-0 overflow-y-auto ">
               <div
                 className={` p-5 ${
                   isTemplateMinimized ? "col-span-6" : "col-span-4"
@@ -651,7 +703,7 @@ const NewTranscription = () => {
                     </div>
                   </div>
                 ) : summaryData ? (
-                  <div className="space-y-4">
+                  <div className="space-y-4 relative">
                     {/* Summary metadata */}
 
                     {/* <div className="text-xs text-gray-500 mb-3 p-2 bg-teal-400/10 rounded">
@@ -785,10 +837,10 @@ const NewTranscription = () => {
                 </div>
               )}
 
-              {isTemplateMinimized ? (
+              {/* {isTemplateMinimized ? (
                 <button
                   onClick={() => setIsTemplateMinimized(false)}
-                  className="absolute right-[-20px] top-1/2 transform -translate-y-1/2 flex items-center justify-center w-8 h-8 rounded-full bg-teal-200 hover:bg-gray-300 transition-colors z-100"
+                  className="absolute right-[5px] top-1/2 transform -translate-y-1/2 flex items-center justify-center w-8 h-8 rounded-full bg-teal-200 hover:bg-gray-300 transition-colors z-100"
                   title="Expand template"
                 >
                   <ChevronLeft className="h-4 w-4 text-teal-600" />
@@ -796,12 +848,12 @@ const NewTranscription = () => {
               ) : (
                 <button
                   onClick={() => setIsTemplateMinimized(true)}
-                  className="absolute right-2 top-1/2 transform -translate-y-1/2 flex items-center justify-center w-8 h-8 rounded-full bg-teal-200 hover:bg-teal-300 transition-colors z-10"
+                  className="absolute right-[5px] top-1/2 transform -translate-y-1/2 flex items-center justify-center w-8 h-8 rounded-full bg-teal-200 hover:bg-teal-300 transition-colors z-10"
                   title="Expand template"
                 >
                   <ChevronRight className="h-4 w-4 text-teal-600" />
                 </button>
-              )}
+              )} */}
             </div>
           </div>
           <div className="w-full flex items-center justify-between mt-8">
@@ -873,10 +925,7 @@ const NewTranscription = () => {
                       </button>
                       {setIsEditingSummary && (
                         <button
-                          onClick={() => {
-                            localStorage.removeItem("savedSummaryData");
-                            setSummaryData(null);
-                          }}
+                          onClick={handleClearClick}
                           className="flex items-center text-s gap-2 border-2 border-red-500 text-white bg-red-500 rounded-full px-4 py-2 font-medium transition hover:bg-red-700 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
                           type="button"
                         >
@@ -929,7 +978,7 @@ const NewTranscription = () => {
             className="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-2xl w-full mx-4 "
           >
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+              <h3 className="text-lg font-bold   text-teal-900 dark:text-white">
                 Save Patient
               </h3>
               <button
@@ -976,6 +1025,7 @@ const NewTranscription = () => {
                   onChange={(e) =>
                     handlePatientInputChange("dateOfBirth", e.target.value)
                   }
+                  error={fieldErrors.dateOfBirth}
                   required
                 />
                 <Select
@@ -1083,7 +1133,7 @@ const NewTranscription = () => {
                 </Button>
                 <Button
                   type="submit"
-                  variant="primary"
+                  variant="teal"
                   size="sm"
                   disabled={patientSaving}
                 >

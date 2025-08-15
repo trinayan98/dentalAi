@@ -484,7 +484,11 @@ export default function UserProfile() {
                           disabled={isLoading}
                           aria-label="Upload profile picture"
                         />
-                        <Edit2 className="h-4 w-4" aria-hidden="true" />
+                        <Edit2
+                          className="h-4 w-4"
+                          aria-hidden="true"
+                          color="teal"
+                        />
                       </label>
                     )}
                   </div>
@@ -527,8 +531,8 @@ export default function UserProfile() {
                     {isOwnProfile && (
                       <Button
                         type="submit"
-                        variant="primary"
-                        size="xs"
+                        variant="teal"
+                        size="md"
                         disabled={isLoading}
                         className="mt-4"
                       >
@@ -611,8 +615,61 @@ export default function UserProfile() {
                   </CardContent>
                 </Card>
               </motion.div>
-
               <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3, delay: 0.4 }}
+              >
+                <Card className="px-3 py-3">
+                  <CardHeader>
+                    <CardTitle>Account Actions</CardTitle>
+                  </CardHeader>
+                  <CardContent className="pt-0">
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                        <div>
+                          <h4 className="text-sm font-medium text-gray-900 dark:text-white">
+                            Log out of your account
+                          </h4>
+                          <p className="text-xs text-gray-500 dark:text-gray-400">
+                            You'll need to enter your credentials to log back in
+                          </p>
+                        </div>
+                        <Button
+                          variant="outline"
+                          onClick={handleLogout}
+                          size="sm"
+                          leftIcon={<LogOut className="h-4 w-4" />}
+                          className="text-gray-900 dark:text-gray-300"
+                        >
+                          Log Out
+                        </Button>
+                      </div>
+
+                      <div className="flex items-center justify-between p-4 bg-error-50 dark:bg-error-900/20 rounded-lg border border-error-200 dark:border-error-800">
+                        <div>
+                          <h4 className="text-sm font-medium text-error-900 dark:text-error-200">
+                            Delete account
+                          </h4>
+                          <p className="text-xs text-error-700 dark:text-error-300">
+                            Permanently delete your account and all your data
+                          </p>
+                        </div>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="border-error-300 dark:border-error-700 text-error-700 dark:text-error-300 hover:bg-error-50 dark:hover:bg-error-900/30"
+                          onClick={handleDeleteAccount}
+                          leftIcon={<Trash className="h-4 w-4" />}
+                        >
+                          Delete Account
+                        </Button>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </motion.div>
+              {/* <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.3, delay: 0.2 }}
@@ -754,10 +811,10 @@ export default function UserProfile() {
                     </Button>
                   </CardFooter>
                 </Card>
-              </motion.div>
+              </motion.div> */}
             </div>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <motion.div
+              {/* <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.3, delay: 0.3 }}
@@ -885,61 +942,7 @@ export default function UserProfile() {
                     </Button>
                   </CardFooter>
                 </Card>
-              </motion.div>
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3, delay: 0.4 }}
-              >
-                <Card className="px-3 py-3">
-                  <CardHeader>
-                    <CardTitle>Account Actions</CardTitle>
-                  </CardHeader>
-                  <CardContent className="pt-0">
-                    <div className="space-y-4">
-                      <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                        <div>
-                          <h4 className="text-sm font-medium text-gray-900 dark:text-white">
-                            Log out of your account
-                          </h4>
-                          <p className="text-xs text-gray-500 dark:text-gray-400">
-                            You'll need to enter your credentials to log back in
-                          </p>
-                        </div>
-                        <Button
-                          variant="outline"
-                          onClick={handleLogout}
-                          size="sm"
-                          leftIcon={<LogOut className="h-4 w-4" />}
-                          className="text-gray-900 dark:text-gray-300"
-                        >
-                          Log Out
-                        </Button>
-                      </div>
-
-                      <div className="flex items-center justify-between p-4 bg-error-50 dark:bg-error-900/20 rounded-lg border border-error-200 dark:border-error-800">
-                        <div>
-                          <h4 className="text-sm font-medium text-error-900 dark:text-error-200">
-                            Delete account
-                          </h4>
-                          <p className="text-xs text-error-700 dark:text-error-300">
-                            Permanently delete your account and all your data
-                          </p>
-                        </div>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="border-error-300 dark:border-error-700 text-error-700 dark:text-error-300 hover:bg-error-50 dark:hover:bg-error-900/30"
-                          onClick={handleDeleteAccount}
-                          leftIcon={<Trash className="h-4 w-4" />}
-                        >
-                          Delete Account
-                        </Button>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </motion.div>
+              </motion.div> */}
             </div>
           </>
         )}

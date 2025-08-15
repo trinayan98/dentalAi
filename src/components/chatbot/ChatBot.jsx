@@ -3,6 +3,7 @@ import { Bot, BotIcon, User } from "lucide-react";
 import axios from "axios";
 import { v4 as uuidv4 } from "uuid"; // For generating unique sessionId
 import useAuthStore from "../../stores/authStore";
+import { N8N_BASE_URL } from "../../config/constants";
 import "./chatBot.css";
 
 const ChatBot = ({ showChatbot, setShowChatbot }) => {
@@ -32,7 +33,7 @@ const ChatBot = ({ showChatbot, setShowChatbot }) => {
 
     try {
       const response = await axios.post(
-        `https://n8n.apisdor.com/webhook/trascript_Chat?user_id=${user?.id}`,
+        `${N8N_BASE_URL}?user_id=${user?.id}`,
         {
           action: "sendMessage",
           chatInput: input,

@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import useAuthStore from "../../stores/authStore";
 import { useToastStore } from "../../stores/toastStore";
+import { API_BASE_URL } from "../../config/constants";
 
 const StreamingDemo = () => {
   const [sessionId, setSessionId] = useState(() => {
@@ -154,7 +155,7 @@ const StreamingDemo = () => {
     try {
       setIsProcessing(true);
       const response = await fetch(
-        "http://localhost:5001/api/transcription/stream/start",
+        `${API_BASE_URL}/transcription/stream/start`,
         {
           method: "POST",
           headers: {
@@ -396,7 +397,7 @@ const StreamingDemo = () => {
       };
 
       console.log("📤 Sending PCM request to backend:", {
-        url: "http://localhost:5001/api/transcription/stream/audio",
+        url: `${API_BASE_URL}/transcription/stream/audio`,
         method: "POST",
         bodySize: JSON.stringify(requestBody).length,
         audioDataSize: audioArray.length,
@@ -405,7 +406,7 @@ const StreamingDemo = () => {
       });
 
       const response = await fetch(
-        "http://localhost:5001/api/transcription/stream/audio",
+        `${API_BASE_URL}/transcription/stream/audio`,
         {
           method: "POST",
           headers: {
@@ -589,7 +590,7 @@ const StreamingDemo = () => {
     try {
       setIsProcessing(true);
       const response = await fetch(
-        "http://localhost:5001/api/transcription/stream/pause",
+        `${API_BASE_URL}/transcription/stream/pause`,
         {
           method: "POST",
           headers: {
@@ -634,7 +635,7 @@ const StreamingDemo = () => {
     try {
       setIsProcessing(true);
       const response = await fetch(
-        "http://localhost:5001/api/transcription/stream/resume",
+        `${API_BASE_URL}/transcription/stream/resume`,
         {
           method: "POST",
           headers: {
@@ -682,7 +683,7 @@ const StreamingDemo = () => {
       await stopRecording();
 
       const response = await fetch(
-        "http://localhost:5001/api/transcription/stream/stop",
+        `${API_BASE_URL}/transcription/stream/stop`,
         {
           method: "POST",
           headers: {
@@ -745,7 +746,7 @@ const StreamingDemo = () => {
     try {
       setIsProcessing(true);
       const response = await fetch(
-        "http://localhost:5001/api/transcription/stream/transcribe",
+        `${API_BASE_URL}/transcription/stream/transcribe`,
         {
           method: "POST",
           headers: {
@@ -796,7 +797,7 @@ const StreamingDemo = () => {
     try {
       setIsProcessing(true);
       const response = await fetch(
-        "http://localhost:5001/api/transcription/stream/save",
+        `${API_BASE_URL}/transcription/stream/save`,
         {
           method: "POST",
           headers: {

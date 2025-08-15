@@ -204,7 +204,7 @@ const Home = () => {
             <div className="w-full flex justify-center">
               <button
                 className="flex items-center gap-2 px-6 py-3 bg-teal-600 text-white font-semibold rounded-lg shadow-md hover:bg-teal-700 transition-all transform hover:scale-105"
-                onClick={() => (window.location.href = "/auth/signup")}
+                onClick={() => (window.location.href = "/signup")}
               >
                 <Rocket size={20} />
                 Get Started Today

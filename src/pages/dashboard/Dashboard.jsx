@@ -202,7 +202,7 @@ const Dashboard = () => {
           <div>
             <Link
               to={`/dashboard/transcribe/create`}
-              className="inline-flex items-center px-4 py-2 bg-primary-600 text-white text-xxs font-medium rounded-md hover:bg-primary-700 transition-colors gap-2 w-full md:w-auto mt-4 md:mt-0"
+              className="inline-flex items-center px-4 py-2 bg-teal-600 text-white text-xxs font-medium rounded-md hover:bg-primary-700 transition-colors gap-2 w-full md:w-auto mt-4 md:mt-0"
             >
               <PlusCircle className="h-3 w-3" />
               New Transcription

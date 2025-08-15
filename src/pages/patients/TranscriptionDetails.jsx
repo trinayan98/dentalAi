@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
 import useAuthStore from "../../stores/authStore";
@@ -6,7 +6,7 @@ import { API_BASE_URL } from "../../config/constants";
 import { ChevronLeft, FileText, Clock, User } from "lucide-react";
 
 const TranscriptionDetails = () => {
-  const { id: patientId, transcriptionId } = useParams();
+  const { patientId, transcriptionId } = useParams();
   const navigate = useNavigate();
   const { token } = useAuthStore();
   const [transcription, setTranscription] = useState(null);
@@ -15,7 +15,7 @@ const TranscriptionDetails = () => {
   const [error, setError] = useState("");
 
   // Fetch transcription details
-  const fetchTranscriptionDetails = async () => {
+  const fetchTranscriptionDetails = useCallback(async () => {
     try {
       setLoading(true);
       setError("");
@@ -30,7 +30,12 @@ const TranscriptionDetails = () => {
       );
 
       if (response.data.success) {
-        setTranscription(response.data.data);
+        setTranscription(response.data.data.transcription);
+        // Also set patient data from the transcription response
+        setPatient({
+          patientId: response.data.data.patientId,
+          fullName: response.data.data.patientName,
+        });
       } else {
         setError("Failed to fetch transcription details");
       }
@@ -43,10 +48,10 @@ const TranscriptionDetails = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [patientId, transcriptionId, token]);
 
   // Fetch patient details for context
-  const fetchPatientDetails = async () => {
+  const fetchPatientDetails = useCallback(async () => {
     try {
       const response = await axios.get(
         `${API_BASE_URL}/patients/${patientId}`,
@@ -62,15 +67,23 @@ const TranscriptionDetails = () => {
       }
     } catch (error) {
       console.error("Error fetching patient details:", error);
+      // If patient API fails, we can still show patient info from transcription response
+      // This will be handled in the transcription fetch
     }
-  };
+  }, [patientId, token]);
 
   useEffect(() => {
-    if (patientId && transcriptionId) {
+    if (patientId && transcriptionId && token) {
       fetchTranscriptionDetails();
       fetchPatientDetails();
     }
-  }, [patientId, transcriptionId]);
+  }, [
+    patientId,
+    transcriptionId,
+    token,
+    fetchTranscriptionDetails,
+    fetchPatientDetails,
+  ]);
 
   // Format date
   const formatDate = (dateString) => {
@@ -85,7 +98,7 @@ const TranscriptionDetails = () => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
+      <div className="flex items-center justify-center min-h-[100%]">
         <div className="flex items-center gap-3">
           <span className="material-icons animate-spin text-blue-600 text-2xl">
             refresh
@@ -148,25 +161,23 @@ const TranscriptionDetails = () => {
         <div className="flex items-center gap-4">
           <button
             onClick={() => navigate(`/dashboard/patients/${patientId}`)}
-            className="flex items-center text-sm font-medium text-gray-600 hover:text-gray-900"
+            className="flex items-center text-s font-medium text-gray-600 hover:text-gray-900"
           >
-            <ChevronLeft className="mr-2" />
+            <ChevronLeft className="mr-2" size={16} />
             Back to Patient
           </button>
-          <div className="h-6 w-px bg-gray-300"></div>
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">
-              Transcription Details
-            </h1>
-            {patient && (
-              <p className="text-sm text-gray-600">
-                Patient: {patient.fullName} ({patient.patientId})
-              </p>
-            )}
-          </div>
         </div>
       </div>
-
+      <div className="mb-6">
+        <h1 className="text-md font-bold text-teal-900">
+          Transcription Details
+        </h1>
+        {patient && (
+          <p className="text-sm text-gray-600">
+            Patient: {patient.fullName} ({patient.patientId})
+          </p>
+        )}
+      </div>
       {/* Transcription Info Card */}
       <div className="bg-white rounded-xl shadow-sm p-6">
         <div className="flex items-center mb-6">
@@ -174,7 +185,7 @@ const TranscriptionDetails = () => {
             <FileText className="text-blue-600" />
           </div>
           <div>
-            <h2 className="text-lg font-bold text-gray-900">
+            <h2 className="text-md font-bold text-gray-900">
               Session: {transcription.sessionId}
             </h2>
             <p className="text-sm text-gray-600">
@@ -221,21 +232,38 @@ const TranscriptionDetails = () => {
             </h3>
             <div className="bg-gray-50 rounded-lg p-4">
               <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">
-                {transcription.transcription}
+                {typeof transcription.transcription === "string"
+                  ? transcription.transcription
+                  : JSON.stringify(transcription.transcription, null, 2)}
               </p>
             </div>
           </div>
         )}
 
         {/* Summary */}
-        {transcription.summary && (
+        {transcription.summary?.rawResponse && (
           <div className="border-t border-gray-200 pt-6 mt-6">
             <h3 className="text-md font-semibold text-gray-900 mb-4">
               Summary
             </h3>
             <div className="bg-gray-50 rounded-lg p-4">
-              <p className="text-sm text-gray-700 leading-relaxed">
-                {transcription.summary}
+              <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">
+                {transcription.summary.rawResponse}
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* Template Information */}
+        {transcription.summary?.template && (
+          <div className="border-t border-gray-200 pt-6 mt-6">
+            <h3 className="text-md font-semibold text-gray-900 mb-4">
+              Template Used
+            </h3>
+            <div className="bg-gray-50 rounded-lg p-4">
+              <p className="text-sm text-gray-700">
+                <strong>{transcription.summary.template.name}</strong> -{" "}
+                {transcription.summary.template.description}
               </p>
             </div>
           </div>
@@ -252,10 +280,14 @@ const TranscriptionDetails = () => {
                 ([key, section]) => (
                   <div key={key} className="bg-gray-50 rounded-lg p-4">
                     <h4 className="font-medium text-sm text-gray-800 mb-2">
-                      {section.title}
+                      {typeof section.title === "string"
+                        ? section.title
+                        : "Untitled"}
                     </h4>
                     <p className="text-sm text-gray-700 leading-relaxed">
-                      {section.content}
+                      {typeof section.content === "string"
+                        ? section.content
+                        : JSON.stringify(section.content, null, 2)}
                     </p>
                   </div>
                 )
@@ -288,7 +320,11 @@ const TranscriptionDetails = () => {
                       {Math.floor(utterance.start / 1000)}s
                     </span>
                   </div>
-                  <p className="text-sm text-gray-700">{utterance.text}</p>
+                  <p className="text-sm text-gray-700">
+                    {typeof utterance.text === "string"
+                      ? utterance.text
+                      : JSON.stringify(utterance.text, null, 2)}
+                  </p>
                 </div>
               ))}
             </div>
@@ -304,35 +340,48 @@ const TranscriptionDetails = () => {
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <div className="text-center">
                 <p className="text-lg font-bold text-blue-600">
-                  {(
-                    transcription.qualityMetrics.transcriptionAccuracy * 100
-                  ).toFixed(1)}
+                  {typeof transcription.qualityMetrics.transcriptionAccuracy ===
+                  "number"
+                    ? (
+                        transcription.qualityMetrics.transcriptionAccuracy * 100
+                      ).toFixed(1)
+                    : "N/A"}
                   %
                 </p>
                 <p className="text-xs text-gray-500">Accuracy</p>
               </div>
               <div className="text-center">
                 <p className="text-lg font-bold text-blue-600">
-                  {(
-                    transcription.qualityMetrics.medicalTermAccuracy * 100
-                  ).toFixed(1)}
+                  {typeof transcription.qualityMetrics.medicalTermAccuracy ===
+                  "number"
+                    ? (
+                        transcription.qualityMetrics.medicalTermAccuracy * 100
+                      ).toFixed(1)
+                    : "N/A"}
                   %
                 </p>
                 <p className="text-xs text-gray-500">Medical Terms</p>
               </div>
               <div className="text-center">
                 <p className="text-lg font-bold text-blue-600">
-                  {(
-                    transcription.qualityMetrics.speakerIdentificationAccuracy *
-                    100
-                  ).toFixed(1)}
+                  {typeof transcription.qualityMetrics
+                    .speakerIdentificationAccuracy === "number"
+                    ? (
+                        transcription.qualityMetrics
+                          .speakerIdentificationAccuracy * 100
+                      ).toFixed(1)
+                    : "N/A"}
                   %
                 </p>
                 <p className="text-xs text-gray-500">Speaker ID</p>
               </div>
               <div className="text-center">
                 <p className="text-lg font-bold text-blue-600">
-                  {(transcription.qualityMetrics.completeness * 100).toFixed(1)}
+                  {typeof transcription.qualityMetrics.completeness === "number"
+                    ? (transcription.qualityMetrics.completeness * 100).toFixed(
+                        1
+                      )
+                    : "N/A"}
                   %
                 </p>
                 <p className="text-xs text-gray-500">Completeness</p>

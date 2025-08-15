@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import useAuthStore from "../../stores/authStore";
 import { useToastStore } from "../../stores/toastStore";
+import { API_BASE_URL } from "../../config/constants";
 
 const StreamingRecorder = ({ onTranscriptionComplete, onSessionUpdate }) => {
   const [sessionId, setSessionId] = useState(() => {
@@ -153,7 +154,7 @@ const StreamingRecorder = ({ onTranscriptionComplete, onSessionUpdate }) => {
     try {
       setIsProcessing(true);
       const response = await fetch(
-        "http://localhost:5001/api/transcription/stream/start",
+        `${API_BASE_URL}/transcription/stream/start`,
         {
           method: "POST",
           headers: {
@@ -401,7 +402,7 @@ const StreamingRecorder = ({ onTranscriptionComplete, onSessionUpdate }) => {
       };
 
       console.log("📤 Sending PCM request to backend:", {
-        url: "http://localhost:5001/api/transcription/stream/audio",
+        url: `${API_BASE_URL}/transcription/stream/audio`,
         method: "POST",
         bodySize: JSON.stringify(requestBody).length,
         audioDataSize: audioArray.length,
@@ -410,7 +411,7 @@ const StreamingRecorder = ({ onTranscriptionComplete, onSessionUpdate }) => {
       });
 
       const response = await fetch(
-        "http://localhost:5001/api/transcription/stream/audio",
+        `${API_BASE_URL}/transcription/stream/audio`,
         {
           method: "POST",
           headers: {
@@ -596,7 +597,7 @@ const StreamingRecorder = ({ onTranscriptionComplete, onSessionUpdate }) => {
       if (isActive && sessionId) {
         try {
           const response = await fetch(
-            "http://localhost:5001/api/transcription/stream/end",
+            `${API_BASE_URL}/transcription/stream/end`,
             {
               method: "POST",
               headers: {
@@ -717,7 +718,7 @@ const StreamingRecorder = ({ onTranscriptionComplete, onSessionUpdate }) => {
     try {
       setIsProcessing(true);
       const response = await fetch(
-        "http://localhost:5001/api/transcription/stream/pause",
+        `${API_BASE_URL}/transcription/stream/pause`,
         {
           method: "POST",
           headers: {
@@ -772,7 +773,7 @@ const StreamingRecorder = ({ onTranscriptionComplete, onSessionUpdate }) => {
     try {
       setIsProcessing(true);
       const response = await fetch(
-        "http://localhost:5001/api/transcription/stream/resume",
+        `${API_BASE_URL}/transcription/stream/resume`,
         {
           method: "POST",
           headers: {
@@ -833,7 +834,7 @@ const StreamingRecorder = ({ onTranscriptionComplete, onSessionUpdate }) => {
       stopRecording();
 
       const response = await fetch(
-        "http://localhost:5001/api/transcription/stream/stop",
+        `${API_BASE_URL}/transcription/stream/stop`,
         {
           method: "POST",
           headers: {
@@ -970,15 +971,15 @@ const StreamingRecorder = ({ onTranscriptionComplete, onSessionUpdate }) => {
                   Start
                 </button>
                 {(sessionId || localStorage.getItem("streamingSessionId")) && (
-                  <Button
+                  <button
                     size="md"
                     onClick={cancelSession}
-                    className="bg-gradient-to-r from-gray-500 to-gray-600 hover:from-gray-600 hover:to-gray-700 text-white font-medium px-6 py-3 rounded-xl shadow-lg hover:shadow-xl transition-all duration-200"
+                    className="flex text-xs items-center bg-gradient-to-r from-gray-500 to-gray-600 hover:from-gray-600 hover:to-gray-700 text-white font-medium px-4 py-2 rounded-full shadow-lg hover:shadow-xl transition-all duration-200"
                     disabled={isProcessing}
                   >
                     <X size={20} className="mr-2" />
                     Clear
-                  </Button>
+                  </button>
                 )}
               </>
             ) : (

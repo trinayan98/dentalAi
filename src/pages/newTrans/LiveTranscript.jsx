@@ -601,7 +601,7 @@ const LiveTranscript = () => {
         </div>
       )}
       {/* Bottom Controls */}
-      <div className="flex items-center mt-5">
+      <div className="flex items-center mt-8">
         <input
           ref={fileInputRef}
           type="file"

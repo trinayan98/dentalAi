@@ -255,19 +255,17 @@ const NewTemplate = () => {
                     <Card className="bg-gray-100 dark:bg-blue-900/20 border-blue-200 dark:border-blue-700 shadow-md px-3">
                       <CardContent className="p-4">
                         <div className="space-y-4">
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <Input
-                              label="Field Title"
-                              value={editFormData.title || ""}
-                              onChange={(e) =>
-                                setEditFormData({
-                                  ...editFormData,
-                                  title: e.target.value,
-                                })
-                              }
-                              className="bg-white dark:bg-gray-800"
-                            />
-                          </div>
+                          <Input
+                            label="Field Title"
+                            value={editFormData.title || ""}
+                            onChange={(e) =>
+                              setEditFormData({
+                                ...editFormData,
+                                title: e.target.value,
+                              })
+                            }
+                            className="bg-white dark:bg-gray-800 w-full"
+                          />
 
                           <Textarea
                             label="Field Instruction"

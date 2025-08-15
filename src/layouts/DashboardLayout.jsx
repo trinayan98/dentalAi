@@ -18,7 +18,13 @@ import { clsx } from "clsx";
 import { ThemeToggle } from "../components/ThemeToggle";
 
 const navigation = {
-  common: [{ name: "Dashboard", href: "/dashboard", icon: LayoutDashboard }],
+  common: [
+    {
+      name: "Dashboard",
+      href: "/dashboard",
+      icon: LayoutDashboard,
+    },
+  ],
   user: [
     { name: "Patients", href: "/dashboard/patients", icon: Users },
     {
@@ -27,7 +33,7 @@ const navigation = {
       icon: Mic,
     },
     { name: "Templates", href: "/dashboard/templates", icon: Layers },
-    { name: "Pause Demo", href: "/dashboard/pause", icon: Mic },
+    // { name: "Pause Demo", href: "/dashboard/pause", icon: Mic },
     { name: "Profile", href: "/dashboard/profile", icon: UserRound },
   ],
   admin: [
@@ -124,7 +130,7 @@ export default function DashboardLayout() {
       </aside>
 
       {/* Main content */}
-      <div className="md:pl-[192px] lg:pl-[200px] xl:pl-[200px] flex-1 flex flex-col min-h-screen">
+      <div className="md:pl-[160px] lg:pl-[200px] xl:pl-[200px] flex-1 flex flex-col min-h-screen">
         {/* Header */}
         <header className="sticky top-0 z-10 bg-white/100 dark:bg-gray-800 backdrop-blur-sm dark:border-gray-700 h-18 border-0 border-b-2 border-gray-100 ">
           <div className="px-4 sm:px-6 h-20 flex items-center justify-between">
